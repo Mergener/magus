@@ -37,22 +37,20 @@ class NetServer:
             if event.type == enet.EVENT_TYPE_NONE:
                 break
 
-            peer_key = (event.peer.address.host, event.peer.address.port)
-
             if event.type == enet.EVENT_TYPE_CONNECT:
                 net_peer = NetPeer(event.peer)
-                self._peers[peer_key] = net_peer
-                print(f"New connection: {peer_key}")
+                self._peers[net_peer.address] = net_peer
+                print(f"New connection: {net_peer.address}")
 
             elif event.type == enet.EVENT_TYPE_RECEIVE:
-                net_peer = self._peers.get(peer_key)
+                net_peer = self._peers.get(net_peer.address)
                 if net_peer:
                     data = bytes(event.packet.data)
                     received_messages.append((data, net_peer))
-                    print(f"From {peer_key}: {data.decode()}")
+                    print(f"From {net_peer.address}: {data.decode()}")
 
             elif event.type == enet.EVENT_TYPE_DISCONNECT:
-                net_peer = self._peers.pop(peer_key, None)
-                print(f"Lost connection: {peer_key}")
+                net_peer = self._peers.pop(net_peer.address, None)
+                print(f"Lost connection: {net_peer.address}")
 
         return received_messages
