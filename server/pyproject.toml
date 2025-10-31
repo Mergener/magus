@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "magus-server"
+version = "0.0.1"
+description = "Server app"
+authors = [{name="Thomas Mergener"}]
+requires-python = ">=3.10"
+
+dependencies = [
+    "magus-common"
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
