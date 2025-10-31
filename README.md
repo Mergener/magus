@@ -20,3 +20,19 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt 
 ```
 
+## Running
+
+After the setup phase, from the repository root directory, you can...
+
+... run the client:
+```bash 
+python -m client
+```
+... run the server:
+```bash 
+python -m server
+```
+
+## Generating Executable
+
+Coming soon
