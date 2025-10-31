@@ -1,7 +1,6 @@
-from common import greet
-
-def start():
-    print(greet("server"))
+from server.netserver import NetServer
 
 if __name__ == "__main__":
-    start()
+    server = NetServer(port=9999)
+    while True:
+        server.poll()
