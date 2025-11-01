@@ -1,4 +1,3 @@
-from common import init_common
 from common.binary import ByteReader, ByteWriter
 from common.enums import DeliveryMode
 from common.packet import Packet
@@ -34,5 +33,3 @@ def test_packet_encoding():
     assert new_packet.int_value1 == original_packet.int_value1
     assert new_packet.str_value == original_packet.str_value
     assert new_packet.int_value2 == original_packet.int_value2
-        
-    
