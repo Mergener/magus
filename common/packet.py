@@ -60,4 +60,3 @@ def init_packets():
     
     for i, c in enumerate(_packet_types):
         _packet_ids[c] = i
-    
