@@ -31,14 +31,33 @@ class Packet(ABC):
         global _packet_ids
         id = _packet_ids[self.__class__]
         writer.write_uint8(id)
-        self.on_write(writer)        
+        self.on_write(writer)
+        
+class NullPacket(Packet):
+    def on_write(self, writer):
+        pass
+
+    def on_read(self, reader):
+        pass
+
+    @property
+    def delivery_mode(self):
+        return DeliveryMode.UNRELIABLE    
 
 _packet_types: list[Type[Packet]] = []
 _packet_ids: dict[Type[Packet], int] = {}
+_initialized = False
 
 def init_packets():
-    global _packet_ids, _packet_types
+    global _packet_ids, _packet_types, _initialized
+    
+    if _initialized:
+        return
+    
+    _initialized = True    
     _packet_types = [c for c in Packet.__subclasses__()]
     _packet_types.sort(key = lambda c: f"{c.__module__}.{c.__name__}")
+    
     for i, c in enumerate(_packet_types):
         _packet_ids[c] = i
+    

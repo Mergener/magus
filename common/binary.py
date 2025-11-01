@@ -34,8 +34,9 @@ class ByteReader:
     def read_uint64(self) -> int:
         return int.from_bytes(self._stream.read(8), byteorder='little', signed=False)
 
+    @property
     def data(self):
-        return self._stream.getvalue()
+        return self._stream.getbuffer().tobytes()
 
 class ByteWriter:
     def __init__(self, data: bytes | BytesIO = BytesIO()):
@@ -72,5 +73,6 @@ class ByteWriter:
     def write_uint64(self, i: int):
         self._stream.write(i.to_bytes(8, byteorder='little', signed=False))
 
+    @property
     def data(self):
-        return self._stream.getvalue()
+        return self._stream.getbuffer().tobytes()

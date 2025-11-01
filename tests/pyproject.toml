@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "magus-tests"
+version = "0.0.1"
+description = "Tests"
+authors = [{name="Thomas Mergener"}]
+requires-python = ">=3.10"
+
+dependencies = [
+  "pygame>=2.1",
+  "magus-common"
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
