@@ -1,4 +1,6 @@
+import pytest
 from common import init_common
 
-def pytest_configure(config):
-    pass
+@pytest.fixture(autouse=True)
+def startup():
+    init_common()

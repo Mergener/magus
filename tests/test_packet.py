@@ -25,8 +25,6 @@ class CustomPacket1(Packet):
 
         
 def test_packet_encoding():
-    init_common()
-    
     original_packet = CustomPacket1(256, "Something", 800)
     writer = ByteWriter()
     original_packet.encode(writer)
