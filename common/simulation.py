@@ -52,9 +52,9 @@ class Simulation:
         for u in self._updatables:
             u.on_update(dt)
             
-    def render(self, context):
+    def render(self):
         for r in self._renderables:
-            r.on_render(context)
+            r.on_render()
 
 class Node:
     def __init__(self, behaviours: list[Behaviour] = []):
@@ -217,6 +217,17 @@ class Transform(Behaviour):
         self._local_scale = pg.Vector2(0, 0)
         self._rotation = 0
         
+    @property
+    def local_scale(self):
+        return self._local_scale
+    
+    @property
+    def scale(self):
+        scale = self._local_scale
+        if self.parent != None:
+            scale *= self.parent.transform.scale
+        return scale
+    
     @property
     def local_position(self):
         return self.local_position

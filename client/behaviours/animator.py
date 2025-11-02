@@ -1,5 +1,3 @@
-import pygame as pg
-
 from client.animation import Animation
 from client.behaviours.sprite_renderer import SpriteRenderer
 from common.simulation import Behaviour
