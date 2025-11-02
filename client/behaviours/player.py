@@ -3,12 +3,13 @@ import pygame as pg
 from client.behaviours.camera import Camera
 from common.simulation import Behaviour
 
+
 class Player(Behaviour):
     def __init__(self):
         super().__init__()
-        
+
     def on_update(self, dt):
-        keys = pg.key.get_pressed()  
+        keys = pg.key.get_pressed()
 
         if keys[pg.K_w]:
             self.transform.position.y -= 200 * dt
@@ -18,7 +19,6 @@ class Player(Behaviour):
             self.transform.position.x -= 200 * dt
         if keys[pg.K_d]:
             self.transform.position.x += 200 * dt
-            
+
         if keys[pg.K_UP]:
             Camera.main.transform.position += 250 * dt
-            

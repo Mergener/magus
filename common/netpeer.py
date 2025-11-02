@@ -2,6 +2,7 @@ import enet
 
 from common.enums import DeliveryMode
 
+
 class NetPeer:
     def __init__(self, enet_peer):
         self._enet_peer = enet_peer
@@ -15,7 +16,7 @@ class NetPeer:
 
     def disconnect(self):
         self._enet_peer.disconnect()
-        
+
     @property
     def address(self) -> tuple[str, int]:
         return (self._host, self._port)

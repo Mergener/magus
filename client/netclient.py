@@ -2,6 +2,7 @@ import enet
 
 from common.enums import DeliveryMode
 
+
 class NetClient:
     def __init__(self, address: str, port: int):
         self._host = enet.Host(None, 1, 2, 0, 0)
@@ -9,13 +10,13 @@ class NetClient:
         self.connect(address, port)
 
     def connect(self, address: str, port: int):
-        addr = enet.Address(address.encode('utf-8'), port)
+        addr = enet.Address(address.encode("utf-8"), port)
         self._peer = self._host.connect(addr, 2, 0)
         event = self._host.service(5000)
-        
+
         if event.type != enet.EVENT_TYPE_CONNECT:
             raise ConnectionError(f"Failed to connect to {address}:{port}")
-        
+
         print(f"Connected to {address}:{port}")
 
     def send(self, data: bytes, mode: DeliveryMode):

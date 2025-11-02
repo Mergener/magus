@@ -1,11 +1,12 @@
 from enum import Enum
 import enet
 
+
 class DeliveryMode(Enum):
     UNRELIABLE = 0
     RELIABLE = 1
     RELIABLE_ORDERED = 2
-    
+
     def to_enet(self) -> tuple[int, int]:
         """
         Returns (channel_id, enet_flags) for sending packets.

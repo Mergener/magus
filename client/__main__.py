@@ -19,9 +19,9 @@ def create_scene(simulation) -> Node:
     camera = Node()
     camera.simulation = simulation
     camera.add_behaviour(Camera())
-    
+
     character = Node()
-    
+
     img = load_image_asset("img/mage_a_walking.png")
 
     sprite_renderer = SpriteRenderer(img)

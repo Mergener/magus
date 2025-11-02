@@ -3,7 +3,7 @@ from server.netserver import NetServer
 
 if __name__ == "__main__":
     init_common()
-    
+
     server = NetServer(port=9999)
     while True:
         server.poll()

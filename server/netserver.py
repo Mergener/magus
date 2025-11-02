@@ -2,8 +2,11 @@ import enet
 from common.enums import DeliveryMode
 from common.netpeer import NetPeer
 
+
 class NetServer:
-    def __init__(self, address: str = "0.0.0.0", port: int = 9999, max_clients: int = 32):
+    def __init__(
+        self, address: str = "0.0.0.0", port: int = 9999, max_clients: int = 32
+    ):
         self._address = enet.Address(address.encode("utf-8"), port)
         self._host = enet.Host(self._address, max_clients, 2, 0, 0)
         self._peers: dict[tuple[str, int], NetPeer] = {}

@@ -2,6 +2,7 @@ from common.binary import ByteReader, ByteWriter
 from common.enums import DeliveryMode
 from common.packet import Packet
 
+
 class CustomPacket1(Packet):
     def __init__(self, int_value1: int, str_value: str, int_value2: int):
         self.int_value1 = int_value1
@@ -22,14 +23,14 @@ class CustomPacket1(Packet):
     def delivery_mode(self):
         return DeliveryMode.RELIABLE
 
-        
+
 def test_packet_encoding():
     original_packet = CustomPacket1(256, "Something", 800)
     writer = ByteWriter()
     original_packet.encode(writer)
     reader = ByteReader(writer.data)
     new_packet: CustomPacket1 = Packet.decode(reader)
-    
+
     assert new_packet.int_value1 == original_packet.int_value1
     assert new_packet.str_value == original_packet.str_value
     assert new_packet.int_value2 == original_packet.int_value2
