@@ -15,7 +15,7 @@ from common.enums import DeliveryMode
 from common.simulation import Node, Simulation
 
 
-def create_scene(simulation) -> Node:
+def create_scene(simulation):
     camera = Node()
     camera.simulation = simulation
     camera.add_behaviour(Camera())
