@@ -16,7 +16,3 @@ test = ["pytest"]
 dependencies = [
   "pygame>=2.1"
 ]
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["common*"]
