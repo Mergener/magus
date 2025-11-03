@@ -3,7 +3,7 @@ from __future__ import annotations
 import pygame as pg
 
 from abc import ABC
-from typing import Self
+from typing import cast, Self
 from common.utils import overrides_method
 
 
@@ -61,10 +61,10 @@ class Simulation:
 class Node:
     def __init__(self, behaviours: list[Behaviour] = []):
         self._children: list[Self] = []
-        self._simulation: Simulation = None
-        self._parent: Self = None
+        self._simulation: Simulation | None = None
+        self._parent: Self | None = None
 
-        self._behaviours = []
+        self._behaviours: list[Behaviour] = []
         self.add_behaviour(Transform())
         for b in behaviours:
             self.add_behaviour(b)
@@ -89,10 +89,10 @@ class Node:
 
     @property
     def transform(self) -> "Transform":
-        return self._behaviours[0]
+        return cast("Transform", self._behaviours[0])
 
     @property
-    def simulation(self) -> Simulation:
+    def simulation(self) -> Simulation | None:
         return self._simulation
 
     @simulation.setter
@@ -137,7 +137,7 @@ class Behaviour(ABC):
     def on_destroy(self):
         pass
 
-    def on_render(self, context):
+    def on_render(self):
         pass
 
     @property
@@ -148,7 +148,7 @@ class Behaviour(ABC):
         if self._node == node:
             return
 
-        if self.node != None:
+        if self.node != None and self.simulation:
             self.simulation.remove_renderable(self)
             self.simulation.remove_tickable(self)
             self.simulation.remove_updatable(self)
@@ -162,7 +162,7 @@ class Behaviour(ABC):
         self.on_start()
 
     @property
-    def simulation(self) -> Simulation:
+    def simulation(self) -> Simulation | None:
         return self._node.simulation
 
     @property

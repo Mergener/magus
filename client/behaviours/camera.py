@@ -5,7 +5,7 @@ from common.simulation import Behaviour
 
 
 class Camera(Behaviour):
-    main: Self = None
+    main: Self | None = None
 
     def __init__(self):
         super().__init__()
