@@ -1,10 +1,10 @@
-from common.behaviour import Behaviour
+from common.simulation import Behaviour
 from common.utils import overrides_method
 
 
 class CustomBehaviour(Behaviour):
     def __init__(self):
-        super().__init__(None)
+        super().__init__()
 
     def on_update(self, dt):
         print("I implement update!")
