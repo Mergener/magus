@@ -120,7 +120,7 @@ class Node:
 
 class Behaviour(ABC):
     def __init__(self):
-        self._node: Node = None
+        self._node: Node | None = None
         self._receive_updates: bool = True
         self._visible: bool = True
         self._render_layer: int = 0
@@ -163,7 +163,7 @@ class Behaviour(ABC):
 
     @property
     def simulation(self) -> Simulation | None:
-        return self._node.simulation
+        return self._node.simulation if self._node is not None else None
 
     @property
     def parent(self):
@@ -218,7 +218,7 @@ class Transform(Behaviour):
     def __init__(self):
         super().__init__()
         self._local_position = pg.Vector2(0, 0)
-        self._local_scale = pg.Vector2(0, 0)
+        self._local_scale = pg.Vector2(1, 1)
         self._rotation = 0
 
     @property
@@ -226,10 +226,10 @@ class Transform(Behaviour):
         return self._local_scale
 
     @property
-    def scale(self):
+    def scale(self) -> pg.Vector2:
         scale = self._local_scale
         if self.parent != None:
-            scale *= self.parent.transform.scale
+            scale = pg.Vector2(self.parent.transform.scale.x * scale.x, self.parent.transform.scale.y * scale.y)
         return scale
 
     @property
@@ -241,13 +241,13 @@ class Transform(Behaviour):
         self.local_position = new_pos
 
     @property
-    def position(self):
+    def position(self) -> pg.Vector2:
         position = self._local_position
         if self.parent != None:
             position += self.parent.transform.position
         return position
 
     @position.setter
-    def position(self, new_pos: pg.Vector2):
+    def position(self, new_pos: pg.Vector2):        
         delta = new_pos - self.position
         self.local_position += delta

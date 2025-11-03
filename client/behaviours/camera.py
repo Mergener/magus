@@ -21,6 +21,7 @@ class Camera(Behaviour):
         return pg.Vector2(screen_x, screen_y)
 
     def screen_to_world_space(self, point: pg.Vector2):
+        return point
         screen_rect = pg.display.get_surface().get_rect()
         world_x = point.x + screen_rect.x + self.transform.position.x
         world_y = point.y + screen_rect.y + self.transform.position.y

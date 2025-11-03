@@ -1,7 +1,8 @@
+from typing import cast
 import pygame as pg
 
 from client.behaviours.camera import Camera
-from common.simulation import Behaviour
+from common.simulation import Behaviour, Transform
 
 
 class SpriteRenderer(Behaviour):
@@ -25,19 +26,14 @@ class SpriteRenderer(Behaviour):
             self._dimensions = None
 
     def on_render(self):
-        if self.texture is None:
+        if self.texture is None or self._dimensions is None:
             return
 
         camera = Camera.main
         if camera is None:
             return
 
-        dim = self._dimensions * self.transform.scale
-        pos = camera.screen_to_world_space(self.transform.position - dim / 2)
-        draw_rect = pg.Rect(pos, dim)
-        window = pg.display.get_surface()
-        if not draw_rect.colliderect(window.get_rect()):
-            # Object not visible.
-            return
+        dim = self._dimensions
+        pos = cast(Transform, self.transform).position - dim / 2
 
-        window.blit(self.texture, draw_rect)
+        pg.display.get_surface().blit(self.texture, pg.Rect(pos, dim))
