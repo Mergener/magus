@@ -22,14 +22,14 @@ def create_scene(simulation) -> Node:
 
     character = Node()
 
-    img = load_image_asset("img/mage_a_walking.png")
+    img = load_image_asset("img/mage.png")
 
     sprite_renderer = SpriteRenderer(img)
     character.add_behaviour(sprite_renderer)
 
-    quads = slice_image(img, pg.Vector2(4, 8), SliceMode.RECTS_PER_AXIS)
+    quads = slice_image(img, pg.Vector2(32, 32), SliceMode.SIZE_PER_RECT)
     frames = list(map(lambda q: AnimationFrame(q), quads))
-    animation = Animation(frames[16:20])
+    animation = Animation(frames[0:4])
 
     character.add_behaviour(Animator(animation))
     character.add_behaviour(Player())
