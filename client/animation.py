@@ -31,9 +31,9 @@ def slice_image(
         size_per_rect = slicing
 
     quads = []
-    y = 0
+    y = 0.0
     for i in range(int(rects_per_axis.y)):
-        x = 0
+        x = 0.0
         for j in range(int(rects_per_axis.x)):
             sub_rect = pg.Rect(pg.Vector2(x, y), size_per_rect)
             if is_sub_rect_transparent(img, sub_rect):
@@ -65,13 +65,14 @@ class Animation:
 
 def is_sub_rect_transparent(surface: pg.Surface, rect: pg.Rect) -> bool:
     return False
-    if surface.get_masks()[3] == 0:
-        raise ValueError("Surface has no alpha channel")
+    # TODO: (Fix broken numpy installation and retry the code below again)
+    # if surface.get_masks()[3] == 0:
+    #     raise ValueError("Surface has no alpha channel")
 
-    rect = rect.clip(surface.get_rect())
-    if rect.width == 0 or rect.height == 0:
-        return True
+    # rect = rect.clip(surface.get_rect())
+    # if rect.width == 0 or rect.height == 0:
+    #     return True
 
-    alpha_array = pg.surfarray.array_alpha(surface)
-    sub = alpha_array[rect.left : rect.right, rect.top : rect.bottom]
-    return np.all(sub == 0)
+    # alpha_array = pg.surfarray.array_alpha(surface)
+    # sub = alpha_array[rect.left : rect.right, rect.top : rect.bottom]
+    # return np.all(sub == 0)

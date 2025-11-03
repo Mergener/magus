@@ -10,7 +10,7 @@ class Animator(Behaviour):
         self.animation = animation
         self._frame_idx = 0
         self._accum_time = 0
-        self._sprite_renderer: SpriteRenderer = None
+        self._sprite_renderer: SpriteRenderer | None = None
 
     def on_start(self):
         self._sprite_renderer = self.node.get_behaviour(SpriteRenderer)

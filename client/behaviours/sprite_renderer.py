@@ -5,17 +5,18 @@ from common.simulation import Behaviour
 
 
 class SpriteRenderer(Behaviour):
+    _dimensions: pg.Vector2 | None
     def __init__(self, texture: pg.Surface | None = None):
         super().__init__()
 
         self.texture = texture
-
+        
     @property
     def texture(self):
         return self._texture
 
     @texture.setter
-    def texture(self, texture: pg.Surface):
+    def texture(self, texture: pg.Surface | None):
         self._texture = texture
 
         if texture is not None:
