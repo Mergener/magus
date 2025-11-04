@@ -4,7 +4,7 @@ import pygame as pg
 
 from abc import ABC
 from typing import cast, Self
-from common.utils import overrides_method
+from common.utils import memberwise_multiply, overrides_method
 
 
 class Simulation:
@@ -88,8 +88,8 @@ class Node:
         self._behaviours.append(b)
 
     @property
-    def transform(self) -> "Transform":
-        return cast("Transform", self._behaviours[0])
+    def transform(self) -> Transform:
+        return cast(Transform, self._behaviours[0])
 
     @property
     def simulation(self) -> Simulation | None:
@@ -226,28 +226,29 @@ class Transform(Behaviour):
         return self._local_scale
 
     @property
-    def scale(self) -> pg.Vector2:
+    def scale(self):
         scale = self._local_scale
         if self.parent != None:
-            scale = pg.Vector2(self.parent.transform.scale.x * scale.x, self.parent.transform.scale.y * scale.y)
+            scale = memberwise_multiply(self.local_scale, self.parent.transform.scale)
         return scale
 
     @property
     def local_position(self):
-        return self.local_position
+        return self._local_position
 
     @local_position.setter
     def local_position(self, new_pos: pg.Vector2):
         self.local_position = new_pos
 
     @property
-    def position(self) -> pg.Vector2:
+    def position(self):
         position = self._local_position
         if self.parent != None:
-            position += self.parent.transform.position
+            position = position + self.parent.transform.position
         return position
 
     @position.setter
     def position(self, new_pos: pg.Vector2):        
         delta = new_pos - self.position
         self.local_position += delta
+        
