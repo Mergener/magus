@@ -58,18 +58,16 @@ class Simulation:
         for l in sorted(self._renderables.keys()):
             for r in self._renderables[l]:
                 r.on_render()
-            
+
 
 class Node:
-    def __init__(self, behaviours: list[Behaviour] = []):
+    def __init__(self):
         self._children: list[Self] = []
         self._simulation: Simulation | None = None
         self._parent: Self | None = None
 
         self._behaviours: list[Behaviour] = []
-        self.add_behaviour(Transform(self))
-        for b in behaviours:
-            self.add_behaviour(b)
+        self.add_behaviour(Transform)
 
     @property
     def parent(self):
@@ -81,13 +79,10 @@ class Node:
                 return b
         return None
 
-    def add_behaviour(self, b: Behaviour):
-        if b in self._behaviours:
-            return
-
-        b._set_node(self)
-
+    def add_behaviour[T: Behaviour](self, tb: type[T]) -> T:
+        b = tb(self)
         self._behaviours.append(b)
+        return b
 
     @property
     def transform(self) -> Transform:
@@ -122,10 +117,14 @@ class Node:
 
 class Behaviour(ABC):
     def __init__(self, node: Node):
-        self._node: Node = node
         self._receive_updates: bool = True
         self._visible: bool = True
         self._render_layer: int = 0
+        self._set_node(node)
+        self.on_init()
+
+    def on_init(self):
+        pass
 
     def on_start(self):
         pass
@@ -147,10 +146,7 @@ class Behaviour(ABC):
         return self._node
 
     def _set_node(self, node: Node):
-        if self._node == node:
-            return
-
-        if self.node != None and self.node._simulation:
+        if hasattr(self, "_node") and self.node != None and self.node._simulation:
             self.node._simulation.remove_renderable(self, self.render_layer)
             self.node._simulation.remove_tickable(self)
             self.node._simulation.remove_updatable(self)
@@ -249,7 +245,6 @@ class Transform(Behaviour):
         return position
 
     @position.setter
-    def position(self, new_pos: pg.Vector2):        
+    def position(self, new_pos: pg.Vector2):
         delta = new_pos - self.position
         self.local_position += delta
-        

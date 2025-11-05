@@ -15,24 +15,22 @@ from common.enums import DeliveryMode
 from common.simulation import Node, Simulation
 
 
-def create_scene(simulation):
-    camera = Node()
-    camera.simulation = simulation
-    camera.add_behaviour(Camera())
+def create_scene(simulation: Simulation):
+    camera_node = Node()
+    camera_node.simulation = simulation
+    camera_node.add_behaviour(Camera)
 
     character = Node()
 
     img = load_image_asset("img/mage.png")
 
-    sprite_renderer = SpriteRenderer(img)
-    character.add_behaviour(sprite_renderer)
-
+    character.add_behaviour(SpriteRenderer)    
     quads = slice_image(img, pg.Vector2(32, 32), SliceMode.SIZE_PER_RECT)
     frames = list(map(lambda q: AnimationFrame(q), quads))
     animation = Animation(frames[0:4])
 
-    character.add_behaviour(Animator(animation))
-    character.add_behaviour(Player())
+    character.add_behaviour(Animator).animation = animation
+    character.add_behaviour(Player)
 
     character.simulation = simulation
 

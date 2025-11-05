@@ -8,7 +8,11 @@ from common.simulation import Behaviour, Transform
 class SpriteRenderer(Behaviour):
     _dimensions: pg.Vector2 | None
     _texture: pg.Surface | None
-        
+
+    def on_init(self):
+        self._texture = None
+        self._dimensions = None
+
     @property
     def texture(self):
         return self._texture
