@@ -4,13 +4,14 @@ from common.simulation import Behaviour, Node
 
 
 class Animator(Behaviour):
-    def __init__(self, node: Node, animation: Animation):
-        super().__init__(node)
+    animation: Animation | None
+    _sprite_renderer: SpriteRenderer | None
+    _frame_idx: int
+    _accum_time: float
 
-        self.animation = animation
+    def on_init(self):
         self._frame_idx = 0
         self._accum_time = 0
-        self._sprite_renderer: SpriteRenderer | None = None
 
     def on_start(self):
         self._sprite_renderer = self.node.get_behaviour(SpriteRenderer)
