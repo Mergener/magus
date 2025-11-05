@@ -1,7 +1,7 @@
-import pygame as pg
 import traceback
-
 from sys import stderr
+
+import pygame as pg
 
 from client.animation import Animation, AnimationFrame, SliceMode, slice_image
 from client.assets import load_image_asset
@@ -9,9 +9,7 @@ from client.behaviours.animator import Animator
 from client.behaviours.camera import Camera
 from client.behaviours.player import Player
 from client.behaviours.sprite_renderer import SpriteRenderer
-from client.netclient import NetClient
 from common import init_common
-from common.enums import DeliveryMode
 from common.simulation import Node, Simulation
 
 
@@ -21,6 +19,7 @@ def create_scene(simulation: Simulation):
     camera_node.add_behaviour(Camera)
 
     character = Node()
+    character.transform.local_scale = pg.Vector2(4, 4)
 
     img = load_image_asset("img/mage.png")
 
@@ -34,13 +33,20 @@ def create_scene(simulation: Simulation):
 
     character.simulation = simulation
 
+    prop = Node()
+    prop.transform.local_scale = pg.Vector2(1.5, 0.5)
+    sprite_renderer = prop.add_behaviour(SpriteRenderer)
+    sprite_renderer.texture = frames[0].texture
+    sprite_renderer.render_layer = -1
+    prop.transform.position = pg.Vector2(200, 500)
+    prop.simulation = simulation
+
 
 if __name__ == "__main__":
     init_common()
     pg.init()
 
     window = pg.display.set_mode((1280, 720))
-    # net_client = NetClient("localhost", 9999)
     simulation = Simulation()
     create_scene(simulation)
 
@@ -59,7 +65,7 @@ if __name__ == "__main__":
 
             simulation.update(dt)
 
-            window.fill((0, 0, 0))
+            window.fill("white")
             simulation.render()
             pg.display.flip()
 

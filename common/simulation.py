@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from abc import ABC
+from collections import defaultdict
+from typing import Self, cast
+
 import pygame as pg
 
-from collections import defaultdict
-from abc import ABC
-from typing import cast, Self
 from common.utils import memberwise_multiply, overrides_method
 
 
@@ -61,13 +62,16 @@ class Simulation:
 
 
 class Node:
-    def __init__(self):
+    def __init__(self, simulation: Simulation | None = None):
         self._children: list[Self] = []
         self._simulation: Simulation | None = None
         self._parent: Self | None = None
 
         self._behaviours: list[Behaviour] = []
         self.add_behaviour(Transform)
+
+        if simulation is not None:
+            self.simulation = simulation
 
     @property
     def parent(self):
@@ -193,7 +197,7 @@ class Behaviour(ABC):
         if self.node.simulation is not None:
             self.node.simulation.remove_renderable(self, self._render_layer)
             self.node.simulation.add_renderable(self, layer)
-        self.render_layer = layer
+        self._render_layer = layer
 
     @property
     def visible(self):
@@ -222,6 +226,10 @@ class Transform(Behaviour):
     def local_scale(self):
         return self._local_scale
 
+    @local_scale.setter
+    def local_scale(self, value: pg.Vector2):
+        self._local_scale = value
+
     @property
     def scale(self):
         scale = self._local_scale
@@ -235,7 +243,7 @@ class Transform(Behaviour):
 
     @local_position.setter
     def local_position(self, new_pos: pg.Vector2):
-        self.local_position = new_pos
+        self._local_position = new_pos
 
     @property
     def position(self):
