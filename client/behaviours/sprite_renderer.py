@@ -35,6 +35,6 @@ class SpriteRenderer(Behaviour):
             return
 
         dim = self._dimensions
-        pos = cast(Transform, self.transform).position - dim / 2
+        pos = Camera.main.world_to_screen_space(self.transform.position - dim / 2)
 
         pg.display.get_surface().blit(self.texture, pg.Rect(pos, dim))
