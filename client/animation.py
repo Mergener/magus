@@ -65,7 +65,7 @@ class Animation:
 
 def is_sub_rect_transparent(surface: pg.Surface, rect: pg.Rect) -> bool:
     if surface.get_masks()[3] == 0:
-        raise False
+        return False
 
     rect = rect.clip(surface.get_rect())
     if rect.width == 0 or rect.height == 0:
