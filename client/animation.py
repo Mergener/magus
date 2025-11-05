@@ -73,4 +73,4 @@ def is_sub_rect_transparent(surface: pg.Surface, rect: pg.Rect) -> bool:
 
     alpha_array = pg.surfarray.array_alpha(surface)
     sub = alpha_array[rect.left : rect.right, rect.top : rect.bottom]
-    return np.all(sub == 0)
+    return bool(np.all(sub == 0))
