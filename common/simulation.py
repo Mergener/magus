@@ -120,7 +120,7 @@ class Node:
 
 class Behaviour(ABC):
     def __init__(self, node: Node):
-        self._node: Node
+        self._node: Node = node
         self._receive_updates: bool = True
         self._visible: bool = True
         self._render_layer: int = 0

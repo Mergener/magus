@@ -1,11 +1,11 @@
 from client.animation import Animation
 from client.behaviours.sprite_renderer import SpriteRenderer
-from common.simulation import Behaviour
+from common.simulation import Behaviour, Node
 
 
 class Animator(Behaviour):
-    def __init__(self, animation: Animation):
-        super().__init__()
+    def __init__(self, node: Node, animation: Animation):
+        super().__init__(node)
 
         self.animation = animation
         self._frame_idx = 0
