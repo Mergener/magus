@@ -58,7 +58,7 @@ class Simulation:
         for l in sorted(self._renderables.keys()):
             for r in self._renderables[l]:
                 r.on_render()
-            
+
 
 class Node:
     def __init__(self, behaviours: list[Behaviour] = []):
@@ -249,7 +249,6 @@ class Transform(Behaviour):
         return position
 
     @position.setter
-    def position(self, new_pos: pg.Vector2):        
+    def position(self, new_pos: pg.Vector2):
         delta = new_pos - self.position
         self.local_position += delta
-        

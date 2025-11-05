@@ -30,7 +30,9 @@ class NetServer:
                 print(f"New connection: {net_peer.address}")
 
             elif event.type == enet.EVENT_TYPE_RECEIVE:
-                net_peer = self._peers.get((event.peer.address.host, event.peer.address.port))
+                net_peer = self._peers.get(
+                    (event.peer.address.host, event.peer.address.port)
+                )
                 if net_peer:
                     data = bytes(event.packet.data)
                     received_messages.append((data, net_peer))
