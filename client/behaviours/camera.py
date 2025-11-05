@@ -1,11 +1,11 @@
 import pygame as pg
 
-from typing import Self
+from typing import Self, ClassVar
 from common.simulation import Behaviour
 
 
 class Camera(Behaviour):
-    main: Self | None = None
+    main: ClassVar[Self | None] = None
 
     def on_start(self):
         if Camera.main is None:
