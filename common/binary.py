@@ -1,11 +1,12 @@
 from io import BytesIO
+from typing import cast
 
 
 class ByteReader:
     def __init__(self, data: bytes | BytesIO = BytesIO()):
         if isinstance(data, bytes):
             data = BytesIO(data)
-        self._stream = data
+        self._stream = cast(BytesIO, data)
 
     def read_int8(self) -> int:
         return int.from_bytes(self._stream.read(1), byteorder="little", signed=True)
@@ -44,7 +45,7 @@ class ByteWriter:
     def __init__(self, data: bytes | BytesIO = BytesIO()):
         if isinstance(data, bytes):
             data = BytesIO(data)
-        self._stream = data
+        self._stream = cast(BytesIO, data)
 
     def write_int8(self, i: int):
         self._stream.write(i.to_bytes(1, byteorder="little", signed=True))

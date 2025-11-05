@@ -1,3 +1,4 @@
+from typing import cast
 from common.binary import ByteReader, ByteWriter
 from common.enums import DeliveryMode
 from common.packet import Packet
@@ -29,7 +30,7 @@ def test_packet_encoding():
     writer = ByteWriter()
     original_packet.encode(writer)
     reader = ByteReader(writer.data)
-    new_packet: CustomPacket1 = Packet.decode(reader)
+    new_packet: CustomPacket1 = cast(CustomPacket1, Packet.decode(reader))
 
     assert new_packet.int_value1 == original_packet.int_value1
     assert new_packet.str_value == original_packet.str_value

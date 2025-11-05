@@ -148,10 +148,10 @@ class Behaviour(ABC):
         if self._node == node:
             return
 
-        if self.node != None and self.simulation:
-            self.simulation.remove_renderable(self)
-            self.simulation.remove_tickable(self)
-            self.simulation.remove_updatable(self)
+        if self.node != None and self.node._simulation:
+            self.node._simulation.remove_renderable(self)
+            self.node._simulation.remove_tickable(self)
+            self.node._simulation.remove_updatable(self)
 
         self._node = node
 
@@ -160,10 +160,6 @@ class Behaviour(ABC):
         self.receive_updates = self.receive_updates
 
         self.on_start()
-
-    @property
-    def simulation(self) -> Simulation | None:
-        return self._node.simulation if self._node is not None else None
 
     @property
     def parent(self):
@@ -180,15 +176,15 @@ class Behaviour(ABC):
     @receive_updates.setter
     def receive_updates(self, rcv: bool):
         self._receive_updates = rcv
-        if self.simulation == None:
+        if self.node is None or self.node._simulation is None:
             return
 
         if rcv:
-            self.simulation.add_tickable(self)
-            self.simulation.add_updatable(self)
+            self.node._simulation.add_tickable(self)
+            self.node._simulation.add_updatable(self)
         else:
-            self.simulation.remove_updatable(self)
-            self.simulation.remove_tickable(self)
+            self.node._simulation.remove_updatable(self)
+            self.node._simulation.remove_tickable(self)
 
     @property
     def render_layer(self):
@@ -205,13 +201,13 @@ class Behaviour(ABC):
     @visible.setter
     def visible(self, vis: bool):
         self._visible = vis
-        if self.simulation == None:
+        if self.node is None or self.node._simulation is None:
             return
 
         if vis:
-            self.simulation.add_renderable(self)
+            self.node._simulation.add_renderable(self)
         else:
-            self.simulation.remove_renderable(self)
+            self.node._simulation.remove_renderable(self)
 
 
 class Transform(Behaviour):
