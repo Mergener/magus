@@ -4,6 +4,8 @@ venv
 bin/*
 assets/*
 .pytest_cache
+tmp/*
+*.spec
 
 */**/__pycache__
 *.pyc
@@ -11,3 +13,4 @@ assets/*
 
 !bin/.gitkeep
 !assets/.gitkeep
+!tmp/.gitkeep
