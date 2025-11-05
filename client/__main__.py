@@ -1,7 +1,7 @@
-import pygame as pg
 import traceback
-
 from sys import stderr
+
+import pygame as pg
 
 from client.animation import Animation, AnimationFrame, SliceMode, slice_image
 from client.assets import load_image_asset
@@ -19,11 +19,12 @@ def create_scene(simulation: Simulation):
     camera_node.add_behaviour(Camera)
 
     character = Node()
+    character.transform.local_scale = pg.Vector2(4, 4)
 
     img = load_image_asset("img/mage.png")
 
     character.add_behaviour(SpriteRenderer)
-    quads = slice_image(img, pg.Vector2(10, 8), SliceMode.RECTS_PER_AXIS)
+    quads = slice_image(img, pg.Vector2(32, 32), SliceMode.SIZE_PER_RECT)
     frames = list(map(lambda q: AnimationFrame(q), quads))
     animation = Animation(frames[0:4])
 

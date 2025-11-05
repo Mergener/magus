@@ -62,13 +62,16 @@ class Simulation:
 
 
 class Node:
-    def __init__(self):
+    def __init__(self, simulation: Simulation | None = None):
         self._children: list[Self] = []
         self._simulation: Simulation | None = None
         self._parent: Self | None = None
 
         self._behaviours: list[Behaviour] = []
         self.add_behaviour(Transform)
+
+        if simulation is not None:
+            self.simulation = simulation
 
     @property
     def parent(self):
