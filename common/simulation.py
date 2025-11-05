@@ -235,7 +235,7 @@ class Transform(Behaviour):
 
     @local_position.setter
     def local_position(self, new_pos: pg.Vector2):
-        self.local_position = new_pos
+        self._local_position = new_pos
 
     @property
     def position(self):
