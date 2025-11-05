@@ -23,7 +23,7 @@ def create_scene(simulation: Simulation):
 
     img = load_image_asset("img/mage.png")
 
-    character.add_behaviour(SpriteRenderer)
+    character.add_behaviour(SpriteRenderer).tint = pg.Color(0, 0, 255, 128)
     quads = slice_image(img, pg.Vector2(32, 32), SliceMode.SIZE_PER_RECT)
     frames = list(map(lambda q: AnimationFrame(q), quads))
     animation = Animation(frames[0:4])
