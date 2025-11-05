@@ -11,7 +11,7 @@ from common.utils import memberwise_multiply, overrides_method
 class Simulation:
     def __init__(self, tick_rate: float = 1 / 15):
         self.tick_rate = tick_rate
-        self._tick_accum_time = 0
+        self._tick_accum_time: float = 0
         self._tick_id = 0
         self._updatables: set[Behaviour] = set()
         self._tickables: set[Behaviour] = set()

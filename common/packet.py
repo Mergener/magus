@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Type
 
 from common.binary import ByteReader, ByteWriter
 from common.enums import DeliveryMode
@@ -47,8 +46,8 @@ class NullPacket(Packet):
         return DeliveryMode.UNRELIABLE
 
 
-_packet_types: list[Type[Packet]] = []
-_packet_ids: dict[Type[Packet], int] = {}
+_packet_types: list[type[Packet]] = []
+_packet_ids: dict[type[Packet], int] = {}
 _initialized = False
 
 
@@ -59,8 +58,8 @@ def init_packets():
         return
 
     _initialized = True
-    _packet_types = [c for c in Packet.__subclasses__()]
-    _packet_types.sort(key=lambda c: f"{c.__module__}.{c.__name__}")
+    _packet_types = [c for c in Packet.__subclasses__()] # type: ignore[type-abstract]
+    _packet_types.sort(key=lambda c: f"{c.__module__}.{c.__name__}") 
 
     for i, c in enumerate(_packet_types):
         _packet_ids[c] = i
