@@ -1,6 +1,6 @@
 import pygame as pg
 
-# import numpy as np
+import numpy as np
 
 from client.assets import load_image_asset
 from enum import Enum
@@ -64,15 +64,13 @@ class Animation:
 
 
 def is_sub_rect_transparent(surface: pg.Surface, rect: pg.Rect) -> bool:
-    return False
-    # TODO: (Fix broken numpy installation and retry the code below again)
-    # if surface.get_masks()[3] == 0:
-    #     raise ValueError("Surface has no alpha channel")
+    if surface.get_masks()[3] == 0:
+        return False
 
-    # rect = rect.clip(surface.get_rect())
-    # if rect.width == 0 or rect.height == 0:
-    #     return True
+    rect = rect.clip(surface.get_rect())
+    if rect.width == 0 or rect.height == 0:
+        return True
 
-    # alpha_array = pg.surfarray.array_alpha(surface)
-    # sub = alpha_array[rect.left : rect.right, rect.top : rect.bottom]
-    # return np.all(sub == 0)
+    alpha_array = pg.surfarray.array_alpha(surface)
+    sub = alpha_array[rect.left : rect.right, rect.top : rect.bottom]
+    return bool(np.all(sub == 0))

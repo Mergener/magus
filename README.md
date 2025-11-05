@@ -1,6 +1,6 @@
 # Magus
 
-## Setup
+## Dev Setup
 
 Create a virtual environment and install dependencies:
 
@@ -18,6 +18,12 @@ python -m venv .venv
 .venv/Scripts/activate
 pip install -r requirements.txt
 pip install -r requirements-dev.txt 
+```
+
+Once you're done installing dependencies, make sure to install the pre-commit hooks:
+
+```bash
+pre-commit install
 ```
 
 ## Running
