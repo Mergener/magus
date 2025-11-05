@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from abc import ABC
+from collections import defaultdict
+from typing import Self, cast
+
 import pygame as pg
 
-from collections import defaultdict
-from abc import ABC
-from typing import cast, Self
 from common.utils import memberwise_multiply, overrides_method
 
 
@@ -221,9 +222,9 @@ class Transform(Behaviour):
     @property
     def local_scale(self):
         return self._local_scale
-    
+
     @local_scale.setter
-    def local_scale(self, value: float):
+    def local_scale(self, value: pg.Vector2):
         self._local_scale = value
 
     @property

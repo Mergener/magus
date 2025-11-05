@@ -1,4 +1,5 @@
 from typing import cast
+
 import pygame as pg
 
 from client.behaviours.camera import Camera
@@ -36,6 +37,6 @@ class SpriteRenderer(Behaviour):
             return
 
         dim = memberwise_multiply(self._dimensions, self.transform.scale)
-        pos = Camera.main.world_to_screen_space(self.transform.position - dim / 2)
+        pos = camera.world_to_screen_space(self.transform.position - dim / 2)
 
         pg.display.get_surface().blit(self.texture, pg.Rect(pos, dim))
