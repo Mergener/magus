@@ -193,7 +193,7 @@ class Behaviour(ABC):
         if self.node.simulation is not None:
             self.node.simulation.remove_renderable(self, self._render_layer)
             self.node.simulation.add_renderable(self, layer)
-        self.render_layer = layer
+        self._render_layer = layer
 
     @property
     def visible(self):
@@ -221,6 +221,10 @@ class Transform(Behaviour):
     @property
     def local_scale(self):
         return self._local_scale
+    
+    @local_scale.setter
+    def local_scale(self, value: float):
+        self._local_scale = value
 
     @property
     def scale(self):

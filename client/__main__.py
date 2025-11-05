@@ -32,6 +32,14 @@ def create_scene(simulation: Simulation):
 
     character.simulation = simulation
 
+    prop = Node()
+    prop.transform.local_scale = pg.Vector2(1.5, 0.5)
+    sprite_renderer = prop.add_behaviour(SpriteRenderer)
+    sprite_renderer.texture = frames[0].texture
+    sprite_renderer.render_layer = -1
+    prop.transform.position = pg.Vector2(200, 500)
+    prop.simulation = simulation
+
 
 if __name__ == "__main__":
     init_common()

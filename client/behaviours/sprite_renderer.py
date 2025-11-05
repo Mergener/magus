@@ -3,6 +3,7 @@ import pygame as pg
 
 from client.behaviours.camera import Camera
 from common.simulation import Behaviour, Transform
+from common.utils import memberwise_multiply
 
 
 class SpriteRenderer(Behaviour):
@@ -34,7 +35,7 @@ class SpriteRenderer(Behaviour):
         if camera is None:
             return
 
-        dim = self._dimensions
+        dim = memberwise_multiply(self._dimensions, self.transform.scale)
         pos = Camera.main.world_to_screen_space(self.transform.position - dim / 2)
 
         pg.display.get_surface().blit(self.texture, pg.Rect(pos, dim))
