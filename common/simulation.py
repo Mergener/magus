@@ -65,7 +65,7 @@ class Node:
         self._parent: Self | None = None
 
         self._behaviours: list[Behaviour] = []
-        self.add_behaviour(Transform())
+        self.add_behaviour(Transform(self))
         for b in behaviours:
             self.add_behaviour(b)
 
@@ -119,8 +119,8 @@ class Node:
 
 
 class Behaviour(ABC):
-    def __init__(self):
-        self._node: Node | None = None
+    def __init__(self, node: Node):
+        self._node: Node
         self._receive_updates: bool = True
         self._visible: bool = True
         self._render_layer: int = 0
@@ -163,11 +163,11 @@ class Behaviour(ABC):
 
     @property
     def parent(self):
-        return self._node.parent if self._node else None
+        return self._node.parent
 
     @property
     def transform(self):
-        return self._node.transform if self._node else None
+        return self._node.transform
 
     @property
     def receive_updates(self):
@@ -176,7 +176,7 @@ class Behaviour(ABC):
     @receive_updates.setter
     def receive_updates(self, rcv: bool):
         self._receive_updates = rcv
-        if self.node is None or self.node._simulation is None:
+        if self.node._simulation is None:
             return
 
         if rcv:
@@ -201,18 +201,18 @@ class Behaviour(ABC):
     @visible.setter
     def visible(self, vis: bool):
         self._visible = vis
-        if self.node is None or self.node._simulation is None:
+        if self.node.simulation is None:
             return
 
         if vis:
-            self.node._simulation.add_renderable(self)
+            self.node.simulation.add_renderable(self)
         else:
-            self.node._simulation.remove_renderable(self)
+            self.node.simulation.remove_renderable(self)
 
 
 class Transform(Behaviour):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, node: Node):
+        super().__init__(node)
         self._local_position = pg.Vector2(0, 0)
         self._local_scale = pg.Vector2(1, 1)
         self._rotation = 0
@@ -239,8 +239,8 @@ class Transform(Behaviour):
     @property
     def position(self):
         position = self._local_position
-        if self.parent != None:
-            position = position + self.parent.transform.position
+        if self.parent is not None:
+            position += self.parent.transform.position
         return position
 
     @position.setter

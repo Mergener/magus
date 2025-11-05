@@ -5,9 +5,6 @@ from common.simulation import Behaviour
 
 
 class Player(Behaviour):
-    def __init__(self):
-        super().__init__()
-
     def on_update(self, dt):
         keys = pg.key.get_pressed()
 
@@ -20,5 +17,5 @@ class Player(Behaviour):
         if keys[pg.K_d]:
             self.transform.position.x += 200 * dt
 
-        if keys[pg.K_UP]:
-            Camera.main.transform.position += 250 * dt
+        if keys[pg.K_UP] and Camera.main is not None:
+            Camera.main.transform.position.y += 250 * dt

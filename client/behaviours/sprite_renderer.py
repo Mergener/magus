@@ -7,10 +7,7 @@ from common.simulation import Behaviour, Transform
 
 class SpriteRenderer(Behaviour):
     _dimensions: pg.Vector2 | None
-    def __init__(self, texture: pg.Surface | None = None):
-        super().__init__()
-
-        self.texture = texture
+    _texture: pg.Surface | None
         
     @property
     def texture(self):
