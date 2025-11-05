@@ -58,8 +58,8 @@ def init_packets():
         return
 
     _initialized = True
-    _packet_types = [c for c in Packet.__subclasses__()] # type: ignore[type-abstract]
-    _packet_types.sort(key=lambda c: f"{c.__module__}.{c.__name__}") 
+    _packet_types = [c for c in Packet.__subclasses__()]  # type: ignore[type-abstract]
+    _packet_types.sort(key=lambda c: f"{c.__module__}.{c.__name__}")
 
     for i, c in enumerate(_packet_types):
         _packet_ids[c] = i
