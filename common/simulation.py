@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pygame as pg
 
+from collections import defaultdict
 from abc import ABC
 from typing import cast, Self
 from common.utils import memberwise_multiply, overrides_method
@@ -14,7 +15,7 @@ class Simulation:
         self._tick_id = 0
         self._updatables: set[Behaviour] = set()
         self._tickables: set[Behaviour] = set()
-        self._renderables: set[Behaviour] = set()
+        self._renderables: defaultdict[int, set[Behaviour]] = defaultdict(set)
 
     @property
     def tick_id(self):
@@ -28,9 +29,9 @@ class Simulation:
         if overrides_method(Behaviour, b, "on_tick"):
             self._tickables.add(b)
 
-    def add_renderable(self, b: Behaviour):
+    def add_renderable(self, b: Behaviour, layer: int):
         if overrides_method(Behaviour, b, "on_render"):
-            self._renderables.add(b)
+            self._renderables[layer].add(b)
 
     def remove_updatable(self, b: Behaviour):
         self._updatables.discard(b)
@@ -38,8 +39,8 @@ class Simulation:
     def remove_tickable(self, b: Behaviour):
         self._tickables.discard(b)
 
-    def remove_renderable(self, b: Behaviour):
-        self._renderables.discard(b)
+    def remove_renderable(self, b: Behaviour, layer: int):
+        self._renderables[layer].discard(b)
 
     def update(self, dt):
         self._tick_accum_time += dt
@@ -54,9 +55,10 @@ class Simulation:
             u.on_update(dt)
 
     def render(self):
-        for r in self._renderables:
-            r.on_render()
-
+        for l in sorted(self._renderables.keys()):
+            for r in self._renderables[l]:
+                r.on_render()
+            
 
 class Node:
     def __init__(self, behaviours: list[Behaviour] = []):
@@ -104,7 +106,7 @@ class Node:
                     self._simulation.add_tickable(b)
 
                 if b.visible:
-                    self._simulation.add_renderable(b)
+                    self._simulation.add_renderable(b, b.render_layer)
 
         self._simulation = simulation
 
@@ -115,7 +117,7 @@ class Node:
                     self._simulation.add_tickable(b)
 
                 if b.visible:
-                    self._simulation.add_renderable(b)
+                    self._simulation.add_renderable(b, b.render_layer)
 
 
 class Behaviour(ABC):
@@ -149,7 +151,7 @@ class Behaviour(ABC):
             return
 
         if self.node != None and self.node._simulation:
-            self.node._simulation.remove_renderable(self)
+            self.node._simulation.remove_renderable(self, self.render_layer)
             self.node._simulation.remove_tickable(self)
             self.node._simulation.remove_updatable(self)
 
@@ -192,6 +194,9 @@ class Behaviour(ABC):
 
     @render_layer.setter
     def render_layer(self, layer: int):
+        if self.node.simulation is not None:
+            self.node.simulation.remove_renderable(self, self._render_layer)
+            self.node.simulation.add_renderable(self, layer)
         self.render_layer = layer
 
     @property
@@ -205,9 +210,9 @@ class Behaviour(ABC):
             return
 
         if vis:
-            self.node.simulation.add_renderable(self)
+            self.node.simulation.add_renderable(self, self._render_layer)
         else:
-            self.node.simulation.remove_renderable(self)
+            self.node.simulation.remove_renderable(self, self._render_layer)
 
 
 class Transform(Behaviour):
