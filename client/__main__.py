@@ -9,9 +9,7 @@ from client.behaviours.animator import Animator
 from client.behaviours.camera import Camera
 from client.behaviours.player import Player
 from client.behaviours.sprite_renderer import SpriteRenderer
-from client.netclient import NetClient
 from common import init_common
-from common.enums import DeliveryMode
 from common.simulation import Node, Simulation
 
 
@@ -25,7 +23,7 @@ def create_scene(simulation: Simulation):
     img = load_image_asset("img/mage.png")
 
     character.add_behaviour(SpriteRenderer)
-    quads = slice_image(img, pg.Vector2(32, 32), SliceMode.SIZE_PER_RECT)
+    quads = slice_image(img, pg.Vector2(10, 8), SliceMode.RECTS_PER_AXIS)
     frames = list(map(lambda q: AnimationFrame(q), quads))
     animation = Animation(frames[0:4])
 
@@ -40,7 +38,6 @@ if __name__ == "__main__":
     pg.init()
 
     window = pg.display.set_mode((1280, 720))
-    # net_client = NetClient("localhost", 9999)
     simulation = Simulation()
     create_scene(simulation)
 
@@ -59,7 +56,7 @@ if __name__ == "__main__":
 
             simulation.update(dt)
 
-            window.fill((0, 0, 0))
+            window.fill("white")
             simulation.render()
             pg.display.flip()
 
