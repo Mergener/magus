@@ -1,6 +1,6 @@
 import pygame as pg
 
-# import numpy as np
+import numpy as np
 
 from client.assets import load_image_asset
 from enum import Enum
