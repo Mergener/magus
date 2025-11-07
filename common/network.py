@@ -1,0 +1,106 @@
+from abc import ABC, abstractmethod
+from collections import defaultdict
+from typing import Callable, cast
+
+import enet
+
+from common.binary import ByteReader, ByteWriter
+from common.enums import DeliveryMode
+
+
+class Packet(ABC):
+    @abstractmethod
+    def on_write(self, writer: ByteWriter):
+        pass
+
+    @abstractmethod
+    def on_read(self, reader: ByteReader):
+        pass
+
+    @property
+    @abstractmethod
+    def delivery_mode(self) -> DeliveryMode:
+        pass
+
+    @classmethod
+    def decode(cls, reader: ByteReader):
+        global _packet_types
+        id = reader.read_uint8()
+        packet_type = _packet_types[id]
+        packet = packet_type.__new__(packet_type)
+        packet.on_read(reader)
+        return packet
+
+    def encode(self, writer: ByteWriter):
+        global _packet_ids
+        id = _packet_ids[self.__class__]
+        writer.write_uint8(id)
+        self.on_write(writer)
+
+
+class NetPeer:
+    def __init__(self, enet_peer):
+        self._enet_peer = enet_peer
+        self._host = self._enet_peer.address.host
+        self._port = self._enet_peer.address.port
+
+    def send_raw(self, data: bytes, mode: DeliveryMode):
+        channel, flags = mode.to_enet()
+        packet = enet.Packet(data, flags)
+        self._enet_peer.send(channel, packet)
+
+    def send(self, packet: Packet, override_mode: DeliveryMode | None = None):
+        writer = ByteWriter()
+        packet.encode(writer)
+        mode = override_mode or packet.delivery_mode
+        self.send_raw(writer.data, mode)
+
+    def disconnect(self):
+        self._enet_peer.disconnect()
+
+    @property
+    def address(self) -> tuple[str, int]:
+        return (self._host, self._port)
+
+
+class PacketBroker:
+    def __init__(self):
+        self._listeners: defaultdict[type, list[Callable[[Packet, NetPeer], None]]] = (
+            defaultdict(list)
+        )
+
+    def dispatch(self, packet: Packet, peer: NetPeer):
+        for l in self._listeners[packet.__class__]:
+            l(packet, peer)
+
+    def add_listener[
+        T: Packet
+    ](self, t: type[T], listener: Callable[[T, NetPeer], None]):
+        self._listeners[t].append(cast(Callable[[Packet, NetPeer], None], listener))
+
+    def remove_listener[
+        T: Packet
+    ](self, t: type[T], listener: Callable[[T, NetPeer], None]):
+        l = self._listeners[t]
+        l.remove(cast(Callable[[Packet, NetPeer], None], listener))
+        if len(l) == 0:
+            self._listeners.pop(t)
+
+
+_packet_types: list[type[Packet]] = []
+_packet_ids: dict[type[Packet], int] = {}
+_initialized = False
+
+
+def init_packets():
+    global _packet_ids, _packet_types, _initialized
+
+    if _initialized:
+        return
+
+    _initialized = True
+    _packet_types = [c for c in Packet.__subclasses__()]  # type: ignore[type-abstract]
+    _packet_types.sort(key=lambda c: f"{c.__module__}.{c.__name__}")
+
+    for i, c in enumerate(_packet_types):
+        _packet_ids[c] = i

@@ -1,6 +1,7 @@
+from typing import ClassVar, Self
+
 import pygame as pg
 
-from typing import Self, ClassVar
 from common.simulation import Behaviour
 
 

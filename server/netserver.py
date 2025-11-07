@@ -1,6 +1,8 @@
 import enet
+
+from common.binary import ByteWriter
 from common.enums import DeliveryMode
-from common.netpeer import NetPeer
+from common.network import NetPeer, Packet
 
 
 class NetServer:
@@ -11,9 +13,14 @@ class NetServer:
         self._host = enet.Host(self._address, max_clients, 2, 0, 0)
         self._peers: dict[tuple[str, int], NetPeer] = {}
 
-    def broadcast(self, data: bytes, mode: DeliveryMode):
+    def broadcast(self, packet: Packet, override_mode: DeliveryMode | None = None):
+        writer = ByteWriter()
+        packet.encode(writer)
+        mode = override_mode or packet.delivery_mode
+        data = writer.data
+
         for net_peer in self._peers.values():
-            net_peer.send(data, mode)
+            net_peer.send_raw(data, mode)
 
     def poll(self) -> list[tuple[bytes, NetPeer]]:
         received_messages: list[tuple[bytes, NetPeer]] = []

@@ -1,4 +1,4 @@
-from common.packet import init_packets
+from common.network import init_packets
 
 
 def init_common():
