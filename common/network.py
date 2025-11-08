@@ -63,24 +63,46 @@ class NetPeer:
         return (self._host, self._port)
 
 
-class PacketBroker:
+class Network(ABC):
     def __init__(self):
         self._listeners: defaultdict[type, list[Callable[[Packet, NetPeer], None]]] = (
             defaultdict(list)
         )
 
-    def dispatch(self, packet: Packet, peer: NetPeer):
-        for l in self._listeners[packet.__class__]:
-            l(packet, peer)
+    @abstractmethod
+    def publish(
+        self, packet: Packet, override_delivery_mode: DeliveryMode | None = None
+    ):
+        """
+        Publishes a packet to all peers connected to this network.
+        If this is the server, it will broadcast the packet to all clients.
+        If this is a client, it will send the packet to the server only.
+        """
+        pass
 
-    def add_listener[
-        T: Packet
-    ](self, t: type[T], listener: Callable[[T, NetPeer], None]):
+    @abstractmethod
+    def poll(self):
+        """
+        Polls the network for events. If packets have been received, listeners are expected to be
+        properly notified here.
+        """
+        pass
+
+    def notify(self, packet: Packet, source_peer: NetPeer):
+        """
+        Should only be called from a class that implements Network when a packet is received.
+        Notifies listeners of the received packet.
+        """
+        for l in self._listeners[packet.__class__]:
+            try:
+                l(packet, source_peer)
+            except Exception as e:
+                print(f"Error during processing of packet of type {type(packet)}: {e}")
+
+    def listen[T: Packet](self, t: type[T], listener: Callable[[T, NetPeer], None]):
         self._listeners[t].append(cast(Callable[[Packet, NetPeer], None], listener))
 
-    def remove_listener[
-        T: Packet
-    ](self, t: type[T], listener: Callable[[T, NetPeer], None]):
+    def unlisten[T: Packet](self, t: type[T], listener: Callable[[T, NetPeer], None]):
         l = self._listeners[t]
         l.remove(cast(Callable[[Packet, NetPeer], None], listener))
         if len(l) == 0:
