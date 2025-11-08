@@ -4,6 +4,6 @@ from server.netserver import NetServer
 if __name__ == "__main__":
     init_common()
 
-    server = NetServer(port=9999)
+    server = NetServer(port=16214)
     while True:
         server.poll()

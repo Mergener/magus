@@ -7,11 +7,13 @@ from common.network import NetPeer, Network, Packet
 
 class NetServer(Network):
     def __init__(
-        self, address: str = "0.0.0.0", port: int = 9999, max_clients: int = 32
+        self, address: str = "127.0.0.1", port: int = 9999, max_clients: int = 32
     ):
+        super().__init__()
         self._address = enet.Address(address.encode("utf-8"), port)
-        self._host = enet.Host(self._address, max_clients, 2, 0, 0)
+        self._host = enet.Host(self._address, 128, 0, 0, 0)
         self._peers: dict[tuple[str, int], NetPeer] = {}
+        print(f"Listening at port {port}")
 
     def publish(
         self, packet: Packet, override_delivery_mode: DeliveryMode | None = None
@@ -27,13 +29,14 @@ class NetServer(Network):
     def poll(self):
         while True:
             net_peer: NetPeer | None
-            event = self._host.service(0)
+            event = self._host.service(100)
             if event.type == enet.EVENT_TYPE_NONE:
-                break
+                continue
 
             if event.type == enet.EVENT_TYPE_CONNECT:
                 net_peer = NetPeer(event.peer)
                 self._peers[net_peer.address] = net_peer
+                print(f"New connection: {net_peer.address}")
 
             elif event.type == enet.EVENT_TYPE_RECEIVE:
                 net_peer = self._peers.get(
@@ -49,3 +52,9 @@ class NetServer(Network):
                 address = (event.peer.address.host, event.peer.address.port)
                 self._peers.pop(address)
                 print(f"Lost connection: {address}")
+
+    def disconnect(self):
+        for p in self._peers.values():
+            p.disconnect()
+        self._peers = {}
+        self._host.destroy()

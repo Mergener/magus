@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from sys import stderr
 from typing import Callable, cast
 
 import enet
@@ -25,17 +26,34 @@ class Packet(ABC):
     @classmethod
     def decode(cls, reader: ByteReader):
         global _packet_types
-        id = reader.read_uint8()
-        packet_type = _packet_types[id]
+        packet_id = reader.read_uint8()
+
+        if packet_id > len(_packet_types) or packet_id < 0:
+            print(f"Received invalid packet: {packet_id}", file=stderr)
+            return NullPacket()
+
+        packet_type = _packet_types[packet_id]
         packet = packet_type.__new__(packet_type)
         packet.on_read(reader)
         return packet
 
     def encode(self, writer: ByteWriter):
         global _packet_ids
-        id = _packet_ids[self.__class__]
-        writer.write_uint8(id)
+        packet_id = _packet_ids[self.__class__]
+        writer.write_uint8(packet_id)
         self.on_write(writer)
+
+
+class NullPacket(Packet):
+    def on_write(self):
+        pass
+
+    def on_read(self, reader: ByteReader):
+        pass
+
+    @property
+    def delivery_mode(self):
+        return DeliveryMode.UNRELIABLE
 
 
 class NetPeer:
@@ -68,6 +86,10 @@ class Network(ABC):
         self._listeners: defaultdict[type, list[Callable[[Packet, NetPeer], None]]] = (
             defaultdict(list)
         )
+
+    @abstractmethod
+    def disconnect():
+        pass
 
     @abstractmethod
     def publish(

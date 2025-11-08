@@ -6,6 +6,7 @@ from common.network import NetPeer, Network, Packet
 
 class NetClient(Network):
     def __init__(self, address: str, port: int):
+        super().__init__()
         self._host = enet.Host(None, 1, 2, 0, 0)
         self._peer: NetPeer | None = None
         self.connect(address, port)
@@ -28,10 +29,12 @@ class NetClient(Network):
             raise RuntimeError("Not connected to any host.")
 
         self._peer.send(packet, override_delivery_mode)
+        print(self._peer.address)
 
     def poll(self):
         messages = []
         while True:
+            self._host.flush()
             event = self._host.service(0)
             if event.type == enet.EVENT_TYPE_NONE:
                 break
@@ -42,3 +45,9 @@ class NetClient(Network):
                 self._peer = None
                 break
         return messages
+
+    def disconnect(self):
+        if self._peer is None:
+            return
+
+        self._peer.disconnect()
