@@ -66,16 +66,38 @@ class Node:
         self._children: list[Self] = []
         self._simulation: Simulation | None = None
         self._parent: Self | None = None
-
+        self._simulation = simulation
         self._behaviours: list[Behaviour] = []
         self.add_behaviour(Transform)
-
-        if simulation is not None:
-            self.simulation = simulation
 
     @property
     def parent(self):
         return self._parent
+
+    @parent.setter
+    def parent(self, parent: Self | None):
+        if self._parent is not None:
+            self._parent._children.remove(self)
+
+        self._parent = parent
+
+        if parent:
+            parent._children.append(self)
+            if self._simulation != parent._simulation:
+                self._simulation = parent._simulation
+                for b in self._behaviours:
+                    b.visible = b.visible
+                    b.receive_updates = b.receive_updates
+
+    def add_child(self, child: Node | None):
+        if child is None:
+            child = Node(self.simulation)
+        child.parent = self
+        return child
+
+    def remove_child(self, child: Node):
+        if child.parent == self:
+            child.parent = None
 
     def get_behaviour[T: Behaviour](self, t: type[T]) -> T | None:
         for b in self._behaviours:
@@ -96,27 +118,27 @@ class Node:
     def simulation(self) -> Simulation | None:
         return self._simulation
 
-    @simulation.setter
-    def simulation(self, simulation: Simulation):
+    def destroy(self):
+        if self.simulation is None:
+            return
+
+        self.parent = None
+        self._destroy_helper()
+
+    def _destroy_helper(self):
+        for b in self._behaviours:
+            b.visible = False
+            b.receive_updates = False
+            b.on_destroy()
+
+        self._behaviours.clear()
+
+        for c in self._children:
+            c._destroy_helper()
+
+        self._children.clear()
         if self._simulation is not None:
-            for b in self._behaviours:
-                if b.receive_updates:
-                    self._simulation.add_updatable(b)
-                    self._simulation.add_tickable(b)
-
-                if b.visible:
-                    self._simulation.add_renderable(b, b.render_layer)
-
-        self._simulation = simulation
-
-        if simulation is not None:
-            for b in self._behaviours:
-                if b.receive_updates:
-                    self._simulation.add_updatable(b)
-                    self._simulation.add_tickable(b)
-
-                if b.visible:
-                    self._simulation.add_renderable(b, b.render_layer)
+            self._simulation = None
 
 
 class Behaviour(ABC):
