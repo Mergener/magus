@@ -88,7 +88,7 @@ class Network(ABC):
         )
 
     @abstractmethod
-    def disconnect():
+    def disconnect(self):
         pass
 
     @abstractmethod
@@ -129,6 +129,19 @@ class Network(ABC):
         l.remove(cast(Callable[[Packet, NetPeer], None], listener))
         if len(l) == 0:
             self._listeners.pop(t)
+
+
+class NullNetwork(Network):
+    def disconnect(self):
+        pass
+
+    def publish(
+        self, packet: Packet, override_delivery_mode: DeliveryMode | None = None
+    ):
+        pass
+
+    def poll(self):
+        pass
 
 
 _packet_types: list[type[Packet]] = []
