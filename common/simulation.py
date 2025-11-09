@@ -62,16 +62,17 @@ class Simulation:
 
 
 class Node:
-    def __init__(self, simulation: Simulation | None = None):
+    def __init__(self, simulation: Simulation):
+        self._simulation = simulation
         self._children: list[Self] = []
-        self._simulation: Simulation | None = None
         self._parent: Self | None = None
 
         self._behaviours: list[Behaviour] = []
         self.add_behaviour(Transform)
 
-        if simulation is not None:
-            self.simulation = simulation
+    @property
+    def simulation(self):
+        return self._simulation
 
     @property
     def parent(self):
@@ -92,31 +93,16 @@ class Node:
     def transform(self) -> Transform:
         return cast(Transform, self._behaviours[0])
 
-    @property
-    def simulation(self) -> Simulation | None:
-        return self._simulation
-
-    @simulation.setter
-    def simulation(self, simulation: Simulation):
-        if self._simulation is not None:
-            for b in self._behaviours:
-                if b.receive_updates:
-                    self._simulation.add_updatable(b)
-                    self._simulation.add_tickable(b)
-
-                if b.visible:
-                    self._simulation.add_renderable(b, b.render_layer)
-
-        self._simulation = simulation
-
+    def destroy(self):
+        simulation = self._simulation
         if simulation is not None:
             for b in self._behaviours:
                 if b.receive_updates:
-                    self._simulation.add_updatable(b)
-                    self._simulation.add_tickable(b)
+                    simulation.add_updatable(b)
+                    simulation.add_tickable(b)
 
                 if b.visible:
-                    self._simulation.add_renderable(b, b.render_layer)
+                    simulation.add_renderable(b, b.render_layer)
 
 
 class Behaviour(ABC):
