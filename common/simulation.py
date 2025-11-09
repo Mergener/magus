@@ -150,21 +150,27 @@ class Behaviour(ABC):
         self.on_init()
 
     def on_init(self):
+        """Called upon behaviour construction."""
         pass
 
     def on_start(self):
+        """Called as soon as the behaviour is materialized in a simulation."""
         pass
 
     def on_update(self, dt: float):
+        """Called every simulation frame, with variable interval."""
         pass
 
     def on_tick(self, tick_id: int):
+        """Called every simulation tick, with fixed interval."""
         pass
 
     def on_destroy(self):
+        """Called when this behaviour or its corresponding node gets destroyed."""
         pass
 
     def on_render(self):
+        """Called every simulation render cycle."""
         pass
 
     @property
