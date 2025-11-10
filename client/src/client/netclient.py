@@ -1,5 +1,8 @@
+from sys import stderr
+
 import enet
 
+from common.binary import ByteReader
 from common.enums import DeliveryMode
 from common.network import NetPeer, Network, Packet
 
@@ -32,18 +35,28 @@ class NetClient(Network):
         print(self._peer.address)
 
     def poll(self):
-        messages = []
         while True:
             event = self._host.service(0)
             if event.type == enet.EVENT_TYPE_NONE:
                 break
             elif event.type == enet.EVENT_TYPE_RECEIVE:
-                messages.append(bytes(event.packet.data))
+                raw_data, raw_peer = event.packet.data, event.peer
+
+                if self._peer is None or raw_peer.address.host != self._peer.address[0]:
+                    print(
+                        f"Received data from unexpected address: {raw_peer.address.host}:{raw_peer.address.port}.",
+                        file=stderr,
+                    )
+                    continue
+
+                reader = ByteReader(raw_data)
+                decoded = Packet.decode(reader)
+                self.notify(decoded, self._peer)
+
             elif event.type == enet.EVENT_TYPE_DISCONNECT:
                 print("Disconnected from server.")
                 self._peer = None
                 break
-        return messages
 
     def disconnect(self):
         if self._peer is None:

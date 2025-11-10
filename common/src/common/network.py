@@ -115,6 +115,9 @@ class Network(ABC):
         Should only be called from a class that implements Network when a packet is received.
         Notifies listeners of the received packet.
         """
+        print(
+            f"Received {packet.__class__} and notifying {len(self._listeners[packet.__class__])} listeners"
+        )
         for l in self._listeners[packet.__class__]:
             try:
                 l(packet, source_peer)

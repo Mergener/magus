@@ -31,7 +31,7 @@ class NetServer(Network):
             net_peer: NetPeer | None
             event = self._host.service(0)
             if event.type == enet.EVENT_TYPE_NONE:
-                continue
+                break
 
             if event.type == enet.EVENT_TYPE_CONNECT:
                 net_peer = NetPeer(event.peer)
