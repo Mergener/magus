@@ -1,0 +1,65 @@
+from sys import stderr
+
+import enet
+
+from common.binary import ByteReader
+from common.enums import DeliveryMode
+from common.network import NetPeer, Network, Packet
+
+
+class NetClient(Network):
+    def __init__(self, address: str, port: int):
+        super().__init__()
+        self._host = enet.Host(None, 1, 2, 0, 0)
+        self._peer: NetPeer | None = None
+        self.connect(address, port)
+
+    def connect(self, address: str, port: int):
+        addr = enet.Address(address.encode("utf-8"), port)
+        peer = self._host.connect(addr, 2, 0)
+        event = self._host.service(5000)
+
+        if event.type != enet.EVENT_TYPE_CONNECT:
+            raise ConnectionError(f"Failed to connect to {address}:{port}")
+
+        self._peer = NetPeer(peer)
+        print(f"Connected to {address}:{port}")
+
+    def publish(
+        self, packet: Packet, override_delivery_mode: DeliveryMode | None = None
+    ):
+        if not self._peer:
+            raise RuntimeError("Not connected to any host.")
+
+        self._peer.send(packet, override_delivery_mode)
+        print(self._peer.address)
+
+    def poll(self):
+        while True:
+            event = self._host.service(0)
+            if event.type == enet.EVENT_TYPE_NONE:
+                break
+            elif event.type == enet.EVENT_TYPE_RECEIVE:
+                raw_data, raw_peer = event.packet.data, event.peer
+
+                if self._peer is None or raw_peer.address.host != self._peer.address[0]:
+                    print(
+                        f"Received data from unexpected address: {raw_peer.address.host}:{raw_peer.address.port}.",
+                        file=stderr,
+                    )
+                    continue
+
+                reader = ByteReader(raw_data)
+                decoded = Packet.decode(reader)
+                self.notify(decoded, self._peer)
+
+            elif event.type == enet.EVENT_TYPE_DISCONNECT:
+                print("Disconnected from server.")
+                self._peer = None
+                break
+
+    def disconnect(self):
+        if self._peer is None:
+            return
+
+        self._peer.disconnect()

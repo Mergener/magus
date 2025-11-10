@@ -3,7 +3,8 @@ from typing import cast
 import pygame as pg
 
 from client.behaviours.camera import Camera
-from common.simulation import Behaviour, Transform
+from common.behaviour import Behaviour
+from common.transform import Transform
 from common.utils import memberwise_multiply
 
 
@@ -69,12 +70,12 @@ class SpriteRenderer(Behaviour):
             self._refresh_active_texture()
 
         camera = Camera.main
-        if camera is None:
+        if camera is None or self.game is None or self.game.screen is None:
             return
 
         dim = memberwise_multiply(self._dimensions, self.transform.scale)
         pos = camera.world_to_screen_space(self.transform.position - dim / 2)
 
-        pg.display.get_surface().blit(
+        self.game.screen.blit(
             self._active_texture, pg.Rect(pos, self._scaled_dimensions)
         )

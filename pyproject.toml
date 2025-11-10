@@ -3,4 +3,8 @@ line-length = 88
 target-version = ['py310']
 
 [tool.isort]
-profile = "black"
+profile = "black"    
+
+[tool.mypy]
+disable_error_code = ["import-not-found"]
+check_untyped_defs = true

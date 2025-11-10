@@ -1,7 +1,8 @@
 from typing import cast
+
 from common.binary import ByteReader, ByteWriter
 from common.enums import DeliveryMode
-from common.packet import Packet
+from common.network import Packet
 
 
 class CustomPacket1(Packet):

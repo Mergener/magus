@@ -14,8 +14,9 @@ requires-python = ">=3.10"
 test = ["pytest"]
 
 dependencies = [
+  "pyenet",
   "pygame>=2.1"
 ]
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = ["src"]

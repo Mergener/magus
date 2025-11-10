@@ -1,23 +1,32 @@
 import enet
+
+from common.binary import ByteReader, ByteWriter
 from common.enums import DeliveryMode
-from common.netpeer import NetPeer
+from common.network import NetPeer, Network, Packet
 
 
-class NetServer:
+class NetServer(Network):
     def __init__(
-        self, address: str = "0.0.0.0", port: int = 9999, max_clients: int = 32
+        self, address: str = "127.0.0.1", port: int = 9999, max_clients: int = 32
     ):
+        super().__init__()
         self._address = enet.Address(address.encode("utf-8"), port)
-        self._host = enet.Host(self._address, max_clients, 2, 0, 0)
+        self._host = enet.Host(self._address, 128, 0, 0, 0)
         self._peers: dict[tuple[str, int], NetPeer] = {}
+        print(f"Listening at port {port}")
 
-    def broadcast(self, data: bytes, mode: DeliveryMode):
+    def publish(
+        self, packet: Packet, override_delivery_mode: DeliveryMode | None = None
+    ):
+        writer = ByteWriter()
+        packet.encode(writer)
+        mode = override_delivery_mode or packet.delivery_mode
+        data = writer.data
+
         for net_peer in self._peers.values():
-            net_peer.send(data, mode)
+            net_peer.send_raw(data, mode)
 
-    def poll(self) -> list[tuple[bytes, NetPeer]]:
-        received_messages: list[tuple[bytes, NetPeer]] = []
-
+    def poll(self):
         while True:
             net_peer: NetPeer | None
             event = self._host.service(0)
@@ -35,12 +44,17 @@ class NetServer:
                 )
                 if net_peer:
                     data = bytes(event.packet.data)
-                    received_messages.append((data, net_peer))
-                    print(f"From {net_peer.address}: {data.decode()}")
+                    reader = ByteReader(data)
+                    packet = Packet.decode(reader)
+                    self.notify(packet, net_peer)
 
             elif event.type == enet.EVENT_TYPE_DISCONNECT:
                 address = (event.peer.address.host, event.peer.address.port)
                 self._peers.pop(address)
                 print(f"Lost connection: {address}")
 
-        return received_messages
+    def disconnect(self):
+        for p in self._peers.values():
+            p.disconnect()
+        self._peers = {}
+        self._host.destroy()

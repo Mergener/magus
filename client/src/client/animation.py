@@ -1,9 +1,9 @@
-import pygame as pg
+from enum import Enum
 
 import numpy as np
+import pygame as pg
 
 from client.assets import load_image_asset
-from enum import Enum
 
 DEFAULT_ANIMATION_FPS = 6
 
