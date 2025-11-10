@@ -9,9 +9,13 @@ class Behaviour(ABC):
         self._started = False
         self._node = node
 
-        self.receive_updates = True
-        self.visible = True
-        self.render_layer = 0
+        self._receive_updates = True
+        self._visible = True
+        self._render_layer = 0
+
+        # Force property refresh
+        self.visible = self._visible
+        self.receive_updates = self._receive_updates
 
         self.on_init()
 
