@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import traceback
-from sys import stderr
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from common.network import Network, NullNetwork
@@ -21,8 +19,12 @@ class Game:
         scene: Node | None = None,
         global_object: Node | None = None,
     ):
+        from common.network import Network, NullNetwork
+        from common.node import Node
+        from common.simulation import Simulation
+
         self._simulation = simulation or Simulation()
-        self._network = network or NullNetwork()
+        self._network: Network = network or NullNetwork()
         self._scene = scene or Node()
         self._global_object = global_object or Node()
         self._screen: pg.Surface | None = None
@@ -68,5 +70,17 @@ class Game:
             self.simulation.render()
             pg.display.update()
 
+    def load_scene(self, node: Node):
+        self.scene.destroy()
+        self._scene = node
+        node.bind_to_game(self)
+
     def cleanup(self):
         self.network.disconnect()
+
+
+_null_game = Game()
+
+
+def get_null_game():
+    return _null_game

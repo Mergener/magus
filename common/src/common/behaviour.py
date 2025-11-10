@@ -37,11 +37,19 @@ class Behaviour(ABC):
         pass
 
     @property
+    def game(self):
+        return self._node.game
+
+    @property
     def node(self):
         return self._node
 
     def _set_node(self, node: Node):
-        if hasattr(self, "_node") and self.node != None and self.node.game:
+        if (
+            hasattr(self, "_node")
+            and self.node is not None
+            and self.node.game is not None
+        ):
             self.node.game.simulation.remove_renderable(self, self.render_layer)
             self.node.game.simulation.remove_tickable(self)
             self.node.game.simulation.remove_updatable(self)
@@ -69,7 +77,8 @@ class Behaviour(ABC):
     @receive_updates.setter
     def receive_updates(self, rcv: bool):
         self._receive_updates = rcv
-        if self.node.game is None:
+
+        if not self.node.game:
             return
 
         if rcv:
@@ -97,7 +106,8 @@ class Behaviour(ABC):
     @visible.setter
     def visible(self, vis: bool):
         self._visible = vis
-        if self.node.game is None:
+
+        if not self.node.game:
             return
 
         if vis:

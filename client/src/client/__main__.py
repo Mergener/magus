@@ -4,6 +4,7 @@ from sys import stderr
 import pygame as pg
 
 from client.netclient import NetClient
+from client.scenes.game_scene import make_game_scene
 from common import init_common
 from common.game import Game
 
@@ -12,7 +13,9 @@ if __name__ == "__main__":
     pg.init()
 
     game = Game(
-        network=NetClient("localhost", 16214), display=pg.display.set_mode((1280, 720))
+        scene=make_game_scene(),
+        network=NetClient("localhost", 16214),
+        display=pg.display.set_mode((1280, 720)),
     )
 
     game.initialize()
