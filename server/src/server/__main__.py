@@ -2,9 +2,9 @@ import traceback
 from sys import stderr
 
 from common import init_common
-from common.game import Game
-from common.network import NetPeer
-from common.packets import JoinGameRequest, JoinGameResponse
+from common.engine.game import Game
+from common.engine.network import NetPeer
+from common.engine.packets import JoinGameRequest, JoinGameResponse
 from server.netserver import NetServer
 
 

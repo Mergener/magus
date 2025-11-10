@@ -1,4 +1,4 @@
-from common.behaviour import Behaviour
+from common.engine.behaviour import Behaviour
 
 
 class NetworkIdentity(Behaviour):

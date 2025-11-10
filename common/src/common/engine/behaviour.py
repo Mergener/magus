@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import TYPE_CHECKING
 
-from common.node import Node
+from common.engine.node import Node
 
 
 class Behaviour(ABC):

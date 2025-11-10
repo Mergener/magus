@@ -1,6 +1,6 @@
-from common.binary import ByteReader, ByteWriter
-from common.enums import DeliveryMode
-from common.network import Packet
+from common.engine.binary import ByteReader, ByteWriter
+from common.engine.enums import DeliveryMode
+from common.engine.network import Packet
 
 
 class NewGame(Packet):

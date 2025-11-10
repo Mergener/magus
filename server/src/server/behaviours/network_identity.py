@@ -1,5 +1,5 @@
-from common.behaviour import Behaviour
-from common.packets import CreateEntity
+from common.engine.behaviour import Behaviour
+from common.engine.packets import CreateEntity
 
 
 class NetworkIdentity(Behaviour):

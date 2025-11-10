@@ -3,7 +3,7 @@ from enum import Enum
 import numpy as np
 import pygame as pg
 
-from client.assets import load_image_asset
+from common.engine.assets import load_image_asset
 
 DEFAULT_ANIMATION_FPS = 6
 

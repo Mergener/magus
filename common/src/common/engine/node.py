@@ -3,14 +3,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Self, cast
 
 if TYPE_CHECKING:
-    from common.behaviour import Behaviour
-    from common.game import Game
-    from common.transform import Transform
+    from common.engine.behaviour import Behaviour
+    from common.engine.game import Game
+    from common.engine.transform import Transform
 
 
 class Node:
     def __init__(self, game: Game | None = None):
-        from common.transform import Transform
+        from common.engine.transform import Transform
 
         self._children: list[Self] = []
         self._parent: Self | None = None

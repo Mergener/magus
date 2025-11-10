@@ -1,8 +1,8 @@
 import enet
 
-from common.binary import ByteReader, ByteWriter
-from common.enums import DeliveryMode
-from common.network import NetPeer, Network, Packet
+from common.engine.binary import ByteReader, ByteWriter
+from common.engine.enums import DeliveryMode
+from common.engine.network import NetPeer, Network, Packet
 
 
 class NetServer(Network):

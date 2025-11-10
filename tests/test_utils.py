@@ -1,6 +1,6 @@
-from common.behaviour import Behaviour
-from common.node import Node
-from common.utils import overrides_method
+from common.engine.behaviour import Behaviour
+from common.engine.node import Node
+from common.engine.utils import overrides_method
 
 
 class CustomBehaviour(Behaviour):

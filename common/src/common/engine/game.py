@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from common.network import Network, NullNetwork
-    from common.node import Node
-    from common.simulation import Simulation
+    from common.engine.network import Network, NullNetwork
+    from common.engine.node import Node
+    from common.engine.simulation import Simulation
 
 import pygame as pg
 
@@ -19,9 +19,9 @@ class Game:
         scene: Node | None = None,
         global_object: Node | None = None,
     ):
-        from common.network import Network, NullNetwork
-        from common.node import Node
-        from common.simulation import Simulation
+        from common.engine.network import Network, NullNetwork
+        from common.engine.node import Node
+        from common.engine.simulation import Simulation
 
         self._simulation = simulation or Simulation()
         self._network: Network = network or NullNetwork()

@@ -1,7 +1,7 @@
-from common.network import init_packets
+from common.engine.network import init_packets
 
 
 def init_common():
-    import common.packets  # noqa: F401
+    import common.engine.packets  # noqa: F401
 
     init_packets()

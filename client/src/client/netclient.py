@@ -2,9 +2,9 @@ from sys import stderr
 
 import enet
 
-from common.binary import ByteReader
-from common.enums import DeliveryMode
-from common.network import NetPeer, Network, Packet
+from common.engine.binary import ByteReader
+from common.engine.enums import DeliveryMode
+from common.engine.network import NetPeer, Network, Packet
 
 
 class NetClient(Network):

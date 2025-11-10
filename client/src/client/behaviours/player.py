@@ -1,7 +1,7 @@
 import pygame as pg
 
 from client.behaviours.camera import Camera
-from common.behaviour import Behaviour
+from common.engine.behaviour import Behaviour
 
 
 class Player(Behaviour):

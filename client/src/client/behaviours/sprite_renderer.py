@@ -3,9 +3,8 @@ from typing import cast
 import pygame as pg
 
 from client.behaviours.camera import Camera
-from common.behaviour import Behaviour
-from common.transform import Transform
-from common.utils import memberwise_multiply
+from common.engine.behaviour import Behaviour
+from common.engine.utils import memberwise_multiply
 
 
 class SpriteRenderer(Behaviour):

@@ -1,7 +1,7 @@
 from client.animation import Animation
 from client.behaviours.sprite_renderer import SpriteRenderer
-from common.behaviour import Behaviour
-from common.node import Node
+from common.engine.behaviour import Behaviour
+from common.engine.node import Node
 
 
 class Animator(Behaviour):
