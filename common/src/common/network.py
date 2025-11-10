@@ -56,6 +56,34 @@ class NullPacket(Packet):
         return DeliveryMode.UNRELIABLE
 
 
+class CombinedPacket(Packet):
+    def __init__(
+        self, packets: list[Packet], delivery_mode: DeliveryMode | None = None
+    ):
+        self.packets = packets
+        self._delivery_mode: DeliveryMode | None = delivery_mode
+
+    def on_write(self, writer: ByteWriter):
+        writer.write_uint8(len(self.packets))
+        for p in self.packets:
+            p.encode(writer)
+
+    def on_read(self, reader: ByteReader):
+        n = reader.read_uint8()
+        self.packets = [Packet.decode(reader) for _ in range(n)]
+
+    @property
+    def delivery_mode(self) -> DeliveryMode:
+        if self._delivery_mode is not None:
+            return self._delivery_mode
+
+        most_reliable_mode = DeliveryMode.UNRELIABLE
+        for p in self.packets:
+            if p.delivery_mode.value > most_reliable_mode.value:
+                most_reliable_mode = p.delivery_mode
+        return most_reliable_mode
+
+
 class NetPeer:
     def __init__(self, enet_peer):
         self._enet_peer = enet_peer
@@ -117,7 +145,11 @@ class Network(ABC):
         """
         for l in self._listeners[packet.__class__]:
             try:
-                l(packet, source_peer)
+                if not isinstance(packet, CombinedPacket):
+                    l(packet, source_peer)
+                else:
+                    for p in packet.packets:
+                        self.notify(p, source_peer)
             except Exception as e:
                 print(f"Error during processing of packet of type {type(packet)}: {e}")
 

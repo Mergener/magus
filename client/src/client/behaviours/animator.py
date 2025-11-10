@@ -10,7 +10,7 @@ class Animator(Behaviour):
     _frame_idx: int
     _accum_time: float
 
-    def on_init(self):
+    def on_validate(self):
         self._frame_idx = 0
         self._accum_time = 0
 

@@ -17,9 +17,9 @@ class Behaviour(ABC):
         self.visible = self._visible
         self.receive_updates = self._receive_updates
 
-        self.on_init()
+        self.on_validate()
 
-    def on_init(self):
+    def on_validate(self):
         """Called upon behaviour construction."""
         pass
 

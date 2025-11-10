@@ -5,7 +5,7 @@ from common.packets import JoinGameRequest, JoinGameResponse, NewGame
 
 
 class GameScene(Behaviour):
-    def on_init(self):
+    def on_validate(self):
         return
 
     def on_start(self):

@@ -55,7 +55,7 @@ class Node:
         if self._game != parent.game and parent.game is not None:
             self.bind_to_game(parent.game)
 
-    def add_child(self, child: Self | None):
+    def add_child(self, child: Self | None = None):
         if child is None:
             child = self.__class__(self._game)
         child.parent = self
