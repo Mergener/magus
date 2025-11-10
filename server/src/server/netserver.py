@@ -29,7 +29,7 @@ class NetServer(Network):
     def poll(self):
         while True:
             net_peer: NetPeer | None
-            event = self._host.service(100)
+            event = self._host.service(0)
             if event.type == enet.EVENT_TYPE_NONE:
                 continue
 
