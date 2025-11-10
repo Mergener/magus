@@ -26,15 +26,16 @@ class Node:
         if self._game == game:
             return
 
+        for c in self._children:
+            c.bind_to_game(game)
+
         self._game = game
         for b in self._behaviours:
             # Setting properties force behaviours to subscribe to
             # proper simulation events.
+            b.on_start()
             b.visible = b.visible
             b.receive_updates = b.receive_updates
-
-        for c in self._children:
-            c.bind_to_game(game)
 
     @property
     def parent(self):
@@ -47,13 +48,12 @@ class Node:
 
         self._parent = parent
 
-        if parent:
-            parent._children.append(self)
-            if self._game != parent._game:
-                self._game = parent._game
-                for b in self._behaviours:
-                    b.visible = b.visible
-                    b.receive_updates = b.receive_updates
+        if parent is None:
+            return
+
+        parent._children.append(self)
+        if self._game != parent.game and parent.game is not None:
+            self.bind_to_game(parent.game)
 
     def add_child(self, child: Self | None):
         if child is None:

@@ -34,7 +34,6 @@ class NetClient(Network):
     def poll(self):
         messages = []
         while True:
-            self._host.flush()
             event = self._host.service(0)
             if event.type == enet.EVENT_TYPE_NONE:
                 break

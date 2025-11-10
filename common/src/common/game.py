@@ -29,6 +29,7 @@ class Game:
         self._global_object = global_object or Node()
         self._screen: pg.Surface | None = None
         self._display = display
+        self._started = False
 
     @property
     def simulation(self):
@@ -54,11 +55,12 @@ class Game:
     def headless(self):
         return self._display is None
 
-    def initialize(self):
-        self.global_object.bind_to_game(self)
-        self.scene.bind_to_game(self)
-
     def iterate(self):
+        if not self._started:
+            self._started = True
+            self.global_object.bind_to_game(self)
+            self.scene.bind_to_game(self)
+
         self.network.poll()
         self.simulation.iterate()
 

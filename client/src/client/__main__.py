@@ -18,7 +18,6 @@ if __name__ == "__main__":
         display=pg.display.set_mode((1280, 720)),
     )
 
-    game.initialize()
     running = True
     while running:
         try:

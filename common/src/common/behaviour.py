@@ -6,10 +6,13 @@ from common.node import Node
 
 class Behaviour(ABC):
     def __init__(self, node: Node):
-        self._receive_updates: bool = True
-        self._visible: bool = True
-        self._render_layer: int = 0
-        self._set_node(node)
+        self._started = False
+        self._node = node
+
+        self.receive_updates = True
+        self.visible = True
+        self.render_layer = 0
+
         self.on_init()
 
     def on_init(self):
@@ -44,24 +47,6 @@ class Behaviour(ABC):
     def node(self):
         return self._node
 
-    def _set_node(self, node: Node):
-        if (
-            hasattr(self, "_node")
-            and self.node is not None
-            and self.node.game is not None
-        ):
-            self.node.game.simulation.remove_renderable(self, self.render_layer)
-            self.node.game.simulation.remove_tickable(self)
-            self.node.game.simulation.remove_updatable(self)
-
-        self._node = node
-
-        # Setting properties so that setters are invoked.
-        self.visible = self.visible
-        self.receive_updates = self.receive_updates
-
-        self.on_start()
-
     @property
     def parent(self):
         return self._node.parent
@@ -82,11 +67,9 @@ class Behaviour(ABC):
             return
 
         if rcv:
-            self.node.game.simulation.add_tickable(self)
             self.node.game.simulation.add_updatable(self)
         else:
             self.node.game.simulation.remove_updatable(self)
-            self.node.game.simulation.remove_tickable(self)
 
     @property
     def render_layer(self):

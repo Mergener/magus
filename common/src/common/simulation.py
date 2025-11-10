@@ -25,8 +25,6 @@ class Simulation:
     def add_updatable(self, b: Behaviour):
         if overrides_method(Behaviour, b, "on_update"):
             self._updatables.add(b)
-
-    def add_tickable(self, b: Behaviour):
         if overrides_method(Behaviour, b, "on_tick"):
             self._tickables.add(b)
 
@@ -36,9 +34,6 @@ class Simulation:
 
     def remove_updatable(self, b: Behaviour):
         self._updatables.discard(b)
-
-    def remove_tickable(self, b: Behaviour):
-        self._tickables.discard(b)
 
     def remove_renderable(self, b: Behaviour, layer: int):
         self._renderables[layer].discard(b)
@@ -54,7 +49,7 @@ class Simulation:
 
         if self._tick_accum_time > self.tick_rate:
             self._tick_accum_time -= self.tick_rate
-            for t in self._tickables:
+            for t in self._updatables:
                 t.on_tick(self._tick_id)
             self._tick_id += 1
 

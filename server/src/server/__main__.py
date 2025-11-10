@@ -20,7 +20,6 @@ if __name__ == "__main__":
     network.listen(JoinGameRequest, handle_join_request)
 
     game = Game(network=network)
-    game.initialize()
 
     running = True
     while running:
