@@ -45,7 +45,7 @@ class Packet(ABC):
 
 
 class NullPacket(Packet):
-    def on_write(self):
+    def on_write(self, writer: ByteWriter):
         pass
 
     def on_read(self, reader: ByteReader):

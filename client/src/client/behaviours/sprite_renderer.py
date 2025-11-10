@@ -3,7 +3,8 @@ from typing import cast
 import pygame as pg
 
 from client.behaviours.camera import Camera
-from common.simulation import Behaviour, Transform
+from common.behaviour import Behaviour
+from common.transform import Transform
 from common.utils import memberwise_multiply
 
 

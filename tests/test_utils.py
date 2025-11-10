@@ -1,4 +1,5 @@
-from common.simulation import Behaviour, Node
+from common.behaviour import Behaviour
+from common.node import Node
 from common.utils import overrides_method
 
 
