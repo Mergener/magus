@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from collections import defaultdict
 
+import pygame as pg
+
 from common.behaviour import Behaviour
 from common.utils import overrides_method
 
@@ -9,6 +11,7 @@ from common.utils import overrides_method
 class Simulation:
     def __init__(self, tick_rate: float = 1 / 15):
         self.tick_rate = tick_rate
+        self._last_tick: float = 0
         self._tick_accum_time: float = 0
         self._tick_id = 0
         self._updatables: set[Behaviour] = set()
@@ -40,7 +43,13 @@ class Simulation:
     def remove_renderable(self, b: Behaviour, layer: int):
         self._renderables[layer].discard(b)
 
-    def update(self, dt):
+    def start(self):
+        self._last_tick = pg.time.get_ticks()
+
+    def iterate(self):
+        curr_tick = pg.time.get_ticks()
+        dt = (curr_tick - self._last_tick) / 1000.0
+        self._last_tick = curr_tick
         self._tick_accum_time += dt
 
         if self._tick_accum_time > self.tick_rate:

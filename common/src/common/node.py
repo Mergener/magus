@@ -9,18 +9,31 @@ if TYPE_CHECKING:
 
 
 class Node:
+    _game: Game | None
+
     def __init__(self, game: Game | None = None):
         from common.transform import Transform
 
         self._children: list[Self] = []
         self._parent: Self | None = None
-        self._game = game
         self._behaviours: list[Behaviour] = []
+        if game is not None:
+            self.bind_to_game(game)
+        else:
+            self._game = None
         self.add_behaviour(Transform)
 
     @property
     def game(self):
         return self._game
+
+    def bind_to_game(self, game: Game):
+        self._game = game
+        for b in self._behaviours:
+            # Setting properties force behaviours to subscribe to
+            # proper simulation events.
+            b.visible = b.visible
+            b.receive_updates = b.receive_updates
 
     @property
     def parent(self):
