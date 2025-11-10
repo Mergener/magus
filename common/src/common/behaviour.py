@@ -1,10 +1,10 @@
 from abc import ABC
+from typing import TYPE_CHECKING
 
 from common.node import Node
 
 
 class Behaviour(ABC):
-
     def __init__(self, node: Node):
         self._receive_updates: bool = True
         self._visible: bool = True
@@ -41,10 +41,10 @@ class Behaviour(ABC):
         return self._node
 
     def _set_node(self, node: Node):
-        if hasattr(self, "_node") and self.node != None and self.node._simulation:
-            self.node._simulation.remove_renderable(self, self.render_layer)
-            self.node._simulation.remove_tickable(self)
-            self.node._simulation.remove_updatable(self)
+        if hasattr(self, "_node") and self.node != None and self.node.game:
+            self.node.game.simulation.remove_renderable(self, self.render_layer)
+            self.node.game.simulation.remove_tickable(self)
+            self.node.game.simulation.remove_updatable(self)
 
         self._node = node
 
@@ -69,15 +69,15 @@ class Behaviour(ABC):
     @receive_updates.setter
     def receive_updates(self, rcv: bool):
         self._receive_updates = rcv
-        if self.node._simulation is None:
+        if self.node.game is None:
             return
 
         if rcv:
-            self.node._simulation.add_tickable(self)
-            self.node._simulation.add_updatable(self)
+            self.node.game.simulation.add_tickable(self)
+            self.node.game.simulation.add_updatable(self)
         else:
-            self.node._simulation.remove_updatable(self)
-            self.node._simulation.remove_tickable(self)
+            self.node.game.simulation.remove_updatable(self)
+            self.node.game.simulation.remove_tickable(self)
 
     @property
     def render_layer(self):

@@ -10,6 +10,8 @@ if TYPE_CHECKING:
 
 class Node:
     def __init__(self, game: Game | None = None):
+        from common.transform import Transform
+
         self._children: list[Self] = []
         self._parent: Self | None = None
         self._game = game
@@ -39,13 +41,13 @@ class Node:
                     b.visible = b.visible
                     b.receive_updates = b.receive_updates
 
-    def add_child(self, child: Node | None):
+    def add_child(self, child: Self | None):
         if child is None:
-            child = Node(self._game)
+            child = self.__class__(self._game)
         child.parent = self
         return child
 
-    def remove_child(self, child: Node):
+    def remove_child(self, child: Self):
         if child.parent == self:
             child.parent = None
 

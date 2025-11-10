@@ -1,8 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pygame as pg
 
+if TYPE_CHECKING:
+    from common.node import Node
+    from common.utils import memberwise_multiply
+
 from common.behaviour import Behaviour
-from common.node import Node
-from common.utils import memberwise_multiply
 
 
 class Transform(Behaviour):
