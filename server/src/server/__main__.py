@@ -9,7 +9,6 @@ from server.netserver import NetServer
 
 
 def handle_join_request(join_req: JoinGameRequest, peer: NetPeer):
-    print(f"{peer.address} asked to join the game!")
     peer.send(JoinGameResponse())
 
 
