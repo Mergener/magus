@@ -1,10 +1,11 @@
 import pygame as pg
 
 from client.behaviours.camera import Camera
+from client.behaviours.network_behaviour import NetworkBehaviour
 from common.engine.behaviour import Behaviour
 
 
-class Player(Behaviour):
+class Player(NetworkBehaviour):
     def on_update(self, dt):
         keys = pg.key.get_pressed()
         motion = pg.Vector2(0, 0)

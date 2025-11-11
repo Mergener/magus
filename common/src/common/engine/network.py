@@ -159,8 +159,8 @@ class Network(ABC):
 
                     l(packet, source_peer)
                 else:
-                    for p in cast(CombinedPacket, packet).packets:
-                        self.notify(p, source_peer)
+                    for sub_packet in cast(CombinedPacket, packet).packets:
+                        self.notify(sub_packet, source_peer)
             except Exception as e:
                 print(f"Error during processing of packet of type {type(packet)}: {e}")
 
@@ -192,7 +192,7 @@ _packet_ids: dict[type[Packet], int] = {}
 
 
 def auto_resolve_packets():
-    register_packets([c for c in Packet.__subclasses__()])
+    register_packets([c for c in Packet.__subclasses__()])  # type: ignore[type-abstract]
 
 
 def register_packets(packets_to_register: list[type[Packet]]):
