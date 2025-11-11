@@ -138,17 +138,28 @@ class Network(ABC):
         """
         pass
 
-    def notify(self, packet: Packet, source_peer: NetPeer):
+    def notify(
+        self,
+        packet: Packet,
+        source_peer: NetPeer,
+        packet_type: type[Packet] | None = None,
+    ):
         """
         Should only be called from a class that implements Network when a packet is received.
         Notifies listeners of the received packet.
         """
+        assert packet_type is None or isinstance(packet, packet_type)
+        packet_type = packet_type or type(packet)
+
         for l in self._listeners[packet.__class__]:
             try:
-                if not isinstance(packet, CombinedPacket):
+                if packet_type != CombinedPacket:
+                    for p in packet_type.__bases__:
+                        self.notify(packet, source_peer, p)
+
                     l(packet, source_peer)
                 else:
-                    for p in packet.packets:
+                    for p in cast(CombinedPacket, packet).packets:
                         self.notify(p, source_peer)
             except Exception as e:
                 print(f"Error during processing of packet of type {type(packet)}: {e}")

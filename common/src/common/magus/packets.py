@@ -1,3 +1,5 @@
+from abc import ABC
+
 from common.engine.binary import ByteReader, ByteWriter
 from common.engine.enums import DeliveryMode
 from common.engine.network import Packet
@@ -73,3 +75,14 @@ class DestroyEntity(Packet):
     @property
     def delivery_mode(self) -> DeliveryMode:
         return DeliveryMode.RELIABLE_ORDERED
+
+
+class EntityPacket(Packet, ABC):
+    def __init__(self, id: int):
+        self.id = id
+
+    def on_write(self, writer: ByteWriter):
+        writer.write_int32(self.id)
+
+    def on_read(self, reader: ByteReader):
+        self.id = reader.read_int32()

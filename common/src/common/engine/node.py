@@ -65,6 +65,10 @@ class Node:
         if child.parent == self:
             child.parent = None
 
+    @property
+    def behaviours(self):
+        return iter(self._behaviours)
+
     def get_behaviour[T: Behaviour](self, t: type[T]) -> T | None:
         for b in self._behaviours:
             if isinstance(b, t):
