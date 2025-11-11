@@ -1,5 +1,5 @@
 from common.engine.behaviour import Behaviour
-from common.engine.packets import CreateEntity
+from common.magus.packets import CreateEntity
 
 
 class NetworkIdentity(Behaviour):

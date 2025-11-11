@@ -178,18 +178,18 @@ class NullNetwork(Network):
 
 _packet_types: list[type[Packet]] = []
 _packet_ids: dict[type[Packet], int] = {}
-_initialized = False
 
 
-def init_packets():
+def auto_resolve_packets():
+    register_packets([c for c in Packet.__subclasses__()])
+
+
+def register_packets(packets_to_register: list[type[Packet]]):
     global _packet_ids, _packet_types, _initialized
 
-    if _initialized:
-        return
-
-    _initialized = True
-    _packet_types = [c for c in Packet.__subclasses__()]  # type: ignore[type-abstract]
+    _packet_types += packets_to_register  # type: ignore[type-abstract]
     _packet_types.sort(key=lambda c: f"{c.__module__}.{c.__name__}")
+    _packet_ids = {}
 
     for i, c in enumerate(_packet_types):
         _packet_ids[c] = i

@@ -58,3 +58,18 @@ class CreateEntity(Packet):
     @property
     def delivery_mode(self) -> DeliveryMode:
         return DeliveryMode.RELIABLE_ORDERED
+
+
+class DestroyEntity(Packet):
+    def __init__(self, id: int):
+        self.id = id
+
+    def on_write(self, writer: ByteWriter):
+        writer.write_int32(self.id)
+
+    def on_read(self, reader: ByteReader):
+        self.id = reader.read_int32()
+
+    @property
+    def delivery_mode(self) -> DeliveryMode:
+        return DeliveryMode.RELIABLE_ORDERED

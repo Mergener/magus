@@ -2,7 +2,7 @@ from typing import cast
 
 from common.engine.binary import ByteReader, ByteWriter
 from common.engine.enums import DeliveryMode
-from common.engine.network import Packet
+from common.engine.network import Packet, register_packets
 
 
 class CustomPacket1(Packet):
@@ -27,6 +27,7 @@ class CustomPacket1(Packet):
 
 
 def test_packet_encoding():
+    register_packets([CustomPacket1])
     original_packet = CustomPacket1(256, "Something", 800)
     writer = ByteWriter()
     original_packet.encode(writer)

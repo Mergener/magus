@@ -1,10 +1,9 @@
 import traceback
 from sys import stderr
 
-from common import init_common
 from common.engine.game import Game
-from common.engine.network import NetPeer
-from common.engine.packets import JoinGameRequest, JoinGameResponse
+from common.engine.network import NetPeer, auto_resolve_packets
+from common.magus.packets import JoinGameRequest, JoinGameResponse
 from server.netserver import NetServer
 
 
@@ -13,7 +12,7 @@ def handle_join_request(join_req: JoinGameRequest, peer: NetPeer):
 
 
 if __name__ == "__main__":
-    init_common()
+    auto_resolve_packets()
 
     network = NetServer(port=16214)
     network.listen(JoinGameRequest, handle_join_request)

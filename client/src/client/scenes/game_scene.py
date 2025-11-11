@@ -1,7 +1,7 @@
 from common.engine.behaviour import Behaviour
 from common.engine.network import NetPeer
 from common.engine.node import Node
-from common.engine.packets import JoinGameRequest, JoinGameResponse, NewGame
+from common.magus.packets import JoinGameRequest, JoinGameResponse, NewGame
 
 
 class GameScene(Behaviour):
