@@ -1,8 +1,7 @@
 from abc import ABC
 
 from common.engine.binary import ByteReader, ByteWriter
-from common.engine.enums import DeliveryMode
-from common.engine.network import Packet
+from common.engine.network import DeliveryMode, Packet
 
 
 class NewGame(Packet):

@@ -3,8 +3,7 @@ from sys import stderr
 import enet
 
 from common.engine.binary import ByteReader
-from common.engine.enums import DeliveryMode
-from common.engine.network import NetPeer, Network, Packet
+from common.engine.network import DeliveryMode, NetPeer, Network, Packet
 
 
 class NetClient(Network):
