@@ -13,7 +13,7 @@ from common.magus.packets import (
 class GameScene(Behaviour):
     _network_manager: NetworkManager
 
-    def on_validate(self):
+    def on_init(self):
         return
 
     def on_start(self):

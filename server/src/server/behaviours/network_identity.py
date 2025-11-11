@@ -1,9 +1,11 @@
 from common.engine.behaviour import Behaviour
+from common.magus.entity_type import EntityType
 from common.magus.packets import CreateEntity
 
 
 class NetworkIdentity(Behaviour):
     _id: int
+    _type_id: int
 
     @property
     def id(self):
@@ -18,4 +20,4 @@ class NetworkIdentity(Behaviour):
             if parent_identity is not None:
                 parent_id = parent_identity._id
 
-        self.game.network.publish(CreateEntity(self._id, parent_id))
+        self.game.network.publish(CreateEntity(self._id, EntityType.MAGE, parent_id))

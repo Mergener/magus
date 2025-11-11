@@ -17,10 +17,10 @@ class Behaviour(ABC):
         self.visible = self._visible
         self.receive_updates = self._receive_updates
 
-        self.on_validate()
+        self.on_init()
 
-    def on_validate(self):
-        """Called upon behaviour construction."""
+    def on_init(self):
+        """Called upon behaviour default construction."""
         pass
 
     def on_start(self):

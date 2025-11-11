@@ -5,20 +5,20 @@ from common.engine.behaviour import Behaviour
 from common.magus.packets import EntityPacket
 
 if TYPE_CHECKING:
-    from client.behaviours.network_identity import NetworkIdentity
+    from client.behaviours.network_entity import NetworkEntity
 
 
 class NetworkBehaviour(Behaviour, ABC):
-    _identity: NetworkIdentity
+    _net_entity: NetworkEntity
 
-    def identity(self):
-        from client.behaviours.network_identity import NetworkIdentity
+    def net_entity(self):
+        from client.behaviours.network_entity import NetworkEntity
 
-        if self._identity is None:
-            self._identity = cast(
-                NetworkIdentity, self.node.get_behaviour(NetworkIdentity)
+        if self._net_entity is None:
+            self._net_entity = cast(
+                NetworkEntity, self.node.get_behaviour(NetworkEntity)
             )
-        return self._identity
+        return self._net_entity
 
     @abstractmethod
     def handle_packet(self, packet: EntityPacket):

@@ -15,7 +15,7 @@ class SpriteRenderer(Behaviour):
     _cached_scale: pg.Vector2
     _tint: pg.Color
 
-    def on_validate(self):
+    def on_init(self):
         self._texture = None
         self._active_texture = None
         self._dimensions = pg.Vector2(0, 0)
