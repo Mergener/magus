@@ -1,10 +1,14 @@
-from common.behaviour import Behaviour
-from common.network import NetPeer
-from common.node import Node
-from common.packets import JoinGameRequest, JoinGameResponse, NewGame
+from client.behaviours.camera import Camera
+from client.behaviours.network_manager import NetworkManager
+from client.behaviours.player import Player
+from common.engine.behaviour import Behaviour
+from common.engine.node import Node
+from common.magus.packets import JoinGameRequest, JoinGameResponse, PlayerJoined
 
 
 class GameScene(Behaviour):
+    _network_manager: NetworkManager
+
     def on_init(self):
         return
 
@@ -12,9 +16,12 @@ class GameScene(Behaviour):
         if not self.game:
             return
 
+        self.node.add_child().add_behaviour(Camera)
+
+        self._network_manager = self.node.add_behaviour(NetworkManager)
         self.game.network.publish(JoinGameRequest())
         self._join_game_listener = self.game.network.listen(
-            JoinGameResponse, lambda resp, peer: self.on_game_joined(resp, peer)
+            JoinGameResponse, lambda resp, peer: self.on_game_joined()
         )
 
     def on_destroy(self):
@@ -24,8 +31,15 @@ class GameScene(Behaviour):
         if self._join_game_listener:
             self.game.network.unlisten(JoinGameResponse, self._join_game_listener)
 
-    def on_game_joined(self, msg: JoinGameResponse, server: NetPeer):
+    def on_game_joined(self):
         print("Game was succesfully joined!")
+
+    def on_player_joined(self, msg: PlayerJoined):
+        self.node.add_child().add_behaviour(Player)
+
+    @property
+    def network_manager(self):
+        return self._network_manager
 
 
 def make_game_scene() -> Node:

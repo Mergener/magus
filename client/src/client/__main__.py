@@ -5,11 +5,11 @@ import pygame as pg
 
 from client.netclient import NetClient
 from client.scenes.game_scene import make_game_scene
-from common import init_common
-from common.game import Game
+from common.engine.game import Game
+from common.engine.network import auto_resolve_packets
 
 if __name__ == "__main__":
-    init_common()
+    auto_resolve_packets()
     pg.init()
 
     game = Game(

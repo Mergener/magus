@@ -1,20 +1,20 @@
 import traceback
 from sys import stderr
 
-from common import init_common
-from common.game import Game
-from common.network import NetPeer
-from common.packets import JoinGameRequest, JoinGameResponse
+from common.engine.game import Game
+from common.engine.network import NetPeer, auto_resolve_packets
+from common.magus.entity_type import EntityType
+from common.magus.packets import CreateEntity, JoinGameRequest, JoinGameResponse
 from server.netserver import NetServer
 
 
 def handle_join_request(join_req: JoinGameRequest, peer: NetPeer):
-    print(f"{peer.address} asked to join the game!")
     peer.send(JoinGameResponse())
+    peer.send(CreateEntity(0, EntityType.MAGE))
 
 
 if __name__ == "__main__":
-    init_common()
+    auto_resolve_packets()
 
     network = NetServer(port=16214)
     network.listen(JoinGameRequest, handle_join_request)

@@ -3,14 +3,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Self, cast
 
 if TYPE_CHECKING:
-    from common.behaviour import Behaviour
-    from common.game import Game
-    from common.transform import Transform
+    from common.engine.behaviour import Behaviour
+    from common.engine.game import Game
+    from common.engine.transform import Transform
 
 
 class Node:
     def __init__(self, game: Game | None = None):
-        from common.transform import Transform
+        from common.engine.transform import Transform
 
         self._children: list[Self] = []
         self._parent: Self | None = None
@@ -31,9 +31,6 @@ class Node:
 
         self._game = game
         for b in self._behaviours:
-            # Setting properties force behaviours to subscribe to
-            # proper simulation events.
-            b.on_start()
             b.visible = b.visible
             b.receive_updates = b.receive_updates
 
@@ -55,7 +52,7 @@ class Node:
         if self._game != parent.game and parent.game is not None:
             self.bind_to_game(parent.game)
 
-    def add_child(self, child: Self | None):
+    def add_child(self, child: Self | None = None):
         if child is None:
             child = self.__class__(self._game)
         child.parent = self
@@ -64,6 +61,10 @@ class Node:
     def remove_child(self, child: Self):
         if child.parent == self:
             child.parent = None
+
+    @property
+    def behaviours(self):
+        return iter(self._behaviours)
 
     def get_behaviour[T: Behaviour](self, t: type[T]) -> T | None:
         for b in self._behaviours:
@@ -74,10 +75,14 @@ class Node:
     def add_behaviour[T: Behaviour](self, tb: type[T]) -> T:
         b = tb(self)
         self._behaviours.append(b)
+        b.visible = b.visible
+        b.receive_updates = b.receive_updates
         return b
 
     @property
     def transform(self) -> Transform:
+        from common.engine.transform import Transform
+
         return cast(Transform, self._behaviours[0])
 
     def destroy(self):

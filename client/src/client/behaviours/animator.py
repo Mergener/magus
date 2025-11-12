@@ -1,7 +1,7 @@
 from client.animation import Animation
 from client.behaviours.sprite_renderer import SpriteRenderer
-from common.behaviour import Behaviour
-from common.node import Node
+from common.engine.behaviour import Behaviour
+from common.engine.node import Node
 
 
 class Animator(Behaviour):
@@ -13,6 +13,8 @@ class Animator(Behaviour):
     def on_init(self):
         self._frame_idx = 0
         self._accum_time = 0
+        self.animation = None
+        self._sprite_renderer = None
 
     def on_start(self):
         self._sprite_renderer = self.node.get_behaviour(SpriteRenderer)

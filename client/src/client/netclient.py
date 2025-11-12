@@ -2,9 +2,8 @@ from sys import stderr
 
 import enet
 
-from common.binary import ByteReader
-from common.enums import DeliveryMode
-from common.network import NetPeer, Network, Packet
+from common.engine.binary import ByteReader
+from common.engine.network import DeliveryMode, NetPeer, Network, Packet
 
 
 class NetClient(Network):
@@ -32,7 +31,6 @@ class NetClient(Network):
             raise RuntimeError("Not connected to any host.")
 
         self._peer.send(packet, override_delivery_mode)
-        print(self._peer.address)
 
     def poll(self):
         while True:
@@ -43,10 +41,6 @@ class NetClient(Network):
                 raw_data, raw_peer = event.packet.data, event.peer
 
                 if self._peer is None or raw_peer.address.host != self._peer.address[0]:
-                    print(
-                        f"Received data from unexpected address: {raw_peer.address.host}:{raw_peer.address.port}.",
-                        file=stderr,
-                    )
                     continue
 
                 reader = ByteReader(raw_data)

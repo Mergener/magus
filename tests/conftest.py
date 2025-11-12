@@ -1,8 +1,8 @@
 import pytest
 
-from common import init_common
+from common.engine.network import auto_resolve_packets
 
 
 @pytest.fixture(autouse=True)
 def startup():
-    init_common()
+    auto_resolve_packets()

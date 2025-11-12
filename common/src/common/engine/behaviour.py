@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import TYPE_CHECKING
 
-from common.node import Node
+from common.engine.node import Node
 
 
 class Behaviour(ABC):
@@ -20,7 +20,7 @@ class Behaviour(ABC):
         self.on_init()
 
     def on_init(self):
-        """Called upon behaviour construction."""
+        """Called upon behaviour default construction."""
         pass
 
     def on_start(self):
