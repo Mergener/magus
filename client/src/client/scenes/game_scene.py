@@ -1,13 +1,9 @@
+from client.behaviours.camera import Camera
 from client.behaviours.network_manager import NetworkManager
 from client.behaviours.player import Player
 from common.engine.behaviour import Behaviour
 from common.engine.node import Node
-from common.magus.packets import (
-    JoinGameRequest,
-    JoinGameResponse,
-    NewGame,
-    PlayerJoined,
-)
+from common.magus.packets import JoinGameRequest, JoinGameResponse, PlayerJoined
 
 
 class GameScene(Behaviour):
@@ -19,6 +15,8 @@ class GameScene(Behaviour):
     def on_start(self):
         if not self.game:
             return
+
+        self.node.add_child().add_behaviour(Camera)
 
         self._network_manager = self.node.add_behaviour(NetworkManager)
         self.game.network.publish(JoinGameRequest())

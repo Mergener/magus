@@ -27,7 +27,6 @@ class Game:
         self._network: Network = network or NullNetwork()
         self._scene = scene or Node()
         self._global_object = global_object or Node()
-        self._screen: pg.Surface | None = None
         self._display = display
         self._started = False
 
@@ -48,8 +47,8 @@ class Game:
         return self._global_object
 
     @property
-    def screen(self):
-        return self._screen
+    def display(self):
+        return self._display
 
     @property
     def headless(self):

@@ -51,6 +51,8 @@ class CreateEntity(Packet):
         if self.parent_id:
             writer.write_int32(-self.id)
             writer.write_int32(self.parent_id)
+        else:
+            writer.write_int32(self.id)
         writer.write_uint8(self.type_id.value)
 
     def on_read(self, reader: ByteReader):

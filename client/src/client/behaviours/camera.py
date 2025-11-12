@@ -13,19 +13,19 @@ class Camera(Behaviour):
             Camera.main = self
 
     def world_to_screen_space(self, point: pg.Vector2):
-        if self.game is None or self.game.screen is None:
+        if self.game is None or self.game.display is None:
             return pg.Vector2(0, 0)
 
-        screen_rect = self.game.screen.get_rect()
+        screen_rect = self.game.display.get_rect()
         screen_x = point.x + screen_rect.centerx - self.transform.position.x
         screen_y = point.y + screen_rect.centery - self.transform.position.y
         return pg.Vector2(screen_x, screen_y)
 
     def screen_to_world_space(self, point: pg.Vector2):
-        if self.game is None or self.game.screen is None:
+        if self.game is None or self.game.display is None:
             return pg.Vector2(0, 0)
 
-        screen_rect = self.game.screen.get_rect()
+        screen_rect = self.game.display.get_rect()
         world_x = point.x - screen_rect.centerx + self.transform.position.x
         world_y = point.y - screen_rect.centery + self.transform.position.y
         return pg.Vector2(world_x, world_y)

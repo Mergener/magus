@@ -24,9 +24,12 @@ class NetworkManager(Behaviour):
 
     def on_create_entity(self, packet: CreateEntity):
         assert self.game
-        entity = self.game.scene.add_child()
-        entity.add_behaviour(NetworkEntity)._id = packet.id
-        self._entities[packet.id] = entity
+        node = self.game.scene.add_child()
+        entity = node.add_behaviour(NetworkEntity)
+        entity._id = packet.id
+        entity.setup(packet.type_id)
+
+        self._entities[packet.id] = node
 
     def on_destroy_entity(self, packet: DestroyEntity):
         assert self.game

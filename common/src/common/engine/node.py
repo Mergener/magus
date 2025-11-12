@@ -31,9 +31,6 @@ class Node:
 
         self._game = game
         for b in self._behaviours:
-            # Setting properties force behaviours to subscribe to
-            # proper simulation events.
-            b.on_start()
             b.visible = b.visible
             b.receive_updates = b.receive_updates
 
@@ -78,10 +75,14 @@ class Node:
     def add_behaviour[T: Behaviour](self, tb: type[T]) -> T:
         b = tb(self)
         self._behaviours.append(b)
+        b.visible = b.visible
+        b.receive_updates = b.receive_updates
         return b
 
     @property
     def transform(self) -> Transform:
+        from common.engine.transform import Transform
+
         return cast(Transform, self._behaviours[0])
 
     def destroy(self):

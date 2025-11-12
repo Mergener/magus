@@ -9,13 +9,11 @@ if TYPE_CHECKING:
 
 
 class NetworkBehaviour(Behaviour, ABC):
-    _net_entity: NetworkEntity
-
     def net_entity(self):
         from client.behaviours.network_entity import NetworkEntity
 
         if self._net_entity is None:
-            self._net_entity = cast(
+            self._net_entity: NetworkEntity = cast(
                 NetworkEntity, self.node.get_behaviour(NetworkEntity)
             )
         return self._net_entity

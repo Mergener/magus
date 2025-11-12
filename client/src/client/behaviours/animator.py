@@ -13,6 +13,8 @@ class Animator(Behaviour):
     def on_init(self):
         self._frame_idx = 0
         self._accum_time = 0
+        self.animation = None
+        self._sprite_renderer = None
 
     def on_start(self):
         self._sprite_renderer = self.node.get_behaviour(SpriteRenderer)

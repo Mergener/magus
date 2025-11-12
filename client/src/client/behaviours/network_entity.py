@@ -1,6 +1,7 @@
 from typing import Callable
 
 from client.behaviours.animator import Animator
+from client.behaviours.entities import NETWORK_ENTITIES_SETUP
 from client.behaviours.mage import Mage
 from client.behaviours.sprite_renderer import SpriteRenderer
 from common.engine.behaviour import Behaviour
@@ -14,10 +15,3 @@ class NetworkEntity(Behaviour):
 
     def setup(self, type: EntityType):
         NETWORK_ENTITIES_SETUP.get(type, lambda node: node)(self.node)
-
-
-NETWORK_ENTITIES_SETUP: dict[EntityType, Callable[[Node], Node | Behaviour]] = {
-    EntityType.MAGE: lambda node: node.add_behaviour(SpriteRenderer)
-    .node.add_behaviour(Animator)
-    .node.add_behaviour(Mage)
-}

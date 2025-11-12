@@ -3,8 +3,10 @@ from typing import cast
 
 
 class ByteReader:
-    def __init__(self, data: bytes | BytesIO = BytesIO()):
-        if isinstance(data, bytes):
+    def __init__(self, data: bytes | BytesIO | None = None):
+        if data is None:
+            data = BytesIO()
+        elif isinstance(data, bytes):
             data = BytesIO(data)
         self._stream = cast(BytesIO, data)
 
@@ -42,8 +44,10 @@ class ByteReader:
 
 
 class ByteWriter:
-    def __init__(self, data: bytes | BytesIO = BytesIO()):
-        if isinstance(data, bytes):
+    def __init__(self, data: bytes | BytesIO | None = None):
+        if data is None:
+            data = BytesIO()
+        elif isinstance(data, bytes):
             data = BytesIO(data)
         self._stream = cast(BytesIO, data)
 

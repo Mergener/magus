@@ -6,9 +6,9 @@ import pygame as pg
 
 if TYPE_CHECKING:
     from common.engine.node import Node
-    from common.engine.utils import memberwise_multiply
 
 from common.engine.behaviour import Behaviour
+from common.engine.utils import memberwise_multiply
 
 
 class Transform(Behaviour):

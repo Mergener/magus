@@ -1,3 +1,4 @@
+import traceback
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from enum import Enum
@@ -62,9 +63,7 @@ class Packet(ABC):
     def decode(cls, reader: ByteReader):
         global _packet_types
         packet_id = reader.read_uint8()
-
         if packet_id > len(_packet_types) or packet_id < 0:
-            print(f"Received invalid packet: {packet_id}", file=stderr)
             return NullPacket()
 
         packet_type = _packet_types[packet_id]
@@ -184,9 +183,13 @@ class Network(ABC):
         Notifies listeners of the received packet.
         """
         assert packet_type is None or isinstance(packet, packet_type)
-        packet_type = packet_type or type(packet)
+        packet_type = packet_type if packet_type is not None else type(packet)
 
-        for l in self._listeners[packet.__class__]:
+        if packet_type == object:
+            return
+
+        listeners = self._listeners[packet_type]
+        for l in listeners:
             try:
                 if packet_type != CombinedPacket:
                     for p in packet_type.__bases__:
@@ -197,7 +200,11 @@ class Network(ABC):
                     for sub_packet in cast(CombinedPacket, packet).packets:
                         self.notify(sub_packet, source_peer)
             except Exception as e:
-                print(f"Error during processing of packet of type {type(packet)}: {e}")
+                error_stack_trace = traceback.format_exc()
+                print(
+                    f"Error during processing of packet of type {type(packet)}: {error_stack_trace}",
+                    file=stderr,
+                )
 
     def listen[T: Packet](self, t: type[T], listener: Callable[[T, NetPeer], None]):
         self._listeners[t].append(cast(Callable[[Packet, NetPeer], None], listener))
@@ -234,6 +241,7 @@ def register_packets(packets_to_register: list[type[Packet]]):
     global _packet_ids, _packet_types, _initialized
 
     _packet_types += packets_to_register  # type: ignore[type-abstract]
+    _packet_types = list(set(_packet_types))
     _packet_types.sort(key=lambda c: f"{c.__module__}.{c.__name__}")
     _packet_ids = {}
 
