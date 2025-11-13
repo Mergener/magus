@@ -9,9 +9,10 @@ if TYPE_CHECKING:
 
 
 class Node:
-    def __init__(self, game: Game | None = None):
+    def __init__(self, game: Game | None = None, name: str | None = None):
         from common.engine.transform import Transform
 
+        self._name = name
         self._children: list[Self] = []
         self._parent: Self | None = None
         self._behaviours: list[Behaviour] = []
@@ -21,6 +22,10 @@ class Node:
     @property
     def game(self) -> Game | None:
         return self._game
+
+    @property
+    def name(self):
+        return self._name or "<unnamed>"
 
     def bind_to_game(self, game: Game):
         if self._game == game:
@@ -115,6 +120,9 @@ class Node:
         if out_dict is None:
             out_dict = {}
 
+        if self._name is not None:
+            out_dict["name"] = self._name
+
         children = []
         for c in self.children:
             cd: dict = {}
@@ -124,7 +132,12 @@ class Node:
 
         behaviours = []
         for b in self._behaviours:
-            bd = {"__type": _get_behaviour_type_name(b)}
+            bd = {
+                "__type": _get_behaviour_type_name(b),
+                "receive_updates": b.receive_updates,
+                "visible": b.visible,
+            }
+
             b.on_serialize(bd)
             behaviours.append(bd)
         out_dict["behaviours"] = behaviours
@@ -132,6 +145,8 @@ class Node:
         return out_dict
 
     def deserialize(self, in_dict: dict):
+        self._name = in_dict.get("name")
+
         dict_children = in_dict.get("children", [])
         dict_behaviours = in_dict.get("behaviours", [])
         for dc in dict_children:
@@ -146,6 +161,8 @@ class Node:
 
             b = self.add_behaviour(behaviour_type)
             b.on_deserialize(db)
+            b.receive_updates = db.get("receive_updates", True)
+            b.visible = db.get("visible", True)
 
         return self
 

@@ -103,6 +103,7 @@ class Animation:
             for d in in_value.get("frames", [])
         ]
         self.fps = in_value.get("fps", DEFAULT_ANIMATION_FPS)
+        self.path = ""
         return self
 
 
