@@ -43,6 +43,12 @@ class Behaviour(ABC):
         """Called every simulation render cycle."""
         pass
 
+    def on_serialize(self, out_dict: dict):
+        pass
+
+    def on_deserialize(self, in_dict: dict):
+        pass
+
     @property
     def game(self):
         return self._node.game

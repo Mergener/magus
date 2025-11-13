@@ -3,6 +3,7 @@ from typing import cast
 import pygame as pg
 
 from client.behaviours.camera import Camera
+from common.engine.assets import load_image_asset
 from common.engine.behaviour import Behaviour
 from common.engine.utils import memberwise_multiply
 
@@ -14,9 +15,11 @@ class SpriteRenderer(Behaviour):
     _scaled_dimensions: pg.Vector2
     _cached_scale: pg.Vector2
     _tint: pg.Color
+    _texture_asset: str | None
 
     def on_init(self):
         self._texture = None
+        self._texture_asset = None
         self._active_texture = None
         self._dimensions = pg.Vector2(0, 0)
         self._cached_scale = self.transform.scale
@@ -78,3 +81,12 @@ class SpriteRenderer(Behaviour):
         self.game.display.blit(
             self._active_texture, pg.Rect(pos, self._scaled_dimensions)
         )
+
+    def on_serialize(self, out_dict: dict):
+        out_dict["texture"] = self._texture_asset
+
+    def on_deserialize(self, in_dict: dict):
+        self._texture_asset = in_dict["texture"]
+        if type(self._texture_asset) != str:
+            self._texture_asset = None
+            return
