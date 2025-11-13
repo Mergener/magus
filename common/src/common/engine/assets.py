@@ -11,9 +11,6 @@ import pygame as pg
 
 from common.engine.node import Node
 
-if TYPE_CHECKING:
-    from common.engine.animation import Animation
-
 
 class ImageAsset:
     def __init__(
@@ -70,6 +67,8 @@ def resource_path(relative_path: str) -> str:
 
 
 def load_image_asset(path: str) -> ImageAsset:
+    global _image_asset_cache
+
     full_path = None
     try:
         full_path = resource_path(path)
@@ -94,6 +93,8 @@ def load_image_asset(path: str) -> ImageAsset:
 
 
 def load_node_asset(path: str) -> Node:
+    global _node_asset_cache
+
     full_path = None
     try:
         full_path = resource_path(path)
@@ -119,6 +120,8 @@ def load_node_asset(path: str) -> Node:
 
 def load_animation_asset(path: str):
     from common.engine.animation import Animation
+
+    global _animation_asset_cache
 
     full_path = None
 
@@ -149,6 +152,6 @@ def _get_placeholder_surface():
     return placeholder_texture
 
 
-_node_asset_cache: dict[str, Node] = {}
-_image_asset_cache: dict[str, ImageAsset] = {}
-_animation_asset_cache: dict[str, Animation] = {}
+_node_asset_cache = {}
+_image_asset_cache = {}
+_animation_asset_cache = {}
