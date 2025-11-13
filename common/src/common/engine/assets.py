@@ -135,6 +135,7 @@ def load_animation_asset(path: str):
         with open(full_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         animation = Animation.__new__(Animation).deserialize(data)
+        animation.path = full_path
 
         _animation_asset_cache[full_path] = animation
         return animation
