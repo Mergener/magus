@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import sys
@@ -9,6 +10,9 @@ from typing import TYPE_CHECKING
 import pygame as pg
 
 from common.engine.node import Node
+
+if TYPE_CHECKING:
+    from common.engine.animation import Animation
 
 
 class ImageAsset:
@@ -69,47 +73,85 @@ def resource_path(relative_path: str) -> str:
 
 
 def load_image_asset(path: str) -> ImageAsset:
+    full_path = None
     try:
         full_path = resource_path(path)
+
+        cached = _image_asset_cache.get(full_path)
+        if cached:
+            return cached
+
         surface = pg.image.load(full_path).convert_alpha()
         if surface is None:
             raise Exception("Image not found.")
-        return ImageAsset(surface, path)
+
+        image_asset = ImageAsset(surface, path)
+        _image_asset_cache[full_path] = image_asset
+        return image_asset
     except Exception as e:
         error_stack_trace = traceback.format_exc()
         print(f"Failed to load image from {path}: {error_stack_trace}", file=stderr)
-        return ImageAsset(_get_placeholder_surface())
+        fallback = ImageAsset(_get_placeholder_surface())
+        _image_asset_cache[full_path or path] = fallback
+        return fallback
 
 
 def load_node_asset(path: str) -> Node:
+    full_path = None
     try:
         full_path = resource_path(path)
+
+        cached = _node_asset_cache.get(full_path)
+        if cached:
+            return cached.clone()
+
         with open(full_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         node = Node().deserialize(data)
+
+        _node_asset_cache[full_path] = node
         return node
     except Exception as e:
         error_stack_trace = traceback.format_exc()
         print(f"Failed to load node from {path}: {error_stack_trace}", file=stderr)
-        return Node()
+
+        fallback = Node()
+        _node_asset_cache[full_path or path] = fallback.clone()
+        return fallback
 
 
 def load_animation_asset(path: str):
     from common.engine.animation import Animation
 
+    full_path = None
+
     try:
         full_path = resource_path(path)
+
+        cached = _animation_asset_cache.get(full_path)
+        if cached:
+            return cached
+
         with open(full_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         animation = Animation.__new__(Animation).deserialize(data)
+
+        _animation_asset_cache[full_path] = animation
         return animation
     except Exception as e:
         error_stack_trace = traceback.format_exc()
         print(f"Failed to load animation from {path}: {error_stack_trace}", file=stderr)
-        return Animation([], 1)
+        fallback = Animation([], 1)
+        _animation_asset_cache[full_path or path] = fallback
+        return fallback
 
 
 def _get_placeholder_surface():
     placeholder_texture = pg.Surface((100, 100))
     placeholder_texture.fill((0, 255, 0))
     return placeholder_texture
+
+
+_node_asset_cache: dict[str, Node] = {}
+_image_asset_cache: dict[str, ImageAsset] = {}
+_animation_asset_cache: dict[str, Animation] = {}

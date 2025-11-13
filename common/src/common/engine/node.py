@@ -166,6 +166,13 @@ class Node:
 
         return self
 
+    def clone(self):
+        # TODO: Improve performance
+        data = self.serialize()
+        new_node = Node(self._game)
+        new_node.deserialize(data)
+        return new_node
+
 
 _behaviour_types: dict[str, type[Behaviour]] | None = None
 
