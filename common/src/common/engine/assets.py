@@ -153,6 +153,6 @@ def _get_placeholder_surface():
     return placeholder_texture
 
 
-_node_asset_cache = {}
-_image_asset_cache = {}
-_animation_asset_cache = {}
+_node_asset_cache = {}  # type: ignore
+_image_asset_cache = {}  # type: ignore
+_animation_asset_cache = {}  # type: ignore
