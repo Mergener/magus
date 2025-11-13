@@ -2,7 +2,7 @@
 .venv
 venv
 bin/*
-assets/*
+assets/img/*
 .pytest_cache
 tmp/*
 *.spec
