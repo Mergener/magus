@@ -154,15 +154,23 @@ class Node:
             node.parent = self
             node.deserialize(dc)
 
+        created_transform = False
         for db in dict_behaviours:
             behaviour_type = _get_behaviour_type_by_name(db.get("__type"))
             if behaviour_type is None:
                 continue
 
+            if behaviour_type == Transform:
+                created_transform = True
+
             b = self.add_behaviour(behaviour_type)
             b.on_deserialize(db)
             b.receive_updates = db.get("receive_updates", True)
             b.visible = db.get("visible", True)
+
+        if not created_transform:
+            self.add_behaviour(Transform)
+            self._behaviours.insert(0, self._behaviours.pop())
 
         return self
 
