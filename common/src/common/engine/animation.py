@@ -17,7 +17,7 @@ class SliceMode(Enum):
 
 
 def slice_image(
-    img: ImageAsset, slicing: pg.Vector2, slice_mode: SliceMode
+    img: ImageAsset, slicing: pg.Vector2, slice_mode: SliceMode, copy: bool = False
 ) -> list[ImageAsset]:
     surface = img.pygame_surface
     if slice_mode == SliceMode.RECTS_PER_AXIS:
@@ -40,8 +40,9 @@ def slice_image(
             if is_sub_rect_transparent(surface, sub_rect):
                 continue
 
-            frame_surface = pg.Surface(size_per_rect, pg.SRCALPHA)
-            frame_surface.blit(surface, (0, 0), pg.Rect((x, y), size_per_rect))
+            frame_surface = surface.subsurface(sub_rect)
+            if copy:
+                frame_surface = frame_surface.copy()
 
             quads.append(
                 ImageAsset(frame_surface, img.path, pg.Rect((x, y), size_per_rect))

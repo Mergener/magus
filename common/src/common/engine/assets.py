@@ -52,10 +52,7 @@ class ImageAsset:
                 and (type(h) == float or type(h) == int)
             ):
                 self.rect = pg.Rect((x, y), (w, h))
-                sliced_surface = pg.Surface(self.rect.size, pg.SRCALPHA)
-                sliced_surface.blit(
-                    self.pygame_surface, (0, 0), pg.Rect((x, y), self.rect.size)
-                )
+                sliced_surface = self.pygame_surface.subsurface(self.rect)
                 self.pygame_surface = sliced_surface
             else:
                 self.rect = self.pygame_surface.get_rect()
