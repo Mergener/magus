@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import pygame as pg
 
-from common.engine.node import Node
+from common.node import Node
 
 
 class ImageAsset:
@@ -119,7 +119,7 @@ def load_node_asset(path: str) -> Node:
 
 
 def load_animation_asset(path: str):
-    from common.engine.animation import Animation
+    from common.animation import Animation
 
     global _animation_asset_cache
 

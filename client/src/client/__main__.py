@@ -11,10 +11,9 @@ import pygame as pg
 
 from client.behaviours.camera import *  # type: ignore
 from client.netclient import NetClient
-from common.engine import *  # type: ignore
-from common.engine.assets import load_node_asset
-from common.engine.game import Game
-from common.engine.network import auto_resolve_packets
+from common.assets import load_node_asset
+from common.game import Game
+from common.network import auto_resolve_packets
 
 if __name__ == "__main__":
     auto_resolve_packets()

@@ -6,7 +6,7 @@ from typing import cast
 import numpy as np
 import pygame as pg
 
-from common.engine.assets import ImageAsset, load_animation_asset, load_image_asset
+from common.assets import ImageAsset, load_animation_asset, load_image_asset
 
 DEFAULT_ANIMATION_FPS = 6
 

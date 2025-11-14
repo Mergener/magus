@@ -11,7 +11,8 @@ requires-python = ">=3.10"
 
 dependencies = [
   "pygame>=2.1",
-  "magus-common"
+  "magus-common",
+  "magus-game"
 ]
 
 [project.optional-dependencies]

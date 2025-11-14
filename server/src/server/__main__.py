@@ -1,10 +1,10 @@
 import traceback
 from sys import stderr
 
-from common.engine.game import Game
-from common.engine.network import NetPeer, auto_resolve_packets
-from common.magus.entity_type import EntityType
-from common.magus.packets import CreateEntity, JoinGameRequest, JoinGameResponse
+from common.game import Game
+from common.network import NetPeer, auto_resolve_packets
+from game.entity_type import EntityType
+from game.packets import CreateEntity, JoinGameRequest, JoinGameResponse
 from server.netserver import NetServer
 
 

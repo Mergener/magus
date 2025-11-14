@@ -2,8 +2,8 @@ from sys import stderr
 
 import enet
 
-from common.engine.binary import ByteReader
-from common.engine.network import DeliveryMode, NetPeer, Network, Packet
+from common.binary import ByteReader
+from common.network import DeliveryMode, NetPeer, Network, Packet
 
 
 class NetClient(Network):

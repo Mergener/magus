@@ -3,9 +3,9 @@ from typing import cast
 import pygame as pg
 
 from client.behaviours.camera import Camera
-from common.engine.assets import load_image_asset
-from common.engine.behaviour import Behaviour
-from common.engine.utils import memberwise_multiply
+from common.assets import load_image_asset
+from common.behaviour import Behaviour
+from common.utils import memberwise_multiply
 
 
 class SpriteRenderer(Behaviour):

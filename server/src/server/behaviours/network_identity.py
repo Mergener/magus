@@ -1,6 +1,6 @@
-from common.engine.behaviour import Behaviour
-from common.magus.entity_type import EntityType
-from common.magus.packets import CreateEntity
+from common.behaviour import Behaviour
+from game.entity_type import EntityType
+from game.packets import CreateEntity
 
 
 class NetworkIdentity(Behaviour):

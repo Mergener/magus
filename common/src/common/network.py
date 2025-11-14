@@ -7,7 +7,7 @@ from typing import Callable, cast
 
 import enet
 
-from common.engine.binary import ByteReader, ByteWriter
+from common.binary import ByteReader, ByteWriter
 
 
 class DeliveryMode(Enum):
@@ -240,6 +240,12 @@ class NullNetwork(Network):
 
     def poll(self):
         pass
+
+    def is_server(self) -> bool:
+        return True
+
+    def is_client(self) -> bool:
+        return True
 
 
 _packet_types: list[type[Packet]] = []

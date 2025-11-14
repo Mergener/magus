@@ -1,7 +1,7 @@
 import enet
 
-from common.engine.binary import ByteReader, ByteWriter
-from common.engine.network import DeliveryMode, NetPeer, Network, Packet
+from common.binary import ByteReader, ByteWriter
+from common.network import DeliveryMode, NetPeer, Network, Packet
 
 
 class NetServer(Network):

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, cast
 
-from common.engine.behaviour import Behaviour
-from common.magus.packets import EntityPacket
+from common.behaviour import Behaviour
+from game.packets import EntityPacket
 
 if TYPE_CHECKING:
     from client.behaviours.network_entity import NetworkEntity
@@ -20,7 +20,3 @@ class NetworkBehaviour(Behaviour, ABC):
                 if self._net_entity is None:
                     self._net_entity = self.node.add_behaviour(NetworkEntity)
         return self._net_entity
-
-    @abstractmethod
-    def handle_packet(self, packet: EntityPacket):
-        pass

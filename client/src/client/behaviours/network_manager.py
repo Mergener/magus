@@ -1,10 +1,10 @@
 from client.behaviours.entities import NETWORK_ENTITIES_ASSETS
 from client.behaviours.network_behaviour import NetworkBehaviour
 from client.behaviours.network_entity import NetworkEntity
-from common.engine.assets import load_node_asset
-from common.engine.behaviour import Behaviour
-from common.engine.node import Node
-from common.magus.packets import CreateEntity, DestroyEntity, EntityPacket
+from common.assets import load_node_asset
+from common.behaviour import Behaviour
+from common.node import Node
+from game.packets import CreateEntity, DestroyEntity, EntityPacket
 
 
 class NetworkManager(Behaviour):

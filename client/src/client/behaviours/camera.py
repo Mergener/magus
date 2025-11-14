@@ -2,7 +2,7 @@ from typing import ClassVar, Self
 
 import pygame as pg
 
-from common.engine.behaviour import Behaviour
+from common.behaviour import Behaviour
 
 
 class Camera(Behaviour):

@@ -1,5 +1,5 @@
-from common.engine.behaviour import Behaviour
-from common.engine.node import Node
+from common.behaviour import Behaviour
+from common.node import Node
 
 
 class EntityManager(Behaviour):

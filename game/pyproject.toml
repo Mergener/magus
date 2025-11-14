@@ -3,9 +3,9 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "magus-common"
+name = "magus-game"
 version = "0.0.1"
-description = "Shared library"
+description = "Game logic"
 authors = [{name="Thomas Mergener"}]
 requires-python = ">=3.10"
 
@@ -14,7 +14,8 @@ test = ["pytest"]
 
 dependencies = [
   "pyenet",
-  "pygame>=2.1"
+  "pygame>=2.1",
+  "magus-common"
 ]
 
 [tool.setuptools.packages.find]

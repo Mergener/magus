@@ -4,14 +4,14 @@ import importlib
 from typing import TYPE_CHECKING, Self, cast
 
 if TYPE_CHECKING:
-    from common.engine.behaviour import Behaviour
-    from common.engine.game import Game
-    from common.engine.transform import Transform
+    from common.behaviour import Behaviour
+    from common.game import Game
+    from common.transform import Transform
 
 
 class Node:
     def __init__(self, game: Game | None = None, name: str | None = None):
-        from common.engine.transform import Transform
+        from common.transform import Transform
 
         self._name = name
         self._children: list[Self] = []
@@ -91,7 +91,7 @@ class Node:
 
     @property
     def transform(self) -> Transform:
-        from common.engine.transform import Transform
+        from common.transform import Transform
 
         return cast(Transform, self._behaviours[0])
 
@@ -146,7 +146,7 @@ class Node:
         return out_dict
 
     def deserialize(self, in_dict: dict):
-        from common.engine.transform import Transform
+        from common.transform import Transform
 
         self._name = in_dict.get("name")
 
@@ -189,7 +189,7 @@ _behaviour_types: dict[str, type[Behaviour]] | None = None
 
 
 def _get_behaviour_type_name(b: Behaviour | type[Behaviour]):
-    from common.engine.behaviour import Behaviour
+    from common.behaviour import Behaviour
 
     if isinstance(b, Behaviour):
         b = b.__class__
@@ -204,7 +204,7 @@ def _get_behaviour_type_by_name(name: str | None):
 
     if _behaviour_types is None:
         _behaviour_types = {}
-        from common.engine.behaviour import Behaviour
+        from common.behaviour import Behaviour
 
         _import_behaviour_types_from_superclass(Behaviour)
 

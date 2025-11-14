@@ -1,8 +1,8 @@
 from abc import ABC
 
-from common.engine.binary import ByteReader, ByteWriter
-from common.engine.network import DeliveryMode, Packet
-from common.magus.entity_type import EntityType
+from common.binary import ByteReader, ByteWriter
+from common.network import DeliveryMode, Packet
+from game.entity_type import EntityType
 
 
 class NewGame(Packet):

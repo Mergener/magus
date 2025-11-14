@@ -1,9 +1,9 @@
 from client.behaviours.camera import Camera
 from client.behaviours.network_manager import NetworkManager
 from client.behaviours.player import Player
-from common.engine.behaviour import Behaviour
-from common.engine.node import Node
-from common.magus.packets import JoinGameRequest, JoinGameResponse, PlayerJoined
+from common.behaviour import Behaviour
+from common.node import Node
+from game.packets import JoinGameRequest, JoinGameResponse, PlayerJoined
 
 
 class GameScene(Behaviour):

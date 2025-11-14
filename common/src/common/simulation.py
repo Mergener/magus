@@ -4,8 +4,8 @@ from collections import defaultdict
 
 import pygame as pg
 
-from common.engine.behaviour import Behaviour
-from common.engine.utils import overrides_method
+from common.behaviour import Behaviour
+from common.utils import overrides_method
 
 
 class Simulation:

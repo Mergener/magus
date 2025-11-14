@@ -2,7 +2,7 @@ import pygame as pg
 
 from client.behaviours.camera import Camera
 from client.behaviours.network_behaviour import NetworkBehaviour
-from common.engine.behaviour import Behaviour
+from common.behaviour import Behaviour
 
 
 class Player(NetworkBehaviour):

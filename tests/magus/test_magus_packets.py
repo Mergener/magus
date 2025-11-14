@@ -1,9 +1,9 @@
 from typing import cast
 
-from common.engine.binary import ByteReader, ByteWriter
-from common.engine.network import Packet, register_packets
-from common.magus.entity_type import EntityType
-from common.magus.packets import CreateEntity
+from common.binary import ByteReader, ByteWriter
+from common.network import Packet, register_packets
+from game.entity_type import EntityType
+from game.packets import CreateEntity
 
 
 def test_packets_simmetry():
