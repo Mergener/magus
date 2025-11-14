@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import traceback
 from typing import TYPE_CHECKING, Self, cast
 
 if TYPE_CHECKING:
@@ -217,7 +218,8 @@ def _get_behaviour_type_by_name(name: str | None):
         module = importlib.import_module(module_name)
         bt = getattr(module, class_name)
     except Exception as e:
-        print(f"Failed to import module {module_name}: {e}")
+        trace = traceback.format_exc()
+        print(f"Failed to import module {module_name}: {trace}")
         return None
 
     _behaviour_types[name] = bt

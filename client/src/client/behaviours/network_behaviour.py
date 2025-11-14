@@ -9,12 +9,10 @@ if TYPE_CHECKING:
 
 
 class NetworkBehaviour(Behaviour, ABC):
-    _net_entity: NetworkEntity
-
     def net_entity(self):
         from client.behaviours.network_entity import NetworkEntity
 
-        if self._net_entity is None:
+        if self._net_entity is None:  # type: ignore
             if self.__class__ == NetworkEntity:
                 self._net_entity = cast(NetworkEntity, self)
             else:
