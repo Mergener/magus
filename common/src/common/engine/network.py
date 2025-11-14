@@ -145,6 +145,7 @@ class NetPeer:
 
 class Network(ABC):
     def __init__(self):
+        self._listener_id = 0
         self._listeners: defaultdict[type, list[Callable[[Packet, NetPeer], None]]] = (
             defaultdict(list)
         )
@@ -207,7 +208,9 @@ class Network(ABC):
                 )
 
     def listen[T: Packet](self, t: type[T], listener: Callable[[T, NetPeer], None]):
-        self._listeners[t].append(cast(Callable[[Packet, NetPeer], None], listener))
+        listener = cast(Callable[[Packet, NetPeer], None], listener)
+        self._listeners[t].append(listener)
+        return listener
 
     def unlisten[T: Packet](self, t: type[T], listener: Callable[[T, NetPeer], None]):
         l = self._listeners[t]

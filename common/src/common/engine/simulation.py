@@ -9,7 +9,7 @@ from common.engine.utils import overrides_method
 
 
 class Simulation:
-    def __init__(self, tick_rate: float = 1 / 15):
+    def __init__(self, tick_rate: float = 15):
         self.tick_rate = tick_rate
         self._last_tick: float = 0
         self._tick_accum_time: float = 0
@@ -32,6 +32,14 @@ class Simulation:
     @property
     def tick_id(self):
         return self._tick_id
+
+    @property
+    def tick_rate(self):
+        return 1 / self.tick_interval
+
+    @tick_rate.setter
+    def tick_rate(self, tick_rate):
+        self.tick_interval = 1 / tick_rate
 
     def add_updatable(self, b: Behaviour):
         if not b._started:
@@ -71,8 +79,8 @@ class Simulation:
         self._will_stop_updating.clear()
         self._will_stop_ticking.clear()
 
-        if self._tick_accum_time > self.tick_rate:
-            self._tick_accum_time -= self.tick_rate
+        if self._tick_accum_time > self.tick_interval:
+            self._tick_accum_time -= self.tick_interval
             for t in self._updatables:
                 t.on_tick(self._tick_id)
             self._tick_id += 1

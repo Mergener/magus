@@ -13,9 +13,12 @@ class NetworkBehaviour(Behaviour, ABC):
         from client.behaviours.network_entity import NetworkEntity
 
         if self._net_entity is None:
-            self._net_entity: NetworkEntity = cast(
-                NetworkEntity, self.node.get_behaviour(NetworkEntity)
-            )
+            if self.__class__ == NetworkEntity:
+                self._net_entity = self
+            else:
+                self._net_entity = self.node.get_behaviour(NetworkEntity)
+                if self._net_entity is None:
+                    self._net_entity = self.node.add_behaviour(NetworkEntity)
         return self._net_entity
 
     @abstractmethod

@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     game = Game(
         display=pg.display.set_mode((1280, 720)),
-        scene=load_node_asset("objects/base-scene.json"),
+        scene=load_node_asset("scenes/game.json"),
         network=NetClient("localhost", 16214),
     )
 

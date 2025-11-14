@@ -13,13 +13,22 @@ class NetworkManager(Behaviour):
     def on_start(self):
         assert self.game
         self._entities = {}
-        self.game.network.listen(
+        self._create_entity_listener = self.game.network.listen(
             CreateEntity,
             lambda msg, _: self.on_create_entity(msg),
         )
-        self.game.network.listen(
+        self._destroy_entity_listener = self.game.network.listen(
             DestroyEntity, lambda msg, _: self.on_destroy_entity(msg)
         )
+        self._entity_packet_listener = self.game.network.listen(
+            EntityPacket, lambda msg, _: self.on_entity_packet(msg)
+        )
+
+    def on_destroy(self):
+        assert self.game
+        self.game.network.unlisten(CreateEntity, self._create_entity_listener)
+        self.game.network.unlisten(DestroyEntity, self._destroy_entity_listener)
+        self.game.network.unlisten(EntityPacket, self._entity_packet_listener)
 
     def get_entity_by_id(self, id: int) -> Node | None:
         return self._entities.get(id)
