@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 from typing import TYPE_CHECKING, Self, cast
 
 if TYPE_CHECKING:
@@ -145,6 +146,8 @@ class Node:
         return out_dict
 
     def deserialize(self, in_dict: dict):
+        from common.engine.transform import Transform
+
         self._name = in_dict.get("name")
 
         dict_children = in_dict.get("children", [])
@@ -194,8 +197,6 @@ def _get_behaviour_type_name(b: Behaviour | type[Behaviour]):
 
 
 def _get_behaviour_type_by_name(name: str | None):
-    from common.engine.behaviour import Behaviour
-
     global _behaviour_types
 
     if name is None:
@@ -203,8 +204,24 @@ def _get_behaviour_type_by_name(name: str | None):
 
     if _behaviour_types is None:
         _behaviour_types = {}
+        from common.engine.behaviour import Behaviour
+
         _import_behaviour_types_from_superclass(Behaviour)
-    return _behaviour_types[name]
+
+    bt = _behaviour_types.get(name)
+    if bt is not None:
+        return bt
+
+    try:
+        module_name, class_name = name.rsplit(".", 1)
+        module = importlib.import_module(module_name)
+        bt = getattr(module, class_name)
+    except Exception as e:
+        print(f"Failed to import module {module_name}: {e}")
+        return None
+
+    _behaviour_types[name] = bt
+    return bt
 
 
 def _import_behaviour_types_from_superclass(cls: type[Behaviour]):

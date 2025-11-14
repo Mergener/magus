@@ -10,7 +10,7 @@ del Magus.spec 2>nul
 mkdir bin
 mkdir tmp\build
 
-pyinstaller client\__main__.py ^
+pyinstaller client\src\client\__main__.py ^
   --onefile ^
   --noconsole ^
   --paths=common ^
@@ -18,7 +18,9 @@ pyinstaller client\__main__.py ^
   --name "Magus" ^
   --distpath bin ^
   --workpath tmp\build ^
-  --clean
+  --collect-all client ^
+  --collect-all common ^
+  --clean 
 
 echo Build complete: bin\Magus.exe
 pause
