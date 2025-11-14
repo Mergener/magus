@@ -1,7 +1,7 @@
 import pygame as pg
 
 from client.behaviours.network_behaviour import NetworkBehaviour
-from game.packets import PositionUpdate
+from common.packets import PositionUpdate
 
 
 class NetworkEntity(NetworkBehaviour):

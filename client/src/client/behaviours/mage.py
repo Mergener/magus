@@ -1,5 +1,5 @@
 from client.behaviours.network_behaviour import NetworkBehaviour
-from game.packets import EntityPacket
+from common.packets import EntityPacket
 
 
 class Mage(NetworkBehaviour):

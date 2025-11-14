@@ -4,7 +4,8 @@ from client.behaviours.network_entity import NetworkEntity
 from common.assets import load_node_asset
 from common.behaviour import Behaviour
 from common.node import Node
-from game.packets import CreateEntity, DestroyEntity, EntityPacket
+from common.packets import EntityPacket
+from game.packets import CreateEntity, DestroyEntity
 
 
 class NetworkManager(Behaviour):
@@ -54,5 +55,3 @@ class NetworkManager(Behaviour):
         for b in entity.behaviours:
             if not isinstance(b, NetworkBehaviour):
                 continue
-
-            b.handle_packet(packet)
