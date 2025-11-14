@@ -57,3 +57,9 @@ class NetServer(Network):
             p.disconnect()
         self._peers = {}
         self._host.destroy()
+
+    def is_server(self) -> bool:
+        return True
+
+    def is_client(self) -> bool:
+        return False

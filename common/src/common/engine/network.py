@@ -151,6 +151,16 @@ class Network(ABC):
         )
 
     @abstractmethod
+    def is_server(self) -> bool:
+        """Whether this is a server or not. Not necessarily equal to 'not is_client'"""
+        pass
+
+    @abstractmethod
+    def is_client(self) -> bool:
+        """Whether this is a client or not. Not necessarily equal to 'not is_server'"""
+        pass
+
+    @abstractmethod
     def disconnect(self):
         pass
 

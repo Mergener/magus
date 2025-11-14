@@ -57,3 +57,9 @@ class NetClient(Network):
             return
 
         self._peer.disconnect()
+
+    def is_server(self) -> bool:
+        return False
+
+    def is_client(self) -> bool:
+        return True
