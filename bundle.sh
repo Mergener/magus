@@ -14,6 +14,8 @@ pyinstaller client/__main__.py \
   --name "Magus" \
   --distpath bin \
   --workpath tmp/build \
+  --collect-all client \
+  --collect-all common \
   --clean
 
 echo "Build complete: bin/Magus"

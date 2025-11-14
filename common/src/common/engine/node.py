@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 from typing import TYPE_CHECKING, Self, cast
 
 if TYPE_CHECKING:
@@ -9,9 +10,10 @@ if TYPE_CHECKING:
 
 
 class Node:
-    def __init__(self, game: Game | None = None):
+    def __init__(self, game: Game | None = None, name: str | None = None):
         from common.engine.transform import Transform
 
+        self._name = name
         self._children: list[Self] = []
         self._parent: Self | None = None
         self._behaviours: list[Behaviour] = []
@@ -21,6 +23,10 @@ class Node:
     @property
     def game(self) -> Game | None:
         return self._game
+
+    @property
+    def name(self):
+        return self._name or "<unnamed>"
 
     def bind_to_game(self, game: Game):
         if self._game == game:
@@ -61,6 +67,10 @@ class Node:
     def remove_child(self, child: Self):
         if child.parent == self:
             child.parent = None
+
+    @property
+    def children(self):
+        return iter(self._children)
 
     @property
     def behaviours(self):
@@ -106,3 +116,118 @@ class Node:
         self._children.clear()
         if self._game is not None:
             self._game = None
+
+    def serialize(self, out_dict: dict | None = None) -> dict:
+        if out_dict is None:
+            out_dict = {}
+
+        if self._name is not None:
+            out_dict["name"] = self._name
+
+        children = []
+        for c in self.children:
+            cd: dict = {}
+            c.serialize(cd)
+            children.append(cd)
+        out_dict["children"] = children
+
+        behaviours = []
+        for b in self._behaviours:
+            bd = {
+                "__type": _get_behaviour_type_name(b),
+                "receive_updates": b.receive_updates,
+                "visible": b.visible,
+            }
+
+            b.on_serialize(bd)
+            behaviours.append(bd)
+        out_dict["behaviours"] = behaviours
+
+        return out_dict
+
+    def deserialize(self, in_dict: dict):
+        from common.engine.transform import Transform
+
+        self._name = in_dict.get("name")
+
+        dict_children = in_dict.get("children", [])
+        dict_behaviours = in_dict.get("behaviours", [])
+        for dc in dict_children:
+            node = Node(self.game)
+            node.parent = self
+            node.deserialize(dc)
+
+        created_transform = False
+        for db in dict_behaviours:
+            behaviour_type = _get_behaviour_type_by_name(db.get("__type"))
+            if behaviour_type is None:
+                continue
+
+            if behaviour_type == Transform:
+                created_transform = True
+
+            b = self.add_behaviour(behaviour_type)
+            b.on_deserialize(db)
+            b.receive_updates = db.get("receive_updates", True)
+            b.visible = db.get("visible", True)
+
+        if not created_transform:
+            self.add_behaviour(Transform)
+            self._behaviours.insert(0, self._behaviours.pop())
+
+        return self
+
+    def clone(self):
+        # TODO: Improve performance
+        data = self.serialize()
+        new_node = Node(self._game)
+        new_node.deserialize(data)
+        return new_node
+
+
+_behaviour_types: dict[str, type[Behaviour]] | None = None
+
+
+def _get_behaviour_type_name(b: Behaviour | type[Behaviour]):
+    from common.engine.behaviour import Behaviour
+
+    if isinstance(b, Behaviour):
+        b = b.__class__
+    return f"{b.__module__}.{b.__name__}"
+
+
+def _get_behaviour_type_by_name(name: str | None):
+    global _behaviour_types
+
+    if name is None:
+        return None
+
+    if _behaviour_types is None:
+        _behaviour_types = {}
+        from common.engine.behaviour import Behaviour
+
+        _import_behaviour_types_from_superclass(Behaviour)
+
+    bt = _behaviour_types.get(name)
+    if bt is not None:
+        return bt
+
+    try:
+        module_name, class_name = name.rsplit(".", 1)
+        module = importlib.import_module(module_name)
+        bt = getattr(module, class_name)
+    except Exception as e:
+        print(f"Failed to import module {module_name}: {e}")
+        return None
+
+    _behaviour_types[name] = bt
+    return bt
+
+
+def _import_behaviour_types_from_superclass(cls: type[Behaviour]):
+    global _behaviour_types
+    assert _behaviour_types is not None
+
+    for bt in cls.__subclasses__():
+        _behaviour_types[_get_behaviour_type_name(bt)] = bt
+        _import_behaviour_types_from_superclass(bt)

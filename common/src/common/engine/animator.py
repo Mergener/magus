@@ -1,5 +1,6 @@
-from client.animation import Animation
 from client.behaviours.sprite_renderer import SpriteRenderer
+from common.engine.animation import Animation
+from common.engine.assets import load_animation_asset
 from common.engine.behaviour import Behaviour
 from common.engine.node import Node
 
@@ -32,4 +33,12 @@ class Animator(Behaviour):
             self._accum_time -= interval
             self._frame_idx = (self._frame_idx + 1) % len(self.animation.frames)
             current_frame = self.animation.frames[self._frame_idx]
-            self._sprite_renderer.texture = current_frame.texture
+            self._sprite_renderer.texture = current_frame.image.pygame_surface
+
+    def on_serialize(self, out_dict: dict):
+        if self.animation:
+            out_dict["animation"] = self.animation.path
+
+    def on_deserialize(self, in_dict: dict):
+        dict_anim = in_dict.get("animation", "")
+        self.animation = load_animation_asset(dict_anim)

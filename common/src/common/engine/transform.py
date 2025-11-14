@@ -52,3 +52,26 @@ class Transform(Behaviour):
     def position(self, new_pos: pg.Vector2):
         delta = new_pos - self.position
         self.local_position += delta
+
+    def on_serialize(self, out_dict: dict):
+        out_dict["local_position"] = {
+            "x": self._local_position.x,
+            "y": self._local_position.y,
+        }
+        out_dict["local_scale"] = {"x": self._local_scale.x, "y": self._local_scale.y}
+        out_dict["rotation"] = self._rotation
+
+    def on_deserialize(self, in_dict: dict):
+        self._local_position = pg.Vector2(0, 0)
+        pos_dict = in_dict.get("local_position")
+        if pos_dict:
+            self._local_position.x = pos_dict["x"]
+            self._local_position.y = pos_dict["y"]
+
+        self._local_scale = pg.Vector2(0, 0)
+        scale_dict = in_dict.get("local_scale")
+        if scale_dict:
+            self._local_scale.x = scale_dict["x"]
+            self._local_scale.y = scale_dict["y"]
+
+        self._rotation = in_dict.get("rotation", 0)

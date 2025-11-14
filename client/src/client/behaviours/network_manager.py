@@ -1,5 +1,7 @@
+from client.behaviours.entities import NETWORK_ENTITIES_ASSETS
 from client.behaviours.network_behaviour import NetworkBehaviour
 from client.behaviours.network_entity import NetworkEntity
+from common.engine.assets import load_node_asset
 from common.engine.behaviour import Behaviour
 from common.engine.node import Node
 from common.magus.packets import CreateEntity, DestroyEntity, EntityPacket
@@ -24,10 +26,10 @@ class NetworkManager(Behaviour):
 
     def on_create_entity(self, packet: CreateEntity):
         assert self.game
-        node = self.game.scene.add_child()
+        node = load_node_asset(NETWORK_ENTITIES_ASSETS[packet.type_id])
+        self.game.scene.add_child(node)
         entity = node.add_behaviour(NetworkEntity)
         entity._id = packet.id
-        entity.setup(packet.type_id)
 
         self._entities[packet.id] = node
 
