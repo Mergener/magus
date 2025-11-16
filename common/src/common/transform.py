@@ -43,15 +43,26 @@ class Transform(Behaviour):
 
     @property
     def position(self):
-        position = self._local_position
         if self.parent is not None:
-            position += self.parent.transform.position
-        return position
+            parent_position = self.parent.transform.position
+            parent_rotation = self.parent.transform.rotation
+            local_pos_offset = self.local_position.rotate(parent_rotation)
+            return local_pos_offset + parent_position
+        else:
+            return self._local_position
 
     @position.setter
     def position(self, new_pos: pg.Vector2):
         delta = new_pos - self.position
         self.local_position += delta
+
+    @property
+    def rotation(self):
+        return self._rotation
+
+    @rotation.setter
+    def rotation(self, rot: float):
+        self._rotation = rot
 
     def on_serialize(self, out_dict: dict):
         out_dict["local_position"] = {

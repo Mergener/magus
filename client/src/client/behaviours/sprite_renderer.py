@@ -1,3 +1,4 @@
+import math
 from typing import cast
 
 import pygame as pg
@@ -15,6 +16,7 @@ class SpriteRenderer(Behaviour):
     _active_texture: pg.Surface | None
     _scaled_dimensions: pg.Vector2
     _cached_scale: pg.Vector2
+    _cached_rot: float
     _tint: pg.Color
     _texture_asset: str | None
 
@@ -24,6 +26,7 @@ class SpriteRenderer(Behaviour):
         self._active_texture = None
         self._dimensions = pg.Vector2(0, 0)
         self._cached_scale = self.transform.scale
+        self._cached_rot = self.transform.rotation
         self._scaled_dimensions = pg.Vector2(0, 0)
         self._tint = pg.Color(255, 255, 255, 255)
 
@@ -37,8 +40,11 @@ class SpriteRenderer(Behaviour):
         self._scaled_dimensions = memberwise_multiply(self._dimensions, scale)
         scaled_texture = pg.transform.scale(self._texture, self._scaled_dimensions)
 
-        tinted_texture = scaled_texture.copy()
+        rotated_texture = pg.transform.rotate(scaled_texture, self.transform.rotation)
+
+        tinted_texture = rotated_texture.copy()
         tinted_texture.fill(self.tint, special_flags=pg.BLEND_RGBA_MULT)
+
         self._active_texture = tinted_texture
 
     @property
@@ -69,15 +75,21 @@ class SpriteRenderer(Behaviour):
         if self._active_texture is None:
             return
 
-        if self._cached_scale != self.transform.scale:
+        if (
+            self._cached_scale != self.transform.scale
+            or self._cached_rot != self.transform.rotation
+        ):
             self._refresh_active_texture()
 
         camera = Camera.main
         if camera is None or self.game is None or self.game.display is None:
             return
 
-        dim = memberwise_multiply(self._dimensions, self.transform.scale)
-        pos = camera.world_to_screen_space(self.transform.position - dim / 2)
+        offset = memberwise_multiply(self._dimensions, self.transform.scale)
+        if self.parent:
+            offset.rotate(self.parent.transform.rotation)
+
+        pos = camera.world_to_screen_space(self.transform.position - offset / 2)
 
         self.game.display.blit(
             self._active_texture, pg.Rect(pos, self._scaled_dimensions)

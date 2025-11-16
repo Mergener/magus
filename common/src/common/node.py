@@ -179,6 +179,8 @@ class Node:
         return self
 
     def _ensure_transform_is_first_behaviour(self):
+        from common.transform import Transform
+
         if len(self._behaviours) > 0 and isinstance(self._behaviours[0], Transform):
             return
 
