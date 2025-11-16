@@ -5,6 +5,7 @@ import pygame as pg
 from client.behaviours.camera import Camera
 from common.assets import load_image_asset
 from common.behaviour import Behaviour
+from common.transform import Transform
 from common.utils import memberwise_multiply
 
 

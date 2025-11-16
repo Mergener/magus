@@ -158,25 +158,43 @@ class Node:
             node.parent = self
             node.deserialize(dc)
 
-        created_transform = False
         for db in dict_behaviours:
             behaviour_type = _get_behaviour_type_by_name(db.get("__type"))
             if behaviour_type is None:
                 continue
 
-            if behaviour_type == Transform:
-                created_transform = True
+            if behaviour_type is not Transform:
+                b = self.add_behaviour(behaviour_type)
+            else:
+                b = self.get_behaviour(Transform)
+                if b is None:
+                    b = self.add_behaviour(Transform)
 
-            b = self.add_behaviour(behaviour_type)
             b.on_deserialize(db)
             b.receive_updates = db.get("receive_updates", True)
             b.visible = db.get("visible", True)
 
-        if not created_transform:
-            self.add_behaviour(Transform)
-            self._behaviours.insert(0, self._behaviours.pop())
+        self._ensure_transform_is_first_behaviour()
 
         return self
+
+    def _ensure_transform_is_first_behaviour(self):
+        if len(self._behaviours) > 0 and isinstance(self._behaviours[0], Transform):
+            return
+
+        existing_idx = -1
+        for i in range(1, len(self._behaviours)):
+            if isinstance(self._behaviours[i], Transform):
+                existing_idx = i
+                break
+
+        if existing_idx == -1:
+            transform = self.add_behaviour(Transform)
+        else:
+            transform = self._behaviours[existing_idx]
+            del self._behaviours[existing_idx]
+
+        self._behaviours.insert(0, transform)
 
     def clone(self):
         # TODO: Improve performance
