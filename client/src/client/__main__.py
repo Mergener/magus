@@ -9,9 +9,9 @@ from sys import stderr
 
 import pygame as pg
 
-from client.behaviours.camera import *  # type: ignore
 from client.netclient import NetClient
 from common.assets import load_node_asset
+from common.behaviours.camera import *  # type: ignore
 from common.game import Game
 from common.network import auto_resolve_packets
 

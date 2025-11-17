@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING, Self, cast
 
 if TYPE_CHECKING:
     from common.behaviour import Behaviour
+    from common.behaviours.transform import Transform
     from common.game import Game
-    from common.transform import Transform
 
 
 class Node:
     def __init__(self, game: Game | None = None, name: str | None = None):
-        from common.transform import Transform
+        from common.behaviours.transform import Transform
 
         self._name = name
         self._children: list[Self] = []
@@ -92,7 +92,7 @@ class Node:
 
     @property
     def transform(self) -> Transform:
-        from common.transform import Transform
+        from common.behaviours.transform import Transform
 
         return cast(Transform, self._behaviours[0])
 
@@ -147,7 +147,7 @@ class Node:
         return out_dict
 
     def deserialize(self, in_dict: dict):
-        from common.transform import Transform
+        from common.behaviours.transform import Transform
 
         self._name = in_dict.get("name")
 
@@ -179,7 +179,7 @@ class Node:
         return self
 
     def _ensure_transform_is_first_behaviour(self):
-        from common.transform import Transform
+        from common.behaviours.transform import Transform
 
         if len(self._behaviours) > 0 and isinstance(self._behaviours[0], Transform):
             return

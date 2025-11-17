@@ -1,7 +1,7 @@
-from client.behaviours.camera import Camera
 from client.behaviours.network_manager import NetworkManager
 from client.behaviours.player import Player
 from common.behaviour import Behaviour
+from common.behaviours.camera import Camera
 from common.node import Node
 from game.packets import JoinGameRequest, JoinGameResponse, PlayerJoined
 

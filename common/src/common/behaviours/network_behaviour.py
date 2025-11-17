@@ -5,12 +5,12 @@ from common.behaviour import Behaviour
 from common.packets import EntityPacket
 
 if TYPE_CHECKING:
-    from client.behaviours.network_entity import NetworkEntity
+    from common.behaviours.network_entity import NetworkEntity
 
 
 class NetworkBehaviour(Behaviour, ABC):
     def net_entity(self):
-        from client.behaviours.network_entity import NetworkEntity
+        from common.behaviours.network_entity import NetworkEntity
 
         if self._net_entity is None:  # type: ignore
             if self.__class__ == NetworkEntity:

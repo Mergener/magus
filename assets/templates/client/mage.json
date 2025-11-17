@@ -3,18 +3,18 @@
   "children": [],
   "behaviours": [
     {
-      "__type": "common.transform.Transform",
+      "__type": "common.behaviours.transform.Transform",
       "local_position": { "x": 250.0, "y": 0.0 },
       "local_scale": { "x": 2.0, "y": 2.0 },
       "rotation": 60
     },
-    { "__type": "client.behaviours.network_entity.NetworkEntity" },
+    { "__type": "common.behaviours.network_entity.NetworkEntity" },
     {
-      "__type": "client.behaviours.sprite_renderer.SpriteRenderer",
+      "__type": "common.behaviours.sprite_renderer.SpriteRenderer",
       "texture": null
     },
     {
-      "__type": "common.animator.Animator",
+      "__type": "common.behaviours.animator.Animator",
       "animation": "animations/mage-animation.json"
     },
     { "__type": "client.behaviours.mage.Mage" }

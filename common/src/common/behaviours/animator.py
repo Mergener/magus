@@ -1,7 +1,7 @@
-from client.behaviours.sprite_renderer import SpriteRenderer
 from common.animation import Animation
 from common.assets import load_animation_asset
 from common.behaviour import Behaviour
+from common.behaviours.sprite_renderer import SpriteRenderer
 from common.node import Node
 
 

@@ -1,6 +1,6 @@
 import pygame as pg
 
-from client.behaviours.network_behaviour import NetworkBehaviour
+from common.behaviours.network_behaviour import NetworkBehaviour
 from common.packets import PositionUpdate
 
 

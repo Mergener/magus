@@ -1,8 +1,8 @@
 from client.behaviours.entities import NETWORK_ENTITIES_ASSETS
-from client.behaviours.network_behaviour import NetworkBehaviour
-from client.behaviours.network_entity import NetworkEntity
 from common.assets import load_node_asset
 from common.behaviour import Behaviour
+from common.behaviours.network_behaviour import NetworkBehaviour
+from common.behaviours.network_entity import NetworkEntity
 from common.node import Node
 from common.packets import EntityPacket
 from game.packets import CreateEntity, DestroyEntity

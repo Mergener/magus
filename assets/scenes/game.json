@@ -4,18 +4,18 @@
       "children": [],
       "behaviours": [
         {
-          "__type": "common.transform.Transform",
+          "__type": "common.behaviours.transform.Transform",
           "local_position": { "x": 0.0, "y": 0.0 },
           "local_scale": { "x": 1.0, "y": 1.0 },
           "rotation": 0
         },
-        { "__type": "client.behaviours.camera.Camera" }
+        { "__type": "common.behaviours.camera.Camera" }
       ]
     }
   ],
   "behaviours": [
     {
-      "__type": "common.transform.Transform",
+      "__type": "common.behaviours.transform.Transform",
       "local_position": { "x": 0.0, "y": 0.0 },
       "local_scale": { "x": 1.0, "y": 1.0 },
       "rotation": 0
