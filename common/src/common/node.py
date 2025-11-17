@@ -90,6 +90,12 @@ class Node:
         b.receive_updates = b.receive_updates
         return b
 
+    def get_or_add_behaviour[T: Behaviour](self, tb: type[T]) -> T:
+        b = self.get_behaviour(tb)
+        if b is not None:
+            return b
+        return self.add_behaviour(tb)
+
     @property
     def transform(self) -> Transform:
         from common.behaviours.transform import Transform
