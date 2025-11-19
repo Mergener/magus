@@ -7,19 +7,29 @@ from game.entity_type import EntityType
 
 
 class EntityPacket(Packet, ABC):
-    def __init__(self, id: int):
+    def __init__(self, id: int, tick_id: int | None):
         self.id = id
+        self.tick_id = tick_id
 
     def on_write(self, writer: ByteWriter):
-        writer.write_int32(self.id)
+        if self.tick_id is not None:
+            writer.write_int32(-self.id)
+            writer.write_uint32(self.tick_id)
+        else:
+            writer.write_int32(self.id)
 
     def on_read(self, reader: ByteReader):
         self.id = reader.read_int32()
+        if self.id < 0:
+            self.id = -self.id
+            self.tick_id = reader.read_uint32()
+        else:
+            self.tick_id = None
 
 
 class PositionUpdate(EntityPacket):
     def __init__(self, tick_id: int, id: int, x: float, y: float):
-        super().__init__(id)
+        super().__init__(id, tick_id)
         self.tick_id = tick_id
         self.x = x
         self.y = y
@@ -43,7 +53,7 @@ class PositionUpdate(EntityPacket):
 
 class ScaleUpdate(EntityPacket):
     def __init__(self, tick_id: int, id: int, x: float, y: float):
-        super().__init__(id)
+        super().__init__(id, tick_id)
         self.tick_id = tick_id
         self.x = x
         self.y = y
@@ -67,19 +77,19 @@ class ScaleUpdate(EntityPacket):
 
 class RotationUpdate(EntityPacket):
     def __init__(self, tick_id: int, id: int, rot: float):
-        super().__init__(id)
+        super().__init__(id, tick_id)
         self.tick_id = tick_id
-        self.rot = rot
+        self.rotation = rot
 
     def on_write(self, writer: ByteWriter):
         super().on_write(writer)
         writer.write_uint32(self.tick_id)
-        writer.write_float32(self.rot)
+        writer.write_float32(self.rotation)
 
     def on_read(self, reader: ByteReader):
         super().on_read(reader)
         self.tick_id = reader.read_uint32()
-        self.rot = reader.read_float32()
+        self.rotation = reader.read_float32()
 
     @property
     def delivery_mode(self) -> DeliveryMode:

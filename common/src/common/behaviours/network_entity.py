@@ -3,7 +3,13 @@ from typing import Callable, cast
 import pygame as pg
 
 from common.behaviour import Behaviour
-from common.packets import EntityPacket, PositionUpdate
+from common.packets import EntityPacket, PositionUpdate, RotationUpdate, ScaleUpdate
+
+
+class _PacketListenerState:
+    def __init__(self, listener: Callable[[EntityPacket], None]):
+        self.listener = listener
+        self.last_received_tick = 0
 
 
 class NetworkEntity(Behaviour):
@@ -12,19 +18,15 @@ class NetworkEntity(Behaviour):
         self._prev_pos = pg.Vector2(0, 0)
         self._approx_speed = pg.Vector2(0, 0)
         self._last_updated_tick = 0
-        self._packet_listeners: dict[
-            type[EntityPacket], list[Callable[[EntityPacket], None]]
-        ] = {}
+        self._packet_listeners: dict[type[EntityPacket], list[_PacketListenerState]] = (
+            {}
+        )
+
+        self.listen(PositionUpdate, lambda msg: self.on_position_update(msg))
 
     @property
     def id(self):
         return self._id
-
-    def on_start(self):
-        assert self.game
-        self._position_listener = self.game.network.listen(
-            PositionUpdate, lambda p, _: self.on_position_update(p)
-        )
 
     def on_position_update(self, packet: PositionUpdate):
         assert self.game
@@ -41,6 +43,12 @@ class NetworkEntity(Behaviour):
         self._last_updated_tick = packet.tick_id
         self._prev_pos = new_pos
 
+    def on_rotation_update(self, packet: RotationUpdate):
+        self.transform.rotation = packet.rotation
+
+    def on_scale_update(self, packet: ScaleUpdate):
+        self.transform.local_scale = pg.Vector2(packet.x, packet.y)
+
     def on_update(self, dt: float):
         curr_local_pos = self.transform.local_position
         self.transform.local_position = curr_local_pos + self._approx_speed * dt
@@ -51,7 +59,12 @@ class NetworkEntity(Behaviour):
             return
 
         for h in handlers:
-            h(packet)
+            if packet.tick_id is not None:
+                if h.last_received_tick > packet.tick_id:
+                    continue
+                h.last_received_tick = packet.tick_id
+
+            h.listener(packet)
 
     def listen[
         T: EntityPacket
@@ -60,7 +73,9 @@ class NetworkEntity(Behaviour):
         if listeners is None:
             listeners = []
             self._packet_listeners[packet_type] = listeners
-        listeners.append(cast(Callable[[EntityPacket], None], listener))
+        listeners.append(
+            _PacketListenerState(cast(Callable[[EntityPacket], None], listener))
+        )
 
     def on_destroy(self):
         self._packet_listeners.clear()
