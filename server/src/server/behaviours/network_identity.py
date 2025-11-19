@@ -20,4 +20,4 @@ class NetworkIdentity(Behaviour):
             if parent_identity is not None:
                 parent_id = parent_identity._id
 
-        self.game.network.publish(CreateEntity(self._id, EntityType.MAGE, parent_id))
+        self.game.network.publish(CreateEntity(self._id, 0, parent_id))

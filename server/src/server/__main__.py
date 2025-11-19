@@ -11,7 +11,7 @@ from server.netserver import NetServer
 
 def handle_join_request(join_req: JoinGameRequest, peer: NetPeer):
     peer.send(JoinGameResponse())
-    peer.send(CreateEntity(0, EntityType.MAGE))
+    peer.send(CreateEntity(0, 1))
 
 
 if __name__ == "__main__":

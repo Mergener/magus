@@ -46,7 +46,7 @@ class NetworkEntityManager(Behaviour):
                 file=stderr,
             )
             return
-        entity.handle_entity_packet(p)
+        entity._handle_entity_packet(p)
 
     def on_create_entity(self, p: CreateEntity):
         assert self.game

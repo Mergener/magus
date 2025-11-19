@@ -1,15 +1,20 @@
+from typing import Callable, cast
+
 import pygame as pg
 
-from common.behaviours.network_behaviour import NetworkBehaviour
+from common.behaviour import Behaviour
 from common.packets import EntityPacket, PositionUpdate
 
 
-class NetworkEntity(NetworkBehaviour):
+class NetworkEntity(Behaviour):
     def on_init(self):
         self._id: int = -1
         self._prev_pos = pg.Vector2(0, 0)
         self._approx_speed = pg.Vector2(0, 0)
         self._last_updated_tick = 0
+        self._packet_listeners: dict[
+            type[EntityPacket], list[Callable[[EntityPacket], None]]
+        ] = {}
 
     @property
     def id(self):
@@ -40,9 +45,22 @@ class NetworkEntity(NetworkBehaviour):
         curr_local_pos = self.transform.local_position
         self.transform.local_position = curr_local_pos + self._approx_speed * dt
 
-    def on_destroy(self):
-        assert self.game
-        self.game.network.unlisten(PositionUpdate, self._position_listener)
+    def _handle_entity_packet(self, packet: EntityPacket):
+        handlers = self._packet_listeners[packet.__class__]
+        if handlers is None:
+            return
 
-    def handle_entity_packet(self, packet: EntityPacket):
-        pass
+        for h in handlers:
+            h(packet)
+
+    def listen[
+        T: EntityPacket
+    ](self, packet_type: type[T], listener: Callable[[T], None]):
+        listeners = self._packet_listeners.get(packet_type)
+        if listeners is None:
+            listeners = []
+            self._packet_listeners[packet_type] = listeners
+        listeners.append(cast(Callable[[EntityPacket], None], listener))
+
+    def on_destroy(self):
+        self._packet_listeners.clear()

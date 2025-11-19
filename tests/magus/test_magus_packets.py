@@ -7,7 +7,7 @@ from game.entity_type import EntityType
 
 
 def test_packets_simmetry():
-    packets = [CreateEntity(0, EntityType.MAGE)]
+    packets = [CreateEntity(0, 1)]
 
     register_packets([packet.__class__ for packet in packets])
 

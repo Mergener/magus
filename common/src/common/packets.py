@@ -18,7 +18,7 @@ class EntityPacket(Packet, ABC):
 
 
 class PositionUpdate(EntityPacket):
-    def __init__(self, tick_id: int, id: int, x: int, y: int):
+    def __init__(self, tick_id: int, id: int, x: float, y: float):
         super().__init__(id)
         self.tick_id = tick_id
         self.x = x
