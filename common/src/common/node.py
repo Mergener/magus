@@ -199,7 +199,7 @@ class Node:
         if existing_idx == -1:
             transform = self.add_behaviour(Transform)
         else:
-            transform = self._behaviours[existing_idx]
+            transform = cast(Transform, self._behaviours[existing_idx])
             del self._behaviours[existing_idx]
 
         self._behaviours.insert(0, transform)

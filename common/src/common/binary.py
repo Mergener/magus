@@ -1,3 +1,4 @@
+import struct
 from io import BytesIO
 from typing import cast
 
@@ -21,6 +22,12 @@ class ByteReader:
 
     def read_int64(self) -> int:
         return int.from_bytes(self._stream.read(8), byteorder="little", signed=True)
+
+    def read_float32(self) -> float:
+        return struct.unpack("<f", self._stream.read(4))[0]
+
+    def read_float64(self) -> float:
+        return struct.unpack("<d", self._stream.read(8))[0]
 
     def read_str(self) -> str:
         n = self.read_int16()
@@ -62,6 +69,12 @@ class ByteWriter:
 
     def write_int64(self, i: int):
         self._stream.write(i.to_bytes(8, byteorder="little", signed=True))
+
+    def write_float32(self, f: float):
+        self._stream.write(struct.pack("<f", f))
+
+    def write_float64(self, f: float):
+        self._stream.write(struct.pack("<d", f))
 
     def write_str(self, s: str):
         encoded = s.encode()

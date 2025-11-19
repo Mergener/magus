@@ -11,6 +11,10 @@ class NetworkEntity(NetworkBehaviour):
         self._approx_speed = pg.Vector2(0, 0)
         self._last_updated_tick = 0
 
+    @property
+    def id(self):
+        return self._id
+
     def on_start(self):
         assert self.game
         self._position_listener = self.game.network.listen(

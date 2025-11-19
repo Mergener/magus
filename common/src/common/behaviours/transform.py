@@ -16,7 +16,7 @@ class Transform(Behaviour):
         super().__init__(node)
         self._local_position = pg.Vector2(0, 0)
         self._local_scale = pg.Vector2(1, 1)
-        self._rotation = 0
+        self._rotation = 0.0
 
     @property
     def local_scale(self):
