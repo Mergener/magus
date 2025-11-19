@@ -13,10 +13,9 @@ from client.netclient import NetClient
 from common.assets import load_node_asset
 from common.behaviours.camera import *  # type: ignore
 from common.game import Game
-from common.network import auto_resolve_packets
+from game.packets import JoinGameRequest
 
 if __name__ == "__main__":
-    auto_resolve_packets()
     pg.init()
 
     game = Game(
@@ -25,6 +24,8 @@ if __name__ == "__main__":
         network=NetClient("localhost", 16214),
         global_object=load_node_asset("global_object.json"),
     )
+
+    game.network.publish(JoinGameRequest())
 
     running = True
     while running:

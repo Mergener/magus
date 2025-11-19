@@ -1,11 +1,15 @@
+from __future__ import annotations
+
+from abc import ABC
 from sys import stderr
 from typing import cast
 
 from common.assets import load_node_asset
 from common.behaviour import Behaviour
-from common.behaviours.network_entity import NetworkEntity
+from common.behaviours.network_entity import EntityPacket, NetworkEntity
+from common.binary import ByteReader, ByteWriter
+from common.network import DeliveryMode, Packet
 from common.node import Node
-from common.packets import CreateEntity, DestroyEntity, EntityPacket
 
 
 class NetworkEntityManager(Behaviour):
@@ -52,6 +56,8 @@ class NetworkEntityManager(Behaviour):
     def on_create_entity(self, p: CreateEntity):
         assert self.game
 
+        print("Create entity invoked!")
+
         parent = self.game.scene
         if p.parent_id is not None:
             parent_entity = self._entities.get(p.parent_id)
@@ -83,3 +89,44 @@ class NetworkEntityManager(Behaviour):
 
     def on_deserialize(self, in_dict: dict):
         self._templates = in_dict.get("templates", [])
+
+
+class CreateEntity(Packet):
+    def __init__(self, id: int, type_id: int, parent_id: int | None = None):
+        self.id = id
+        self.parent_id = parent_id
+        self.template_id = type_id
+
+    def on_write(self, writer: ByteWriter):
+        if self.parent_id:
+            writer.write_int32(-self.id)
+            writer.write_int32(self.parent_id)
+        else:
+            writer.write_int32(self.id)
+        writer.write_uint8(self.template_id)
+
+    def on_read(self, reader: ByteReader):
+        self.id = reader.read_int32()
+        if self.id < 0:
+            self.id = -self.id
+            self.parent_id = reader.read_int32()
+        self.template_id = reader.read_uint8()
+
+    @property
+    def delivery_mode(self) -> DeliveryMode:
+        return DeliveryMode.RELIABLE_ORDERED
+
+
+class DestroyEntity(Packet):
+    def __init__(self, id: int):
+        self.id = id
+
+    def on_write(self, writer: ByteWriter):
+        writer.write_int32(self.id)
+
+    def on_read(self, reader: ByteReader):
+        self.id = reader.read_int32()
+
+    @property
+    def delivery_mode(self) -> DeliveryMode:
+        return DeliveryMode.RELIABLE_ORDERED

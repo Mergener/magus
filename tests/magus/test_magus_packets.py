@@ -1,8 +1,8 @@
 from typing import cast
 
+from common.behaviours.network_entity_manager import CreateEntity
 from common.binary import ByteReader, ByteWriter
 from common.network import Packet, register_packets
-from common.packets import CreateEntity
 from game.entity_type import EntityType
 
 

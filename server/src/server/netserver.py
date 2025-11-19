@@ -45,6 +45,7 @@ class NetServer(Network):
                     data = bytes(event.packet.data)
                     reader = ByteReader(data)
                     packet = Packet.decode(reader)
+                    print(f"Received {packet}")
                     self.notify(packet, net_peer)
 
             elif event.type == enet.EVENT_TYPE_DISCONNECT:

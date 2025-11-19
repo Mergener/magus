@@ -1,5 +1,8 @@
+from __future__ import annotations
+
+import hashlib
 import traceback
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from collections import defaultdict
 from enum import Enum
 from sys import stderr
@@ -45,7 +48,48 @@ class DeliveryMode(Enum):
         return cls.UNRELIABLE
 
 
-class Packet(ABC):
+class PacketMeta(ABCMeta):
+    def __init__(cls, name, bases, namespace):
+        super().__init__(name, bases, namespace)
+
+        if cls.__name__ == "Packet" or getattr(cls, "__abstractmethods__", False):
+            return
+
+        if any(isinstance(b, PacketMeta) for b in bases):
+            register_packets([cls])  # type: ignore
+
+
+_packet_types: list[type[Packet]] = []
+_packet_ids: dict[type[Packet], int] = {}
+_protocol_checksum: int = 0
+
+
+def register_packets(packets_to_register: list[type[Packet]]):
+    global _packet_ids, _packet_types, _initialized
+
+    _packet_types += packets_to_register  # type: ignore[type-abstract]
+    _packet_types = list(set(_packet_types))
+    _packet_types.sort(key=lambda c: f"{c.__module__}.{c.__name__}")
+    _packet_ids = {}
+
+    m = hashlib.sha256()
+
+    for i, c in enumerate(_packet_types):
+        _packet_ids[c] = i
+        m.update(f"#{i}-{c.__module__}.{c.__name__}".encode("utf-8"))
+
+    _packet_checksum = int(m.hexdigest()[:8], 16)
+
+    print(
+        f"New packet types added to registry (current checksum: {hex(_packet_checksum)}): {[f"{p.__module__}.{p.__name__}" for p in packets_to_register]}"
+    )
+
+
+def get_protocol_checksum():
+    return _protocol_checksum
+
+
+class Packet(ABC, metaclass=PacketMeta):
     @abstractmethod
     def on_write(self, writer: ByteWriter):
         pass
@@ -76,6 +120,9 @@ class Packet(ABC):
         packet_id = _packet_ids[self.__class__]
         writer.write_uint8(packet_id)
         self.on_write(writer)
+
+    def __str__(self):
+        return f"{type(self).__name__}: {self.__dict__}"
 
 
 class NullPacket(Packet):
@@ -246,23 +293,3 @@ class NullNetwork(Network):
 
     def is_client(self) -> bool:
         return True
-
-
-_packet_types: list[type[Packet]] = []
-_packet_ids: dict[type[Packet], int] = {}
-
-
-def auto_resolve_packets():
-    register_packets([c for c in Packet.__subclasses__()])  # type: ignore[type-abstract]
-
-
-def register_packets(packets_to_register: list[type[Packet]]):
-    global _packet_ids, _packet_types, _initialized
-
-    _packet_types += packets_to_register  # type: ignore[type-abstract]
-    _packet_types = list(set(_packet_types))
-    _packet_types.sort(key=lambda c: f"{c.__module__}.{c.__name__}")
-    _packet_ids = {}
-
-    for i, c in enumerate(_packet_types):
-        _packet_ids[c] = i

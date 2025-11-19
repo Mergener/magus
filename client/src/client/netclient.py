@@ -30,6 +30,7 @@ class NetClient(Network):
         if not self._peer:
             raise RuntimeError("Not connected to any host.")
 
+        print(f"Sending {packet}")
         self._peer.send(packet, override_delivery_mode)
 
     def poll(self):
@@ -45,6 +46,7 @@ class NetClient(Network):
 
                 reader = ByteReader(raw_data)
                 decoded = Packet.decode(reader)
+                print(f"Received {decoded}")
                 self.notify(decoded, self._peer)
 
             elif event.type == enet.EVENT_TYPE_DISCONNECT:

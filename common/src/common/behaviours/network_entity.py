@@ -1,9 +1,13 @@
+from __future__ import annotations
+
+from abc import ABC
 from typing import Callable, cast
 
 import pygame as pg
 
 from common.behaviour import Behaviour
-from common.packets import EntityPacket, PositionUpdate, RotationUpdate, ScaleUpdate
+from common.binary import ByteReader, ByteWriter
+from common.network import DeliveryMode, Packet
 
 
 class _PacketListenerState:
@@ -79,3 +83,93 @@ class NetworkEntity(Behaviour):
 
     def on_destroy(self):
         self._packet_listeners.clear()
+
+
+class EntityPacket(Packet, ABC):
+    def __init__(self, id: int, tick_id: int | None):
+        self.id = id
+        self.tick_id = tick_id
+
+    def on_write(self, writer: ByteWriter):
+        if self.tick_id is not None:
+            writer.write_int32(-self.id)
+            writer.write_uint32(self.tick_id)
+        else:
+            writer.write_int32(self.id)
+
+    def on_read(self, reader: ByteReader):
+        self.id = reader.read_int32()
+        if self.id < 0:
+            self.id = -self.id
+            self.tick_id = reader.read_uint32()
+        else:
+            self.tick_id = None
+
+
+class PositionUpdate(EntityPacket):
+    def __init__(self, tick_id: int, id: int, x: float, y: float):
+        super().__init__(id, tick_id)
+        self.tick_id = tick_id
+        self.x = x
+        self.y = y
+
+    def on_write(self, writer: ByteWriter):
+        super().on_write(writer)
+        writer.write_uint32(self.tick_id)
+        writer.write_float32(self.x)
+        writer.write_float32(self.y)
+
+    def on_read(self, reader: ByteReader):
+        super().on_read(reader)
+        self.tick_id = reader.read_uint32()
+        self.x = reader.read_float32()
+        self.y = reader.read_float32()
+
+    @property
+    def delivery_mode(self) -> DeliveryMode:
+        return DeliveryMode.UNRELIABLE
+
+
+class ScaleUpdate(EntityPacket):
+    def __init__(self, tick_id: int, id: int, x: float, y: float):
+        super().__init__(id, tick_id)
+        self.tick_id = tick_id
+        self.x = x
+        self.y = y
+
+    def on_write(self, writer: ByteWriter):
+        super().on_write(writer)
+        writer.write_uint32(self.tick_id)
+        writer.write_float32(self.x)
+        writer.write_float32(self.y)
+
+    def on_read(self, reader: ByteReader):
+        super().on_read(reader)
+        self.tick_id = reader.read_uint32()
+        self.x = reader.read_float32()
+        self.y = reader.read_float32()
+
+    @property
+    def delivery_mode(self) -> DeliveryMode:
+        return DeliveryMode.RELIABLE
+
+
+class RotationUpdate(EntityPacket):
+    def __init__(self, tick_id: int, id: int, rot: float):
+        super().__init__(id, tick_id)
+        self.tick_id = tick_id
+        self.rotation = rot
+
+    def on_write(self, writer: ByteWriter):
+        super().on_write(writer)
+        writer.write_uint32(self.tick_id)
+        writer.write_float32(self.rotation)
+
+    def on_read(self, reader: ByteReader):
+        super().on_read(reader)
+        self.tick_id = reader.read_uint32()
+        self.rotation = reader.read_float32()
+
+    @property
+    def delivery_mode(self) -> DeliveryMode:
+        return DeliveryMode.RELIABLE
