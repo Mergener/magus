@@ -108,7 +108,7 @@ def load_node_asset(path: str) -> Node:
         node = Node().deserialize(data)
 
         _node_asset_cache[full_path] = node
-        return node
+        return node.clone()
     except Exception as e:
         error_stack_trace = traceback.format_exc()
         print(f"Failed to load node from {path}: {error_stack_trace}", file=stderr)

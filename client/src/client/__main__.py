@@ -20,9 +20,10 @@ if __name__ == "__main__":
     pg.init()
 
     game = Game(
-        display=pg.display.set_mode((1280, 720)),
+        display=pg.display.set_mode((1280, 720), pg.RESIZABLE),
         scene=load_node_asset("scenes/game.json"),
         network=NetClient("localhost", 16214),
+        global_object=load_node_asset("global_object.json"),
     )
 
     running = True

@@ -3,24 +3,19 @@
     {
       "children": [],
       "behaviours": [
-        {
-          "__type": "common.behaviours.transform.Transform",
-          "local_position": { "x": 0.0, "y": 0.0 },
-          "local_scale": { "x": 1.0, "y": 1.0 },
-          "rotation": 0
-        },
         { "__type": "common.behaviours.camera.Camera" }
+      ]
+    },
+    {
+      "behaviours": [
+        { 
+          "__type:": "common.behaviours.network_entity_manager.NetworkEntityManager",
+          "templates": [
+            "templates/mage.json"
+          ]
+        }
       ]
     }
   ],
-  "behaviours": [
-    {
-      "__type": "common.behaviours.transform.Transform",
-      "local_position": { "x": 0.0, "y": 0.0 },
-      "local_scale": { "x": 1.0, "y": 1.0 },
-      "rotation": 0
-    },
-    { "__type": "client.scenes.game_scene.GameScene" },
-    { "__type": "client.behaviours.network_manager.NetworkManager" }
-  ]
+  "behaviours": []
 }

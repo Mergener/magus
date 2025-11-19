@@ -100,7 +100,7 @@ class CreateEntity(Packet):
     def __init__(self, id: int, type_id: int, parent_id: int | None = None):
         self.id = id
         self.parent_id = parent_id
-        self.type_id = type_id
+        self.template_id = type_id
 
     def on_write(self, writer: ByteWriter):
         if self.parent_id:
@@ -108,14 +108,14 @@ class CreateEntity(Packet):
             writer.write_int32(self.parent_id)
         else:
             writer.write_int32(self.id)
-        writer.write_uint8(self.type_id)
+        writer.write_uint8(self.template_id)
 
     def on_read(self, reader: ByteReader):
         self.id = reader.read_int32()
         if self.id < 0:
             self.id = -self.id
             self.parent_id = reader.read_int32()
-        self.type_id = reader.read_uint8()
+        self.template_id = reader.read_uint8()
 
     @property
     def delivery_mode(self) -> DeliveryMode:

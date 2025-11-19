@@ -1,4 +1,5 @@
 from sys import stderr
+from typing import cast
 
 from common.assets import load_node_asset
 from common.behaviour import Behaviour
@@ -8,13 +9,13 @@ from common.packets import CreateEntity, DestroyEntity, EntityPacket
 
 
 class NetworkEntityManager(Behaviour):
-    _entity_templates: list[str]
+    _templates: list[str]
     _entities: dict[int, NetworkEntity]
 
     def on_init(self):
         assert self.game
 
-        self._entity_templates = getattr(self, "_entity_templates", [])
+        self._templates = getattr(self, "_entity_templates", [])
         self._entities = getattr(self, "_entities", {})
         self._entity_packet_listener = getattr(
             self,
@@ -57,12 +58,12 @@ class NetworkEntityManager(Behaviour):
             if parent_entity is not None:
                 parent = parent_entity.node
 
-        if p.type_id in range(len(self._entity_templates)):
-            node = load_node_asset(self._entity_templates[p.type_id])
+        if p.template_id in range(len(self._templates)):
+            node = load_node_asset(self._templates[p.template_id])
             node.parent = parent
             entity = node.get_or_add_behaviour(NetworkEntity)
         else:
-            print(f"Couldn't find template ID {p.type_id}", file=stderr)
+            print(f"Couldn't find template ID {p.template_id}", file=stderr)
             entity = parent.add_child().add_behaviour(NetworkEntity)
 
         entity._id = p.id
@@ -76,3 +77,9 @@ class NetworkEntityManager(Behaviour):
 
         entity.node.destroy()
         del self._entities[p.id]
+
+    def on_serialize(self, out_dict: dict):
+        out_dict["templates"] = self._templates
+
+    def on_deserialize(self, in_dict: dict):
+        self._templates = in_dict.get("templates", [])

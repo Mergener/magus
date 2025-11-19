@@ -8,7 +8,6 @@
       "local_scale": { "x": 2.0, "y": 2.0 },
       "rotation": 60
     },
-    { "__type": "common.behaviours.network_entity.NetworkEntity" },
     {
       "__type": "common.behaviours.sprite_renderer.SpriteRenderer",
       "texture": null
@@ -16,7 +15,6 @@
     {
       "__type": "common.behaviours.animator.Animator",
       "animation": "animations/mage-animation.json"
-    },
-    { "__type": "client.behaviours.mage.Mage" }
+    }
   ]
 }

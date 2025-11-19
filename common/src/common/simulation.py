@@ -79,12 +79,6 @@ class Simulation:
         self._will_stop_updating.clear()
         self._will_stop_ticking.clear()
 
-        if self._tick_accum_time > self.tick_interval:
-            self._tick_accum_time -= self.tick_interval
-            for t in self._updatables:
-                t.on_tick(self._tick_id)
-            self._tick_id += 1
-
         starting = self._to_start
         self._to_start = set()
         for ts in starting:
@@ -92,6 +86,12 @@ class Simulation:
                 continue
             ts._started = True
             ts.on_start()
+
+        if self._tick_accum_time > self.tick_interval:
+            self._tick_accum_time -= self.tick_interval
+            for t in self._tickables:
+                t.on_tick(self._tick_id)
+            self._tick_id += 1
 
         for u in self._updatables:
             u.on_update(dt)
