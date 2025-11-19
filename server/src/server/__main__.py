@@ -3,8 +3,9 @@ from sys import stderr
 
 from common.game import Game
 from common.network import NetPeer, auto_resolve_packets
+from common.packets import CreateEntity
 from game.entity_type import EntityType
-from game.packets import CreateEntity, JoinGameRequest, JoinGameResponse
+from game.packets import JoinGameRequest, JoinGameResponse
 from server.netserver import NetServer
 
 

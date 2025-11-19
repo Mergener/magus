@@ -1,6 +1,5 @@
 from common.binary import ByteReader, ByteWriter
 from common.network import DeliveryMode, Packet
-from game.entity_type import EntityType
 
 
 class NewGame(Packet):
@@ -37,47 +36,6 @@ class JoinGameResponse(Packet):
     @property
     def delivery_mode(self):
         return DeliveryMode.RELIABLE
-
-
-class CreateEntity(Packet):
-    def __init__(self, id: int, type_id: EntityType, parent_id: int | None = None):
-        self.id = id
-        self.parent_id = parent_id
-        self.type_id = type_id
-
-    def on_write(self, writer: ByteWriter):
-        if self.parent_id:
-            writer.write_int32(-self.id)
-            writer.write_int32(self.parent_id)
-        else:
-            writer.write_int32(self.id)
-        writer.write_uint8(self.type_id.value)
-
-    def on_read(self, reader: ByteReader):
-        self.id = reader.read_int32()
-        if self.id < 0:
-            self.id = -self.id
-            self.parent_id = reader.read_int32()
-        self.type_id = EntityType(reader.read_uint8())
-
-    @property
-    def delivery_mode(self) -> DeliveryMode:
-        return DeliveryMode.RELIABLE_ORDERED
-
-
-class DestroyEntity(Packet):
-    def __init__(self, id: int):
-        self.id = id
-
-    def on_write(self, writer: ByteWriter):
-        writer.write_int32(self.id)
-
-    def on_read(self, reader: ByteReader):
-        self.id = reader.read_int32()
-
-    @property
-    def delivery_mode(self) -> DeliveryMode:
-        return DeliveryMode.RELIABLE_ORDERED
 
 
 class PlayerJoined(Packet):

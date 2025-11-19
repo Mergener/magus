@@ -1,6 +1,6 @@
 from common.behaviour import Behaviour
+from common.packets import CreateEntity
 from game.entity_type import EntityType
-from game.packets import CreateEntity
 
 
 class NetworkIdentity(Behaviour):

@@ -1,7 +1,7 @@
 import pygame as pg
 
 from common.behaviours.network_behaviour import NetworkBehaviour
-from common.packets import PositionUpdate
+from common.packets import EntityPacket, PositionUpdate
 
 
 class NetworkEntity(NetworkBehaviour):
@@ -43,3 +43,6 @@ class NetworkEntity(NetworkBehaviour):
     def on_destroy(self):
         assert self.game
         self.game.network.unlisten(PositionUpdate, self._position_listener)
+
+    def handle_entity_packet(self, packet: EntityPacket):
+        pass
