@@ -104,6 +104,6 @@ class Behaviour(ABC):
             return
 
         if vis:
-            self.node.game.simulation.add_renderable(self, self._render_layer)
+            self.node.game.simulation.add_renderable(self, self.render_layer)
         else:
-            self.node.game.simulation.remove_renderable(self, self._render_layer)
+            self.node.game.simulation.remove_renderable(self, self.render_layer)
