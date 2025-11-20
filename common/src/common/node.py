@@ -218,11 +218,9 @@ class Node:
         new_node.deserialize(data)
         return new_node
 
-    def find_behaviour_in_children[
-        T: Behaviour
-    ](self, tb: type[T], include_self: bool = True, recursive: bool = False) -> (
-        T | None
-    ):
+    def find_behaviour_in_children[T: Behaviour](
+        self, tb: type[T], include_self: bool = True, recursive: bool = False
+    ) -> T | None:
         if include_self:
             b = self.get_behaviour(tb)
             if b:

@@ -78,9 +78,9 @@ class NetworkEntity(Behaviour):
 
             h.listener(packet)
 
-    def listen[
-        T: EntityPacket
-    ](self, packet_type: type[T], listener: Callable[[T], None]):
+    def listen[T: EntityPacket](
+        self, packet_type: type[T], listener: Callable[[T], None]
+    ):
         listeners = self._packet_listeners.get(packet_type)
         if listeners is None:
             listeners = []
