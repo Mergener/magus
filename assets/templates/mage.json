@@ -1,0 +1,23 @@
+{
+  "name": "mage",
+  "children": [],
+  "behaviours": [
+    {
+      "__type": "common.behaviours.transform.Transform",
+      "local_position": { "x": 250.0, "y": 0.0 },
+      "local_scale": { "x": 2.0, "y": 2.0 },
+      "rotation": 60
+    },
+    {
+      "__type": "common.behaviours.sprite_renderer.SpriteRenderer",
+      "texture": null
+    },
+    {
+      "__type": "common.behaviours.animator.Animator",
+      "animation": "animations/mage-animation.json"
+    },
+    {
+      "__type": "game.mage.Mage"
+    }
+  ]
+}

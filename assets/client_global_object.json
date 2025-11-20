@@ -1,0 +1,3 @@
+{
+  "behaviours": [{ "__type": "common.behaviours.debug_console.DebugConsole" }]
+}

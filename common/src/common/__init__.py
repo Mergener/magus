@@ -1,6 +1,4 @@
-from sys import stderr
+# Make sure packets are always imported.
 
-import common.magus.packets
-from common.engine.network import auto_resolve_packets
-
-auto_resolve_packets()
+import common.behaviours.network_entity
+import common.behaviours.network_entity_manager

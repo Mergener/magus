@@ -2,8 +2,8 @@ from sys import stderr
 
 import enet
 
-from common.engine.binary import ByteReader
-from common.engine.network import DeliveryMode, NetPeer, Network, Packet
+from common.binary import ByteReader
+from common.network import DeliveryMode, NetPeer, Network, Packet
 
 
 class NetClient(Network):
@@ -25,7 +25,10 @@ class NetClient(Network):
         print(f"Connected to {address}:{port}")
 
     def publish(
-        self, packet: Packet, override_delivery_mode: DeliveryMode | None = None
+        self,
+        packet: Packet,
+        override_delivery_mode: DeliveryMode | None = None,
+        exclude_peers: list[NetPeer] | None = None,
     ):
         if not self._peer:
             raise RuntimeError("Not connected to any host.")
@@ -45,6 +48,7 @@ class NetClient(Network):
 
                 reader = ByteReader(raw_data)
                 decoded = Packet.decode(reader)
+                print(f"Received {decoded}")
                 self.notify(decoded, self._peer)
 
             elif event.type == enet.EVENT_TYPE_DISCONNECT:
@@ -57,3 +61,9 @@ class NetClient(Network):
             return
 
         self._peer.disconnect()
+
+    def is_server(self) -> bool:
+        return False
+
+    def is_client(self) -> bool:
+        return True

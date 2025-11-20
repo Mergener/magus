@@ -9,22 +9,23 @@ from sys import stderr
 
 import pygame as pg
 
-from client.behaviours.camera import *  # type: ignore
 from client.netclient import NetClient
-from common.engine import *  # type: ignore
-from common.engine.assets import load_node_asset
-from common.engine.game import Game
-from common.engine.network import auto_resolve_packets
+from common.assets import load_node_asset
+from common.behaviours.camera import *  # type: ignore
+from common.game import Game
+from game.lobby import JoinGameRequest
 
 if __name__ == "__main__":
-    auto_resolve_packets()
     pg.init()
 
     game = Game(
-        display=pg.display.set_mode((1280, 720)),
-        scene=load_node_asset("objects/base-scene.json"),
+        display=pg.display.set_mode((1280, 720), pg.RESIZABLE),
+        scene=load_node_asset("scenes/client/lobby.json"),
         network=NetClient("localhost", 16214),
+        global_object=load_node_asset("client_global_object.json"),
     )
+
+    game.network.publish(JoinGameRequest())
 
     running = True
     while running:

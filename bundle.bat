@@ -20,6 +20,7 @@ pyinstaller client\src\client\__main__.py ^
   --workpath tmp\build ^
   --collect-all client ^
   --collect-all common ^
+  --collect-all game ^
   --clean 
 
 echo Build complete: bin\Magus.exe

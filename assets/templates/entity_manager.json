@@ -1,0 +1,11 @@
+{
+  "behaviours": [
+    {
+      "__type": "common.behaviours.network_entity_manager.NetworkEntityManager",
+      "templates": {
+        "player": "templates/player.json",
+        "mage": "templates/mage.json"
+      }
+    }
+  ]
+}

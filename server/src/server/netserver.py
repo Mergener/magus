@@ -1,7 +1,7 @@
 import enet
 
-from common.engine.binary import ByteReader, ByteWriter
-from common.engine.network import DeliveryMode, NetPeer, Network, Packet
+from common.binary import ByteReader, ByteWriter
+from common.network import DeliveryMode, NetPeer, Network, Packet
 
 
 class NetServer(Network):
@@ -15,7 +15,10 @@ class NetServer(Network):
         print(f"Listening at port {port}")
 
     def publish(
-        self, packet: Packet, override_delivery_mode: DeliveryMode | None = None
+        self,
+        packet: Packet,
+        override_delivery_mode: DeliveryMode | None = None,
+        exclude_peers: list[NetPeer] | None = None,
     ):
         writer = ByteWriter()
         packet.encode(writer)
@@ -23,6 +26,9 @@ class NetServer(Network):
         data = writer.data
 
         for net_peer in self._peers.values():
+            if exclude_peers is not None and net_peer in exclude_peers:
+                continue
+
             net_peer.send_raw(data, mode)
 
     def poll(self):
@@ -45,6 +51,7 @@ class NetServer(Network):
                     data = bytes(event.packet.data)
                     reader = ByteReader(data)
                     packet = Packet.decode(reader)
+                    print(f"Received {packet}")
                     self.notify(packet, net_peer)
 
             elif event.type == enet.EVENT_TYPE_DISCONNECT:
@@ -57,3 +64,9 @@ class NetServer(Network):
             p.disconnect()
         self._peers = {}
         self._host.destroy()
+
+    def is_server(self) -> bool:
+        return True
+
+    def is_client(self) -> bool:
+        return False

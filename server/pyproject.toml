@@ -10,7 +10,8 @@ authors = [{name="Thomas Mergener"}]
 requires-python = ">=3.10"
 
 dependencies = [
-    "magus-common"
+    "magus-common",
+    "magus-game"
 ]
 
 [project.optional-dependencies]

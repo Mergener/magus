@@ -1,0 +1,104 @@
+import struct
+from io import BytesIO
+from typing import cast
+
+
+class ByteReader:
+    def __init__(self, data: bytes | BytesIO | None = None):
+        if data is None:
+            data = BytesIO()
+        elif isinstance(data, bytes):
+            data = BytesIO(data)
+        self._stream = cast(BytesIO, data)
+
+    def read_int8(self) -> int:
+        return int.from_bytes(self._stream.read(1), byteorder="little", signed=True)
+
+    def read_int16(self) -> int:
+        return int.from_bytes(self._stream.read(2), byteorder="little", signed=True)
+
+    def read_int32(self) -> int:
+        return int.from_bytes(self._stream.read(4), byteorder="little", signed=True)
+
+    def read_int64(self) -> int:
+        return int.from_bytes(self._stream.read(8), byteorder="little", signed=True)
+
+    def read_float32(self) -> float:
+        return struct.unpack("<f", self._stream.read(4))[0]
+
+    def read_float64(self) -> float:
+        return struct.unpack("<d", self._stream.read(8))[0]
+
+    def read_str(self) -> str:
+        n = self.read_int16()
+        return self._stream.read(n).decode()
+
+    def read_uint8(self) -> int:
+        return int.from_bytes(self._stream.read(1), byteorder="little", signed=False)
+
+    def read_uint16(self) -> int:
+        return int.from_bytes(self._stream.read(2), byteorder="little", signed=False)
+
+    def read_uint32(self) -> int:
+        return int.from_bytes(self._stream.read(4), byteorder="little", signed=False)
+
+    def read_uint64(self) -> int:
+        return int.from_bytes(self._stream.read(8), byteorder="little", signed=False)
+
+    def read_bool(self) -> bool:
+        return bool(self.read_uint8())
+
+    @property
+    def data(self):
+        return self._stream.getbuffer().tobytes()
+
+
+class ByteWriter:
+    def __init__(self, data: bytes | BytesIO | None = None):
+        if data is None:
+            data = BytesIO()
+        elif isinstance(data, bytes):
+            data = BytesIO(data)
+        self._stream = cast(BytesIO, data)
+
+    def write_int8(self, i: int):
+        self._stream.write(i.to_bytes(1, byteorder="little", signed=True))
+
+    def write_int16(self, i: int):
+        self._stream.write(i.to_bytes(2, byteorder="little", signed=True))
+
+    def write_int32(self, i: int):
+        self._stream.write(i.to_bytes(4, byteorder="little", signed=True))
+
+    def write_int64(self, i: int):
+        self._stream.write(i.to_bytes(8, byteorder="little", signed=True))
+
+    def write_float32(self, f: float):
+        self._stream.write(struct.pack("<f", f))
+
+    def write_float64(self, f: float):
+        self._stream.write(struct.pack("<d", f))
+
+    def write_str(self, s: str):
+        encoded = s.encode()
+        self.write_int16(len(encoded))
+        self._stream.write(encoded)
+
+    def write_uint8(self, i: int):
+        self._stream.write(i.to_bytes(1, byteorder="little", signed=False))
+
+    def write_uint16(self, i: int):
+        self._stream.write(i.to_bytes(2, byteorder="little", signed=False))
+
+    def write_uint32(self, i: int):
+        self._stream.write(i.to_bytes(4, byteorder="little", signed=False))
+
+    def write_uint64(self, i: int):
+        self._stream.write(i.to_bytes(8, byteorder="little", signed=False))
+
+    def write_bool(self, b: bool):
+        self.write_uint8(int(b))
+
+    @property
+    def data(self):
+        return self._stream.getbuffer().tobytes()

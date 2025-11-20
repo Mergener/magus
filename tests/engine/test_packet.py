@@ -1,7 +1,7 @@
 from typing import cast
 
-from common.engine.binary import ByteReader, ByteWriter
-from common.engine.network import DeliveryMode, Packet, register_packets
+from common.binary import ByteReader, ByteWriter
+from common.network import DeliveryMode, Packet, register_packets
 
 
 class CustomPacket1(Packet):

@@ -1,13 +1,12 @@
 from typing import cast
 
-from common.engine.binary import ByteReader, ByteWriter
-from common.engine.network import Packet, register_packets
-from common.magus.entity_type import EntityType
-from common.magus.packets import CreateEntity
+from common.behaviours.network_entity_manager import SpawnEntity
+from common.binary import ByteReader, ByteWriter
+from common.network import Packet, register_packets
 
 
 def test_packets_simmetry():
-    packets = [CreateEntity(0, EntityType.MAGE)]
+    packets = [SpawnEntity(0, "mage")]
 
     register_packets([packet.__class__ for packet in packets])
 
