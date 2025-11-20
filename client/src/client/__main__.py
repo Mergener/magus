@@ -27,17 +27,13 @@ if __name__ == "__main__":
 
     game.network.publish(JoinGameRequest())
 
-    running = True
-    while running:
+    while not game.stopped:
         try:
-            for ev in pg.event.get():
-                if ev.type == pg.QUIT:
-                    running = False
-
             game.iterate()
+            game.handle_pygame_events(pg.event.get())
 
         except KeyboardInterrupt:
-            running = False
+            game.stopped = True
 
         except Exception as e:
             error_stack_trace = traceback.format_exc()
