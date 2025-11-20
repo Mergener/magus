@@ -177,6 +177,7 @@ class NetPeer:
         self._enet_peer.send(channel, packet)
 
     def send(self, packet: Packet, override_mode: DeliveryMode | None = None):
+        print(f"Sending {packet} to {self.address}")
         writer = ByteWriter()
         packet.encode(writer)
         mode = override_mode or packet.delivery_mode
@@ -213,7 +214,10 @@ class Network(ABC):
 
     @abstractmethod
     def publish(
-        self, packet: Packet, override_delivery_mode: DeliveryMode | None = None
+        self,
+        packet: Packet,
+        override_delivery_mode: DeliveryMode | None = None,
+        exclude_peers: list[NetPeer] | None = None,
     ):
         """
         Publishes a packet to all peers connected to this network.
@@ -265,6 +269,7 @@ class Network(ABC):
                 )
 
     def listen[T: Packet](self, t: type[T], listener: Callable[[T, NetPeer], None]):
+        print(f"Added listener for {t}")
         listener = cast(Callable[[Packet, NetPeer], None], listener)
         self._listeners[t].append(listener)
         return listener
@@ -281,7 +286,10 @@ class NullNetwork(Network):
         pass
 
     def publish(
-        self, packet: Packet, override_delivery_mode: DeliveryMode | None = None
+        self,
+        packet: Packet,
+        override_delivery_mode: DeliveryMode | None = None,
+        excluded_peers: list[NetPeer] | None = None,
     ):
         pass
 

@@ -25,12 +25,14 @@ class NetClient(Network):
         print(f"Connected to {address}:{port}")
 
     def publish(
-        self, packet: Packet, override_delivery_mode: DeliveryMode | None = None
+        self,
+        packet: Packet,
+        override_delivery_mode: DeliveryMode | None = None,
+        exclude_peers: list[NetPeer] | None = None,
     ):
         if not self._peer:
             raise RuntimeError("Not connected to any host.")
 
-        print(f"Sending {packet}")
         self._peer.send(packet, override_delivery_mode)
 
     def poll(self):

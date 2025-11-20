@@ -1,24 +1,14 @@
 import traceback
 from sys import stderr
 
-from common.behaviours.network_entity_manager import CreateEntity
+from common.assets import load_node_asset
 from common.game import Game
-from common.network import NetPeer
-from game.entity_type import EntityType
-from game.packets import JoinGameRequest, JoinGameResponse
 from server.netserver import NetServer
-
-
-def handle_join_request(join_req: JoinGameRequest, peer: NetPeer):
-    peer.send(JoinGameResponse())
-    peer.send(CreateEntity(0, 1))
-
 
 if __name__ == "__main__":
     network = NetServer(port=16214)
-    network.listen(JoinGameRequest, handle_join_request)
 
-    game = Game(network=network)
+    game = Game(network=network, scene=load_node_asset("scenes/server/lobby.json"))
 
     running = True
     while running:

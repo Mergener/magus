@@ -1,0 +1,4 @@
+{
+  "children": ["templates/entity_manager.json"],
+  "behaviours": [{ "__type": "server.behaviours.lobby_manager.LobbyManager" }]
+}

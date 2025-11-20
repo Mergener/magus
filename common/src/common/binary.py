@@ -45,6 +45,9 @@ class ByteReader:
     def read_uint64(self) -> int:
         return int.from_bytes(self._stream.read(8), byteorder="little", signed=False)
 
+    def read_bool(self) -> bool:
+        return bool(self.read_uint8())
+
     @property
     def data(self):
         return self._stream.getbuffer().tobytes()
@@ -92,6 +95,9 @@ class ByteWriter:
 
     def write_uint64(self, i: int):
         self._stream.write(i.to_bytes(8, byteorder="little", signed=False))
+
+    def write_bool(self, b: bool):
+        self.write_uint8(int(b))
 
     @property
     def data(self):

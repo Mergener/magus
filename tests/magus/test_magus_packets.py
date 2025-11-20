@@ -1,13 +1,12 @@
 from typing import cast
 
-from common.behaviours.network_entity_manager import CreateEntity
+from common.behaviours.network_entity_manager import SpawnEntity
 from common.binary import ByteReader, ByteWriter
 from common.network import Packet, register_packets
-from game.entity_type import EntityType
 
 
 def test_packets_simmetry():
-    packets = [CreateEntity(0, 1)]
+    packets = [SpawnEntity(0, "mage")]
 
     register_packets([packet.__class__ for packet in packets])
 

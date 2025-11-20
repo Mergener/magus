@@ -15,6 +15,9 @@
     {
       "__type": "common.behaviours.animator.Animator",
       "animation": "animations/mage-animation.json"
+    },
+    {
+      "__type": "game.mage.Mage"
     }
   ]
 }

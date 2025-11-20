@@ -1,0 +1,4 @@
+{
+  "children": [],
+  "behaviours": [{ "__type": "game.initialization.Initialization" }]
+}

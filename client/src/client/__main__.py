@@ -13,16 +13,16 @@ from client.netclient import NetClient
 from common.assets import load_node_asset
 from common.behaviours.camera import *  # type: ignore
 from common.game import Game
-from game.packets import JoinGameRequest
+from game.lobby import JoinGameRequest
 
 if __name__ == "__main__":
     pg.init()
 
     game = Game(
         display=pg.display.set_mode((1280, 720), pg.RESIZABLE),
-        scene=load_node_asset("scenes/game.json"),
+        scene=load_node_asset("scenes/client/lobby.json"),
         network=NetClient("localhost", 16214),
-        global_object=load_node_asset("global_object.json"),
+        global_object=load_node_asset("client_global_object.json"),
     )
 
     game.network.publish(JoinGameRequest())

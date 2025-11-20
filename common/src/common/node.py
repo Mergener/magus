@@ -18,6 +18,7 @@ class Node:
         self._children: list[Self] = []
         self._parent: Self | None = None
         self._behaviours: list[Behaviour] = []
+        self._destroyed = False
         self._game = game
         self.add_behaviour(Transform)
 
@@ -103,9 +104,10 @@ class Node:
         return cast(Transform, self._behaviours[0])
 
     def destroy(self):
-        if self._game is None:
+        if self._destroyed or self._game is None:
             return
 
+        self._destroyed = True
         self.parent = None
         self._destroy_helper()
 
@@ -153,6 +155,7 @@ class Node:
         return out_dict
 
     def deserialize(self, in_dict: dict):
+        from common.assets import load_node_asset
         from common.behaviours.transform import Transform
 
         self._name = in_dict.get("name")
@@ -160,9 +163,13 @@ class Node:
         dict_children = in_dict.get("children", [])
         dict_behaviours = in_dict.get("behaviours", [])
         for dc in dict_children:
-            node = Node(self.game)
-            node.parent = self
-            node.deserialize(dc)
+            if isinstance(dc, dict):
+                node = Node(self.game)
+                node.parent = self
+                node.deserialize(dc)
+            elif isinstance(dc, str):
+                node = load_node_asset(dc)
+                node.parent = self
 
         for db in dict_behaviours:
             behaviour_type = _get_behaviour_type_by_name(db.get("__type"))
@@ -210,6 +217,29 @@ class Node:
         new_node = Node(self._game)
         new_node.deserialize(data)
         return new_node
+
+    def find_behaviour_in_children[
+        T: Behaviour
+    ](self, tb: type[T], include_self: bool = True, recursive: bool = False) -> (
+        T | None
+    ):
+        if include_self:
+            b = self.get_behaviour(tb)
+            if b:
+                return b
+
+        for c in self._children:
+            b = c.get_behaviour(tb)
+            if b:
+                return b
+
+        if recursive:
+            for c in self._children:
+                b = c.find_behaviour_in_children(tb, include_self=False, recursive=True)
+                if b:
+                    return b
+
+        return None
 
 
 _behaviour_types: dict[str, type[Behaviour]] | None = None

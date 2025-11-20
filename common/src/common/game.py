@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from common.network import Network, NullNetwork
     from common.node import Node
     from common.simulation import Simulation
+    from common.behaviour import Behaviour
 
 import pygame as pg
 
@@ -29,6 +30,8 @@ class Game:
         self._global_object = global_object or Node()
         self._display = display
         self._started = False
+        self._queued_scene: Node | None = None
+        self._queued_nodes_to_transfer: list[Node] | None = None
 
     @property
     def simulation(self):
@@ -60,6 +63,19 @@ class Game:
             self.global_object.bind_to_game(self)
             self.scene.bind_to_game(self)
 
+        if self._queued_scene is not None:
+            prev_scene = self._scene
+            self._scene = self._queued_scene
+            self._scene.bind_to_game(self)
+
+            if self._queued_nodes_to_transfer is not None:
+                for n in self._queued_nodes_to_transfer:
+                    n.parent = self._scene
+
+            prev_scene.destroy()
+            self._queued_scene = None
+            self._queued_nodes_to_transfer = None
+
         self.network.poll()
         self.simulation.iterate()
 
@@ -71,10 +87,9 @@ class Game:
             self.simulation.render()
             pg.display.update()
 
-    def load_scene(self, node: Node):
-        self.scene.destroy()
-        self._scene = node
-        node.bind_to_game(self)
+    def load_scene(self, node: Node, nodes_to_transfer: list[Node] | None = None):
+        self._queued_scene = node
+        self._queued_nodes_to_transfer = nodes_to_transfer
 
     def cleanup(self):
         self.network.disconnect()

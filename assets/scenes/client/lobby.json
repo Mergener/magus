@@ -1,0 +1,6 @@
+{
+  "children": [
+    "templates/entity_manager.json"
+  ],
+  "behaviours": []
+}

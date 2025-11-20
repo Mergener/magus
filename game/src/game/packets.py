@@ -1,4 +1,4 @@
 from common.network import register_packets
-from game.match import JoinGameRequest, JoinGameResponse, NewGame, PlayerJoined
+from game.lobby import JoinGameRequest, JoinGameResponse, PlayerJoined, StartGameRequest
 
-register_packets([JoinGameRequest, JoinGameResponse, NewGame, PlayerJoined])
+register_packets([JoinGameRequest, JoinGameResponse, StartGameRequest, PlayerJoined])

@@ -26,13 +26,25 @@ class NetworkEntity(Behaviour):
             {}
         )
 
-        self.listen(PositionUpdate, lambda msg: self.on_position_update(msg))
-
     @property
     def id(self):
         return self._id
 
-    def on_position_update(self, packet: PositionUpdate):
+    def on_start(self):
+        assert self.game
+
+        if self.game.network.is_client():
+            self.listen(PositionUpdate, lambda msg: self._handle_pos_update(msg))
+            self.listen(RotationUpdate, lambda msg: self._handle_rotation_update(msg))
+            self.listen(ScaleUpdate, lambda msg: self._handle_scale_update(msg))
+
+    def _handle_rotation_update(self, packet: RotationUpdate):
+        self.transform.rotation = packet.rotation
+
+    def _handle_scale_update(self, packet: ScaleUpdate):
+        self.transform.local_scale = pg.Vector2(packet.x, packet.y)
+
+    def _handle_pos_update(self, packet: PositionUpdate):
         assert self.game
 
         if packet.tick_id < self._last_updated_tick:
@@ -47,15 +59,11 @@ class NetworkEntity(Behaviour):
         self._last_updated_tick = packet.tick_id
         self._prev_pos = new_pos
 
-    def on_rotation_update(self, packet: RotationUpdate):
-        self.transform.rotation = packet.rotation
-
-    def on_scale_update(self, packet: ScaleUpdate):
-        self.transform.local_scale = pg.Vector2(packet.x, packet.y)
-
     def on_update(self, dt: float):
-        curr_local_pos = self.transform.local_position
-        self.transform.local_position = curr_local_pos + self._approx_speed * dt
+        assert self.game
+        if self.game.network.is_client():
+            curr_local_pos = self.transform.local_position
+            self.transform.local_position = curr_local_pos + self._approx_speed * dt
 
     def _handle_entity_packet(self, packet: EntityPacket):
         handlers = self._packet_listeners[packet.__class__]
@@ -107,6 +115,8 @@ class EntityPacket(Packet, ABC):
 
 
 class PositionUpdate(EntityPacket):
+    tick_id: int
+
     def __init__(self, tick_id: int, id: int, x: float, y: float):
         super().__init__(id, tick_id)
         self.tick_id = tick_id
@@ -131,6 +141,8 @@ class PositionUpdate(EntityPacket):
 
 
 class ScaleUpdate(EntityPacket):
+    tick_id: int
+
     def __init__(self, tick_id: int, id: int, x: float, y: float):
         super().__init__(id, tick_id)
         self.tick_id = tick_id
@@ -155,6 +167,8 @@ class ScaleUpdate(EntityPacket):
 
 
 class RotationUpdate(EntityPacket):
+    tick_id: int
+
     def __init__(self, tick_id: int, id: int, rot: float):
         super().__init__(id, tick_id)
         self.tick_id = tick_id
