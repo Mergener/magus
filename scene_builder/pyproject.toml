@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "magus-scene-builder"
+version = "0.0.1"
+description = "Scene building scripts"
+authors = [{name="Thomas Mergener"}]
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+dependencies = [
+  "pyenet",
+  "pygame>=2.1",
+  "magus-common",
+  "magus-game"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
