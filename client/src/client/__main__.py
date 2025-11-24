@@ -12,8 +12,11 @@ import pygame as pg
 from client.netclient import NetClient
 from common.assets import load_node_asset
 from common.behaviours.camera import *  # type: ignore
+from common.behaviours.ui.canvas import Canvas
+from common.behaviours.ui.ui_button import UIButton
+from common.behaviours.ui.ui_label import UILabel
 from common.game import Game
-from game.lobby import JoinGameRequest
+from common.node import Node
 
 if __name__ == "__main__":
     pg.init()
@@ -25,7 +28,7 @@ if __name__ == "__main__":
         global_object=load_node_asset("client_global_object.json"),
     )
 
-    game.network.publish(JoinGameRequest())
+    # game.network.publish(JoinGameRequest())
 
     while not game.stopped:
         try:
@@ -33,7 +36,7 @@ if __name__ == "__main__":
             game.handle_pygame_events(pg.event.get())
 
         except KeyboardInterrupt:
-            game.stopped = True
+            game.quit()
 
         except Exception as e:
             error_stack_trace = traceback.format_exc()

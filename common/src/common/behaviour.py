@@ -13,6 +13,8 @@ class Behaviour(ABC):
         self._visible = True
         self._render_layer = 0
 
+        self.skip_serialization = False
+
         # Force property refresh
         self.visible = self._visible
         self.receive_updates = self._receive_updates

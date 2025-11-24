@@ -21,6 +21,7 @@ class Node:
         self._destroyed = False
         self._game = game
         self.add_behaviour(Transform)
+        self.skip_serialization = False
 
     @property
     def game(self) -> Game | None:
@@ -73,6 +74,9 @@ class Node:
     @property
     def children(self):
         return iter(self._children)
+
+    def get_child(self, idx: int):
+        return self._children[idx]
 
     @property
     def behaviours(self):
@@ -136,12 +140,18 @@ class Node:
         children = []
         for c in self.children:
             cd: dict = {}
+            if c.skip_serialization:
+                continue
+
             c.serialize(cd)
             children.append(cd)
         out_dict["children"] = children
 
         behaviours = []
         for b in self._behaviours:
+            if b.skip_serialization:
+                continue
+
             bd = {
                 "__type": _get_behaviour_type_name(b),
                 "receive_updates": b.receive_updates,

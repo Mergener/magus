@@ -1,12 +1,7 @@
-import math
-from typing import cast
-
 import pygame as pg
 
-from common.assets import load_image_asset
 from common.behaviour import Behaviour
 from common.behaviours.camera import Camera
-from common.behaviours.transform import Transform
 from common.utils import memberwise_multiply
 
 

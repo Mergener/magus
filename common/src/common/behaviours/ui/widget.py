@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 import pygame as pg
@@ -14,8 +14,9 @@ class Widget(Behaviour, ABC):
         self._anchor = pg.Vector2(0.5, 0.5)
 
     @property
-    def render_layer(self):
-        return super().render_layer + 1048576
+    @abstractmethod
+    def rect(self) -> pg.Rect:
+        pass
 
     @property
     def anchor(self):
@@ -27,6 +28,8 @@ class Widget(Behaviour, ABC):
 
     @property
     def canvas(self):
+        from common.behaviours.ui.canvas import Canvas
+
         parent = self.parent
         while parent is not None:
             canvas = parent.get_behaviour(Canvas)
@@ -34,3 +37,12 @@ class Widget(Behaviour, ABC):
                 return canvas
             parent = parent.parent
         return None
+
+    def on_serialize(self, out_dict: dict):
+        out_dict["anchor"] = {"x": self.anchor.x, "y": self.anchor.y}
+
+    def on_deserialize(self, in_dict: dict):
+        anchor_dict = in_dict.get("anchor")
+        if anchor_dict is not None:
+            self._anchor.x = anchor_dict.get("x", 0.5)
+            self._anchor.y = anchor_dict.get("y", 0.5)
