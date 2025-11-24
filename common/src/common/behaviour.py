@@ -13,6 +13,8 @@ class Behaviour(ABC):
         self._visible = True
         self._render_layer = 0
 
+        self.skip_serialization = False
+
         # Force property refresh
         self.visible = self._visible
         self.receive_updates = self._receive_updates
@@ -104,6 +106,6 @@ class Behaviour(ABC):
             return
 
         if vis:
-            self.node.game.simulation.add_renderable(self, self._render_layer)
+            self.node.game.simulation.add_renderable(self, self.render_layer)
         else:
-            self.node.game.simulation.remove_renderable(self, self._render_layer)
+            self.node.game.simulation.remove_renderable(self, self.render_layer)

@@ -74,12 +74,17 @@ class Transform(Behaviour):
 
     def on_deserialize(self, in_dict: dict):
         self._local_position = pg.Vector2(0, 0)
-        pos_dict = in_dict.get("local_position")
-        if pos_dict:
-            self._local_position.x = pos_dict["x"]
-            self._local_position.y = pos_dict["y"]
+        local_pos_dict = in_dict.get("local_position")
+        if local_pos_dict:
+            self._local_position = pg.Vector2(
+                local_pos_dict.get("x", 0), local_pos_dict.get("y", 0)
+            )
+        else:
+            pos_dict = in_dict.get("position")
+            if pos_dict:
+                self.position = pg.Vector2(pos_dict.get("x", 0), pos_dict.get("y", 0))
 
-        self._local_scale = pg.Vector2(0, 0)
+        self._local_scale = pg.Vector2(1, 1)
         scale_dict = in_dict.get("local_scale")
         if scale_dict:
             self._local_scale.x = scale_dict["x"]

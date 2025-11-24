@@ -147,6 +147,46 @@ def load_animation_asset(path: str):
         return fallback
 
 
+def load_font_asset(
+    font_name: str, font_size: int, bold: bool = False, italic: bool = False
+):
+    global _font_asset_cache
+
+    cache_key = (font_name, font_size, bold, italic)
+
+    try:
+        cached = _font_asset_cache.get(cache_key)
+        if cached:
+            return cached
+
+        if font_name:
+            full_path = resource_path(font_name)
+            try:
+                font = pg.font.Font(full_path, font_size)
+            except FileNotFoundError as e:
+                # User might be expecting a system font.
+                font = pg.font.SysFont(font_name, font_size)
+        else:
+            font = pg.font.SysFont("Arial", font_size)
+
+        font.set_bold(bold)
+        font.set_italic(italic)
+
+        _font_asset_cache[cache_key] = font
+        return font
+
+    except Exception as e:
+        error_stack_trace = traceback.format_exc()
+        print(
+            f"Failed to load font {font_name} (size {font_size}, bold={bold}, italic={italic}): {error_stack_trace}",
+            file=stderr,
+        )
+
+        fallback = pg.font.Font(None, font_size)
+        _font_asset_cache[cache_key] = fallback
+        return fallback
+
+
 def _get_placeholder_surface():
     placeholder_texture = pg.Surface((100, 100))
     placeholder_texture.fill((0, 255, 0))
@@ -156,3 +196,4 @@ def _get_placeholder_surface():
 _node_asset_cache = {}  # type: ignore
 _image_asset_cache = {}  # type: ignore
 _animation_asset_cache = {}  # type: ignore
+_font_asset_cache = {}  # type: ignore

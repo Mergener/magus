@@ -41,8 +41,7 @@ class Game:
     def stopped(self):
         return self._stopped
 
-    @stopped.setter
-    def stopped(self, value):
+    def quit(self):
         self._stopped = True
 
     @property
@@ -107,7 +106,9 @@ class Game:
             pg.display.update()
 
     def handle_pygame_events(self, events: list[pg.event.Event]):
-        self.stopped = self._input.handle_pygame_events(events)
+        must_stop = self._input.handle_pygame_events(events)
+        if must_stop:
+            self.quit()
 
     def load_scene(self, node: Node, nodes_to_transfer: list[Node] | None = None):
         self._queued_scene = node
