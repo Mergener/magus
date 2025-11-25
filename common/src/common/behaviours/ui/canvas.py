@@ -11,7 +11,7 @@ class Canvas(Behaviour):
     reference_resolution: pg.Vector2
 
     def on_init(self):
-        self.reference_resolution = pg.Vector2(1680, 1050)
+        self.reference_resolution = pg.Vector2(1920, 1080)
 
     def canvas_to_screen_point(self, point: pg.Vector2):
         if self.game is None or self.game.display is None:

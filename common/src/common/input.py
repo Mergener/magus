@@ -7,9 +7,13 @@ class Input:
     def __init__(self):
         self.double_click_time = 0.40
         self.drag_threshold = 3
+        self._backspace_next_repeat_time = 0.0
+        self._backspace_initial_delay = 0.40
+        self._backspace_repeat_rate = 0.05
 
         self._keys_just_pressed: list[int] = []
         self._keys_just_released: list[int] = []
+        self._typed_chars: list[str] = []
 
         self._mouse_buttons_just_pressed: list[tuple[int, bool]] = []
         self._mouse_buttons_just_released: list[int] = []
@@ -30,6 +34,7 @@ class Input:
         self._keys_just_released.clear()
         self._mouse_buttons_just_pressed.clear()
         self._mouse_buttons_just_released.clear()
+        self._typed_chars.clear()
         self._scroll_delta = (0, 0)
 
         must_stop = False
@@ -42,9 +47,22 @@ class Input:
                 if ev.key not in self._keys_just_pressed:
                     self._keys_just_pressed.append(ev.key)
 
+                if ev.unicode:
+                    self._typed_chars.append(ev.unicode)
+
+                now = monotonic()
+
+                if ev.key == pg.K_BACKSPACE:
+                    self._backspace_next_repeat_time = (
+                        now + self._backspace_initial_delay
+                    )
+
             elif ev.type == pg.KEYUP:
                 if ev.key not in self._keys_just_released:
                     self._keys_just_released.append(ev.key)
+
+                if ev.key == pg.K_BACKSPACE:
+                    self._backspace_next_repeat_time = 0.0
 
             elif ev.type == pg.MOUSEBUTTONDOWN:
                 self._mouse_buttons_just_pressed.append((ev.button, False))
@@ -134,3 +152,21 @@ class Input:
     @property
     def scroll_delta(self):
         return self._scroll_delta
+
+    def get_typed_char(self) -> str | None:
+        for ch in self._typed_chars:
+            if ch.isprintable():
+                return ch
+        return None
+
+    def is_backspace_pressed(self):
+        if self.is_key_just_pressed(pg.K_BACKSPACE):
+            return True
+
+        if self.is_key_pressed(pg.K_BACKSPACE):
+            now = monotonic()
+            if now >= self._backspace_next_repeat_time > 0:
+                self._backspace_next_repeat_time = now + self._backspace_repeat_rate
+                return True
+
+        return False
