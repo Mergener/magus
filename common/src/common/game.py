@@ -111,6 +111,7 @@ class Game:
             self.quit()
 
     def load_scene(self, node: Node, nodes_to_transfer: list[Node] | None = None):
+        print(f"Loading new scene: {node.name}")
         self._queued_scene = node
         self._queued_nodes_to_transfer = nodes_to_transfer
 

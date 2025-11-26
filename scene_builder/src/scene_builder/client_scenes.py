@@ -13,7 +13,7 @@ def build_client_scenes():
 
 
 def build_lobby_menu():
-    lobby_menu = Node()
+    lobby_menu = Node(name="lobby")
     canvas = lobby_menu.add_behaviour(Canvas)
 
     lobby_label = lobby_menu.add_child().add_behaviour(UILabel)

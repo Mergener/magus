@@ -8,6 +8,7 @@ from common.behaviours.network_entity_manager import NetworkEntityManager
 from common.binary import ByteReader, ByteWriter
 from common.network import DeliveryMode, NetPeer, Packet
 from game.lobby import (
+    GameStarting,
     JoinGameRequest,
     JoinGameResponse,
     LobbyInfo,
@@ -72,6 +73,9 @@ class LobbyManager(Behaviour):
 
         peer.send(JoinGameResponse(True))
         peer.send(PlayerJoined(player_entity.id, len(self._players), True))
+        for i, p in enumerate(self._players):
+            # Notify the player about every other present player.
+            peer.send(PlayerJoined(p.net_entity.id, i, False))
 
         player_joined = PlayerJoined(player_entity.id, len(self._players), False)
         self.game.network.publish(player_joined, exclude_peers=[peer])
@@ -88,11 +92,12 @@ class LobbyManager(Behaviour):
         self.game.load_scene(
             game_scene, [self.net_entity_manager.node] + [p.node for p in self._players]
         )
+        self.game.network.publish(GameStarting())
 
     def _handle_update_lobby_info(self, packet: UpdateLobbyInfo, peer: NetPeer):
         self.lobby_info.update_from_packet(packet)
 
     def on_destroy(self):
         assert self.game
-        self.game.network.unlisten(JoinGameRequest, self._handle_join_request)
-        self.game.network.unlisten(StartGameRequest, self._handle_start_game)
+        self.game.network.unlisten(JoinGameRequest, self._join_request_handler)
+        self.game.network.unlisten(StartGameRequest, self._start_game_handler)

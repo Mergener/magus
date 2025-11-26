@@ -59,6 +59,18 @@ class JoinGameResponse(Packet):
         return DeliveryMode.RELIABLE_ORDERED
 
 
+class GameStarting(Packet):
+    def on_write(self, writer: ByteWriter):
+        pass
+
+    def on_read(self, reader: ByteReader):
+        pass
+
+    @property
+    def delivery_mode(self):
+        return DeliveryMode.RELIABLE_ORDERED
+
+
 class PlayerJoined(EntityPacket):
     def __init__(self, entity_id: int, index: int, you: bool):
         super().__init__(entity_id, None)
