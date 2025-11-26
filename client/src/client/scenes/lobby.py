@@ -5,7 +5,13 @@ from common.behaviour import Behaviour
 from common.behaviours.network_entity_manager import NetworkEntityManager
 from common.behaviours.ui.ui_button import UIButton
 from common.game import Game
-from game.lobby import GameStarting, PlayerJoined, QuitLobby, StartGameRequest
+from game.lobby import (
+    DoneLoadingGameScene,
+    GameStarting,
+    PlayerJoined,
+    QuitLobby,
+    StartGameRequest,
+)
 from game.player import Player
 
 
@@ -30,7 +36,7 @@ class Lobby(Behaviour):
 
         entity_mgr = self.game.scene.find_behaviour_in_children(NetworkEntityManager)
         if entity_mgr is None:
-            self.game.scene.add_child().add_behaviour(NetworkEntityManager)
+            self.game.scene.add_child(load_node_asset("templates/entity_manager.json"))
 
     def on_destroy(self):
         assert self.game
@@ -40,8 +46,9 @@ class Lobby(Behaviour):
     def _on_player_joined(self, packet: PlayerJoined):
         print("A new player joined!")
 
-    def _on_game_starting(self, packet: GameStarting):
+    async def _on_game_starting(self, packet: GameStarting):
         assert self.game
+        game = self.game
 
         players = [
             p.node
@@ -50,9 +57,11 @@ class Lobby(Behaviour):
         entity_mgr = self.game.scene.find_behaviour_in_children(NetworkEntityManager)
         assert entity_mgr
 
-        self.game.load_scene(
+        await self.game.load_scene_async(
             load_node_asset("scenes/client/game.json"), players + [entity_mgr.node]
         )
+
+        game.network.publish(DoneLoadingGameScene())
 
     def _on_back_button_pressed(self):
         assert self.game

@@ -1,6 +1,6 @@
 from common.network import register_packets
 from game.lobby import (
-    GameSceneLoaded,
+    DoneLoadingGameScene,
     JoinGameRequest,
     JoinGameResponse,
     PlayerJoined,
@@ -15,6 +15,6 @@ register_packets(
         StartGameRequest,
         PlayerJoined,
         PlayerLeft,
-        GameSceneLoaded,
+        DoneLoadingGameScene,
     ]
 )

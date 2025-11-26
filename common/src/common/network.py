@@ -316,7 +316,10 @@ class Network(ABC):
                     for p in packet_type.__bases__:
                         self.notify(packet, source_peer, p)
 
-                    l(packet, source_peer)
+                    res = l(packet, source_peer)
+
+                    if asyncio.iscoroutine(res):
+                        asyncio.create_task(res)
                 else:
                     for sub_packet in cast(CombinedPacket, packet).packets:
                         self.notify(sub_packet, source_peer)

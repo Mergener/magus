@@ -71,7 +71,7 @@ class GameStarting(Packet):
         return DeliveryMode.RELIABLE_ORDERED
 
 
-class GameSceneLoaded(Packet):
+class DoneLoadingGameScene(Packet):
     def on_write(self, writer: ByteWriter):
         pass
 
