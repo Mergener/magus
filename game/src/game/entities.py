@@ -5,5 +5,6 @@ from enum import Enum
 
 
 class Entities(Enum):
+    GAME_MANAGER = "game_manager"
     PLAYER = "player"
     MAGE = "mage"

@@ -3,6 +3,7 @@
     {
       "__type": "common.behaviours.network_entity_manager.NetworkEntityManager",
       "templates": {
+        "game_manager": "templates/game_manager.json",
         "player": "templates/player.json",
         "mage": "templates/mage.json"
       }

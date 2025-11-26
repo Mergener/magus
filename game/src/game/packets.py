@@ -1,5 +1,6 @@
 from common.network import register_packets
 from game.lobby import (
+    GameSceneLoaded,
     JoinGameRequest,
     JoinGameResponse,
     PlayerJoined,
@@ -8,5 +9,12 @@ from game.lobby import (
 )
 
 register_packets(
-    [JoinGameRequest, JoinGameResponse, StartGameRequest, PlayerJoined, PlayerLeft]
+    [
+        JoinGameRequest,
+        JoinGameResponse,
+        StartGameRequest,
+        PlayerJoined,
+        PlayerLeft,
+        GameSceneLoaded,
+    ]
 )

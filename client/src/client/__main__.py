@@ -1,3 +1,4 @@
+import asyncio
 import importlib
 import json
 import os
@@ -18,7 +19,8 @@ from common.behaviours.ui.ui_label import UILabel
 from common.game import Game
 from common.node import Node
 
-if __name__ == "__main__":
+
+async def main():
     pg.init()
 
     game = Game(
@@ -30,7 +32,7 @@ if __name__ == "__main__":
 
     while not game.stopped:
         try:
-            game.iterate()
+            await game.iterate()
             game.handle_pygame_events(pg.event.get())
 
         except KeyboardInterrupt:
@@ -41,3 +43,7 @@ if __name__ == "__main__":
             print(error_stack_trace, file=stderr)
 
     game.cleanup()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

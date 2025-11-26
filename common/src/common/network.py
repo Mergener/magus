@@ -7,7 +7,7 @@ from abc import ABC, ABCMeta, abstractmethod
 from collections import defaultdict
 from enum import Enum
 from sys import stderr
-from typing import Callable, Collection, cast
+from typing import Any, Callable, Collection, cast
 
 import enet
 
@@ -212,7 +212,7 @@ class NetPeer:
     def _resolve_packet_futures(self, packet: Packet):
         packet_type = type(packet)
 
-        if packet_type in self._packet_futures:
+        if packet_type in self._packet_futures.keys():
             futures = self._packet_futures[packet_type].copy()
             for future in futures:
                 if not future.done():
@@ -239,10 +239,10 @@ class Network(ABC):
     def __init__(self):
         self._listener_id = 0
         self._packet_listeners: defaultdict[
-            type, list[Callable[[Packet, NetPeer], None]]
+            type, list[Callable[[Packet, NetPeer], Any]]
         ] = defaultdict(list)
-        self._connect_listeners: list[Callable[[NetPeer], None]] = []
-        self._disconnect_listeners: list[Callable[[NetPeer], None]] = []
+        self._connect_listeners: list[Callable[[NetPeer], Any]] = []
+        self._disconnect_listeners: list[Callable[[NetPeer], Any]] = []
 
     @abstractmethod
     def is_server(self) -> bool:
@@ -335,33 +335,86 @@ class Network(ABC):
                 file=stderr,
             )
 
-    def listen[T: Packet](self, t: type[T], listener: Callable[[T, NetPeer], None]):
+    def listen[T: Packet](self, t: type[T], listener: Callable[[T, NetPeer], Any]):
         print(f"Added listener for {t}")
-        listener = cast(Callable[[Packet, NetPeer], None], listener)
+        listener = cast(Callable[[Packet, NetPeer], Any], listener)
         self._packet_listeners[t].append(listener)
         return listener
 
-    def unlisten[T: Packet](self, t: type[T], listener: Callable[[T, NetPeer], None]):
+    def unlisten[T: Packet](self, t: type[T], listener: Callable[[T, NetPeer], Any]):
         l = self._packet_listeners[t]
-        l.remove(cast(Callable[[Packet, NetPeer], None], listener))
+        l.remove(cast(Callable[[Packet, NetPeer], Any], listener))
         if len(l) == 0:
             self._packet_listeners.pop(t)
 
-    def listen_connected(self, listener: Callable[[NetPeer], None]):
+    def listen_connected(self, listener: Callable[[NetPeer], Any]):
         self._connect_listeners.append(listener)
         return listener
 
-    def listen_disconnected(self, listener: Callable[[NetPeer], None]):
+    def listen_disconnected(self, listener: Callable[[NetPeer], Any]):
         self._disconnect_listeners.append(listener)
         return listener
 
-    def unlisten_connected(self, listener: Callable[[NetPeer], None]):
+    def unlisten_connected(self, listener: Callable[[NetPeer], Any]):
         self._connect_listeners.remove(listener)
 
-    def unlisten_disconnected(self, listener: Callable[[NetPeer], None]):
+    def unlisten_disconnected(self, listener: Callable[[NetPeer], Any]):
         self._disconnect_listeners.remove(listener)
 
     async def expect[T](
+        self,
+        expected_response_type: type[T],
+        timeout_ms: float = 5000.0,
+        exclude_peers: list[NetPeer] | None = None,
+    ) -> T | None:
+        all_peers = self.connected_peers
+        target_peers = [
+            peer
+            for peer in all_peers
+            if exclude_peers is None or peer not in exclude_peers
+        ]
+
+        if not target_peers:
+            return None
+
+        expect_tasks = [
+            asyncio.create_task(peer.expect(expected_response_type))
+            for peer in target_peers
+        ]
+
+        timeout_seconds = timeout_ms / 1000.0
+
+        try:
+            done, pending = await asyncio.wait(
+                expect_tasks,
+                timeout=timeout_seconds,
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            for task in pending:
+                task.cancel()
+
+            if done:
+                first_task = done.pop()
+                try:
+                    response = first_task.result()
+                    task_index = expect_tasks.index(first_task)
+                    peer = target_peers[task_index]
+                    return response
+                except Exception as e:
+                    print(f"Error getting response from peer: {e}", file=stderr)
+                    return None
+            else:
+                return None
+
+        except Exception as e:
+            print(f"Error in expect_one: {e}", file=stderr)
+            for task in expect_tasks:
+                if not task.done():
+                    task.cancel()
+            return None
+
+    async def expect_all[T](
         self,
         expected_response_type: type[T],
         timeout_ms: float = 5000.0,
@@ -393,7 +446,9 @@ class Network(ABC):
                     response = task.result()
                     results.append((peer, response))
                 except Exception as e:
-                    print(f"Error getting response from {peer.address}: {e}")
+                    print(
+                        f"Error getting response from {peer.address}: {e}", file=stderr
+                    )
                     results.append((peer, None))
             else:
                 task.cancel()
@@ -422,3 +477,7 @@ class NullNetwork(Network):
 
     def is_client(self) -> bool:
         return True
+
+    @property
+    def connected_peers(self) -> Collection[NetPeer]:
+        return []

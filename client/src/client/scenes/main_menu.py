@@ -1,3 +1,4 @@
+from sys import stderr
 from typing import cast
 
 from common.assets import load_node_asset
@@ -23,20 +24,28 @@ class MainMenu(Behaviour):
         self.exit_button = self.node.get_child(2).get_or_add_behaviour(UIButton)
 
         self.exit_button.on_click = lambda: cast(Game, self.game).quit()
-        self.play_button.on_click = lambda: cast(Game, self.game).network.publish(
-            JoinGameRequest()
-        )
-        self._join_game_handler = self.game.network.listen(
-            JoinGameResponse, lambda msg, _: self._on_join_game(msg)
-        )
+        self.play_button.on_click = lambda: self._join_game()
+
+    async def _join_game(self):
+        assert self.game
+
+        self.game.network.publish(JoinGameRequest())
+        response = await self.game.network.expect(JoinGameResponse)
+        print("Got a response!")
+
+        if response is None:
+            print(
+                "Failed to get response from server when trying to join game.",
+                file=stderr,
+            )
+            return
+
+        if not response.accepted:
+            print("Join lobby request refused.")
+            return
+
+        print("Got join lobby response", response)
+        await self.game.load_scene_async(load_node_asset("scenes/client/lobby.json"))
 
     def _on_join_game(self, msg: JoinGameResponse):
         assert self.game
-        if not msg.accepted:
-            print("Join lobby request refused.")
-            return
-        self.game.load_scene(load_node_asset("scenes/client/lobby.json"))
-
-    def on_destroy(self):
-        assert self.game
-        self.game.network.unlisten(JoinGameResponse, self._join_game_handler)

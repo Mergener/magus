@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import asyncio
+
 from common.assets import load_node_asset
 from common.behaviour import Behaviour
 from common.behaviours.network_entity_manager import NetworkEntityManager
 from common.network import NetPeer
+from game.entities import Entities
 from game.lobby import (
+    GameSceneLoaded,
     GameStarting,
     JoinGameRequest,
     JoinGameResponse,
@@ -66,14 +70,24 @@ class LobbyManager(Behaviour):
 
         self._players.append(player)
 
-    def _handle_start_game(self, packet: StartGameRequest, peer: NetPeer):
+    async def _handle_start_game(self, packet: StartGameRequest, peer: NetPeer):
         assert self.game
         assert self.net_entity_manager
+
+        self.game.network.publish(GameStarting())
+
+        response_promise = self.game.network.expect_all(
+            GameSceneLoaded, timeout_ms=20000
+        )
+
         game_scene = load_node_asset("scenes/server/game.json")
-        self.game.load_scene(
+        load_promise = self.game.load_scene_async(
             game_scene, [self.net_entity_manager.node] + [p.node for p in self._players]
         )
-        self.game.network.publish(GameStarting())
+
+        responses = await asyncio.gather(response_promise, load_promise)
+        # TODO: Handle player failing to load scene.
+        self.net_entity_manager.spawn_entity(Entities.GAME_MANAGER.value)
 
     def _handle_disconnection(self, peer):
         assert self.game

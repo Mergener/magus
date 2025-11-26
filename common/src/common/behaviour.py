@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from common.node import Node
 
@@ -21,31 +21,31 @@ class Behaviour(ABC):
 
         self.on_init()
 
-    def on_init(self):
+    def on_init(self) -> Any:
         """Called upon behaviour default construction."""
         pass
 
-    def on_pre_start(self):
+    def on_pre_start(self) -> Any:
         """Called as soon as the behaviour is materialized in a simulation."""
         pass
 
-    def on_start(self):
+    def on_start(self) -> Any:
         """Called when the behaviour is materialized in a simulation, after on_pre_start."""
         pass
 
-    def on_update(self, dt: float):
+    def on_update(self, dt: float) -> Any:
         """Called every simulation frame, with variable interval."""
         pass
 
-    def on_tick(self, tick_id: int):
+    def on_tick(self, tick_id: int) -> Any:
         """Called every simulation tick, with fixed interval."""
         pass
 
-    def on_destroy(self):
+    def on_destroy(self) -> Any:
         """Called when this behaviour or its corresponding node gets destroyed."""
         pass
 
-    def on_render(self):
+    def on_render(self) -> Any:
         """Called every simulation render cycle."""
         pass
 
