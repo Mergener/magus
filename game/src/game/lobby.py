@@ -92,6 +92,24 @@ class PlayerJoined(EntityPacket):
         return DeliveryMode.RELIABLE_ORDERED
 
 
+class PlayerLeft(EntityPacket):
+    def __init__(self, entity_id: int, index: int):
+        super().__init__(entity_id, None)
+        self.index = index
+
+    def on_write(self, writer: ByteWriter):
+        super().on_write(writer)
+        writer.write_uint8(self.index)
+
+    def on_read(self, reader: ByteReader):
+        super().on_read(reader)
+        self.index = reader.read_uint8()
+
+    @property
+    def delivery_mode(self) -> DeliveryMode:
+        return DeliveryMode.RELIABLE_ORDERED
+
+
 class UpdateLobbyInfo(Packet):
     def __init__(self, name: str | None, capacity: int | None):
         self.name = name

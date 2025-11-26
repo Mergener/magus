@@ -1,18 +1,16 @@
 from __future__ import annotations
 
-from typing import cast
-
 from common.assets import load_node_asset
 from common.behaviour import Behaviour
 from common.behaviours.network_entity_manager import NetworkEntityManager
-from common.binary import ByteReader, ByteWriter
-from common.network import DeliveryMode, NetPeer, Packet
+from common.network import NetPeer
 from game.lobby import (
     GameStarting,
     JoinGameRequest,
     JoinGameResponse,
     LobbyInfo,
     PlayerJoined,
+    PlayerLeft,
     StartGameRequest,
     UpdateLobbyInfo,
 )
@@ -59,9 +57,11 @@ class LobbyManager(Behaviour):
 
         player_joined = PlayerJoined(player_entity.id, len(self._players), False)
         self.game.network.publish(player_joined, exclude_peers=[peer])
+
         player = player_entity.node.get_behaviour(Player)
         assert player
         player._handle_player_joined(player_joined)
+        player._net_peer = peer
 
         self._players.append(player)
 
@@ -74,6 +74,22 @@ class LobbyManager(Behaviour):
         )
         self.game.network.publish(GameStarting())
 
+    def _handle_disconnection(self, peer):
+        assert self.game
+
+        player = None
+        for i, p in enumerate(self._players):
+            if p.net_peer == peer:
+                player = p
+                del self._players[i]
+                break
+
+        if player is None:
+            return
+
+        player_left = PlayerLeft(player.net_entity.id, player.index)
+        self.game.network.publish(player_left)
+
     def _handle_update_lobby_info(self, packet: UpdateLobbyInfo, peer: NetPeer):
         self.lobby_info.update_from_packet(packet)
 
@@ -82,8 +98,6 @@ class LobbyManager(Behaviour):
 
     def on_start(self):
         assert self.game
-
-        print("Started!")
 
         self.lobby_info = LobbyInfo()
 
@@ -96,8 +110,12 @@ class LobbyManager(Behaviour):
         self._update_lobby_info_handler = self.game.network.listen(
             UpdateLobbyInfo, lambda m, p: self._handle_update_lobby_info(m, p)
         )
+        self._disconnection_handler = self.game.network.listen_disconnected(
+            lambda p: self._handle_disconnection(p)
+        )
 
     def on_destroy(self):
         assert self.game
         self.game.network.unlisten(JoinGameRequest, self._join_request_handler)
         self.game.network.unlisten(StartGameRequest, self._start_game_handler)
+        self.game.network.unlisten_disconnected(self._disconnection_handler)

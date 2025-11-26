@@ -290,6 +290,20 @@ class Network(ABC):
         if len(l) == 0:
             self._packet_listeners.pop(t)
 
+    def listen_connected(self, listener: Callable[[NetPeer], None]):
+        self._connect_listeners.append(listener)
+        return listener
+
+    def listen_disconnected(self, listener: Callable[[NetPeer], None]):
+        self._disconnect_listeners.append(listener)
+        return listener
+
+    def unlisten_connected(self, listener: Callable[[NetPeer], None]):
+        self._connect_listeners.remove(listener)
+
+    def unlisten_disconnected(self, listener: Callable[[NetPeer], None]):
+        self._disconnect_listeners.remove(listener)
+
 
 class NullNetwork(Network):
     def disconnect(self):

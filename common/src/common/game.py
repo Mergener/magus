@@ -22,7 +22,7 @@ class Game:
         global_object: Node | None = None,
     ):
         from common.input import Input
-        from common.network import Network, NullNetwork
+        from common.network import NullNetwork
         from common.node import Node
         from common.simulation import Simulation
 
