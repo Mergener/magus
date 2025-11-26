@@ -194,9 +194,11 @@ class NetPeer:
 class Network(ABC):
     def __init__(self):
         self._listener_id = 0
-        self._listeners: defaultdict[type, list[Callable[[Packet, NetPeer], None]]] = (
-            defaultdict(list)
-        )
+        self._packet_listeners: defaultdict[
+            type, list[Callable[[Packet, NetPeer], None]]
+        ] = defaultdict(list)
+        self._connect_listeners: list[Callable[[NetPeer], None]] = []
+        self._disconnect_listeners: list[Callable[[NetPeer], None]] = []
 
     @abstractmethod
     def is_server(self) -> bool:
@@ -234,6 +236,14 @@ class Network(ABC):
         """
         pass
 
+    def notify_connection(self, connected_peer: NetPeer):
+        for c in self._connect_listeners:
+            c(connected_peer)
+
+    def notify_disconnection(self, disconnected_peer: NetPeer):
+        for d in self._disconnect_listeners:
+            d(disconnected_peer)
+
     def notify(
         self,
         packet: Packet,
@@ -250,7 +260,7 @@ class Network(ABC):
         if packet_type == object:
             return
 
-        listeners = self._listeners[packet_type]
+        listeners = self._packet_listeners[packet_type]
         for l in listeners:
             try:
                 if packet_type != CombinedPacket:
@@ -271,14 +281,14 @@ class Network(ABC):
     def listen[T: Packet](self, t: type[T], listener: Callable[[T, NetPeer], None]):
         print(f"Added listener for {t}")
         listener = cast(Callable[[Packet, NetPeer], None], listener)
-        self._listeners[t].append(listener)
+        self._packet_listeners[t].append(listener)
         return listener
 
     def unlisten[T: Packet](self, t: type[T], listener: Callable[[T, NetPeer], None]):
-        l = self._listeners[t]
+        l = self._packet_listeners[t]
         l.remove(cast(Callable[[Packet, NetPeer], None], listener))
         if len(l) == 0:
-            self._listeners.pop(t)
+            self._packet_listeners.pop(t)
 
 
 class NullNetwork(Network):
@@ -289,7 +299,7 @@ class NullNetwork(Network):
         self,
         packet: Packet,
         override_delivery_mode: DeliveryMode | None = None,
-        excluded_peers: list[NetPeer] | None = None,
+        exclude_peers: list[NetPeer] | None = None,
     ):
         pass
 

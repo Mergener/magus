@@ -22,9 +22,6 @@ from game.player import Player
 class LobbyManager(Behaviour):
     _entity_mgr: NetworkEntityManager | None
 
-    def on_init(self):
-        self._players: list[Player] = []
-
     @property
     def net_entity_manager(self):
         if self.game is None:
@@ -40,23 +37,6 @@ class LobbyManager(Behaviour):
                 )
 
         return self._entity_mgr
-
-    def on_start(self):
-        assert self.game
-
-        print("Started!")
-
-        self.lobby_info = LobbyInfo()
-
-        self._join_request_handler = self.game.network.listen(
-            JoinGameRequest, lambda m, p: self._handle_join_request(m, p)
-        )
-        self._start_game_handler = self.game.network.listen(
-            StartGameRequest, lambda m, p: self._handle_start_game(m, p)
-        )
-        self._update_lobby_info_handler = self.game.network.listen(
-            UpdateLobbyInfo, lambda m, p: self._handle_update_lobby_info(m, p)
-        )
 
     def _handle_join_request(self, packet: JoinGameRequest, peer: NetPeer):
         assert self.game
@@ -96,6 +76,26 @@ class LobbyManager(Behaviour):
 
     def _handle_update_lobby_info(self, packet: UpdateLobbyInfo, peer: NetPeer):
         self.lobby_info.update_from_packet(packet)
+
+    def on_init(self):
+        self._players: list[Player] = []
+
+    def on_start(self):
+        assert self.game
+
+        print("Started!")
+
+        self.lobby_info = LobbyInfo()
+
+        self._join_request_handler = self.game.network.listen(
+            JoinGameRequest, lambda m, p: self._handle_join_request(m, p)
+        )
+        self._start_game_handler = self.game.network.listen(
+            StartGameRequest, lambda m, p: self._handle_start_game(m, p)
+        )
+        self._update_lobby_info_handler = self.game.network.listen(
+            UpdateLobbyInfo, lambda m, p: self._handle_update_lobby_info(m, p)
+        )
 
     def on_destroy(self):
         assert self.game

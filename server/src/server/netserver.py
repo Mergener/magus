@@ -41,6 +41,7 @@ class NetServer(Network):
             if event.type == enet.EVENT_TYPE_CONNECT:
                 net_peer = NetPeer(event.peer)
                 self._peers[net_peer.address] = net_peer
+                self.notify_connection(net_peer)
                 print(f"New connection: {net_peer.address}")
 
             elif event.type == enet.EVENT_TYPE_RECEIVE:
@@ -56,7 +57,8 @@ class NetServer(Network):
 
             elif event.type == enet.EVENT_TYPE_DISCONNECT:
                 address = (event.peer.address.host, event.peer.address.port)
-                self._peers.pop(address)
+                disconnected = self._peers.pop(address)
+                self.notify_disconnection(disconnected)
                 print(f"Lost connection: {address}")
 
     def disconnect(self):
