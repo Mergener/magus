@@ -6,7 +6,7 @@ from common.node import Node
 
 
 class Animator(Behaviour):
-    animation: Animation | None
+    animations: dict[str, Animation]
     _sprite_renderer: SpriteRenderer | None
     _frame_idx: int
     _accum_time: float
@@ -14,31 +14,54 @@ class Animator(Behaviour):
     def on_init(self):
         self._frame_idx = 0
         self._accum_time = 0
-        self.animation = None
         self._sprite_renderer = None
+        self._current_animation: Animation | None = None
+        self.animations = {}
 
     def on_start(self):
-        self._sprite_renderer = self.node.get_behaviour(SpriteRenderer)
+        self._sprite_renderer = self.node.get_or_add_behaviour(SpriteRenderer)
+
+        if "idle" in self.animations:
+            self.play("idle")
 
     def on_update(self, dt):
-        if self.animation is None or self._sprite_renderer is None:
+        if self._current_animation is None or self._sprite_renderer is None:
             return
 
-        current_frame = self.animation.frames[self._frame_idx]
+        print(self.transform.position)
 
-        interval = 1 / (self.animation.fps * current_frame.speed)
+        current_frame = self._current_animation.frames[self._frame_idx]
+
+        interval = 1 / (self._current_animation.fps * current_frame.speed)
         self._accum_time += dt
 
         if self._accum_time > interval:
             self._accum_time -= interval
-            self._frame_idx = (self._frame_idx + 1) % len(self.animation.frames)
-            current_frame = self.animation.frames[self._frame_idx]
+            self._frame_idx = (self._frame_idx + 1) % len(
+                self._current_animation.frames
+            )
+            current_frame = self._current_animation.frames[self._frame_idx]
             self._sprite_renderer.texture = current_frame.image.pygame_surface
 
     def on_serialize(self, out_dict: dict):
-        if self.animation:
-            out_dict["animation"] = self.animation.path
+        out_dict["animations"] = {}
+        for k, a in self.animations.items():
+            if a.path is not None and a.path != "":
+                out_dict["animations"][k] = a.path
 
     def on_deserialize(self, in_dict: dict):
-        dict_anim = in_dict.get("animation", "")
-        self.animation = load_animation_asset(dict_anim)
+        dict_anim = in_dict.get("animations", {})
+        for k, a in dict_anim.items():
+            if a is not None and a != "":
+                self.animations[k] = load_animation_asset(a)
+
+    def play(self, animation_name: str, force_restart: bool = False):
+        anim = self.animations.get(animation_name)
+        if anim == None:
+            print(f"Warn: Calling play() in unregistered animation {animation_name}")
+
+        if not force_restart and anim == self._current_animation:
+            return
+        self._current_animation = anim
+        self._accum_time = 0
+        self._frame_idx = 0

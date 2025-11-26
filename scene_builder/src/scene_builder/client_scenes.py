@@ -1,15 +1,22 @@
+import json
+
 import pygame as pg
 
 from client.scenes.lobby import Lobby
+from common.animation import Animation, AnimationFrame, SliceMode, slice_image
+from common.assets import load_image_asset, resource_path
+from common.behaviours.animator import Animator
 from common.behaviours.ui.canvas import Canvas
 from common.behaviours.ui.ui_button import UIButton
 from common.behaviours.ui.ui_label import UILabel
 from common.node import Node
+from game.mage import Mage
 from scene_builder.base import save_node
 
 
 def build_client_scenes():
     build_lobby_menu()
+    build_mage_template()
 
 
 def build_lobby_menu():
@@ -37,3 +44,22 @@ def build_lobby_menu():
     lobby_menu.add_behaviour(Lobby)
 
     save_node(lobby_menu, "scenes/client/lobby.json")
+
+
+def build_mage_template():
+    mage_node = Node()
+
+    # Make mage animation
+    slices = slice_image(
+        load_image_asset("img/mage.png"), pg.Vector2(32, 32), SliceMode.SIZE_PER_RECT
+    )
+    frames = [AnimationFrame(s) for s in slices]
+    animation = Animation(frames, path="animations/mage-animation.json")
+    with open(resource_path(animation.path), "w") as f:
+        json.dump(animation.serialize(), f)
+
+    mage = mage_node.add_behaviour(Mage)
+    animator = mage_node.get_or_add_behaviour(Animator)
+    animator.animations = {"idle": animation}
+
+    save_node(mage_node, "templates/mage.json")
