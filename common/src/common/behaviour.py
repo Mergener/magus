@@ -25,8 +25,12 @@ class Behaviour(ABC):
         """Called upon behaviour default construction."""
         pass
 
-    def on_start(self):
+    def on_pre_start(self):
         """Called as soon as the behaviour is materialized in a simulation."""
+        pass
+
+    def on_start(self):
+        """Called when the behaviour is materialized in a simulation, after on_pre_start."""
         pass
 
     def on_update(self, dt: float):

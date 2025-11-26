@@ -30,7 +30,7 @@ class NetworkEntity(Behaviour):
     def id(self):
         return self._id
 
-    def on_start(self):
+    def on_pre_start(self):
         assert self.game
 
         if self.game.network.is_client():

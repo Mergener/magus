@@ -84,6 +84,11 @@ class Simulation:
         for ts in starting:
             if ts._started:
                 continue
+            ts.on_pre_start()
+
+        for ts in starting:
+            if ts._started:
+                continue
             ts._started = True
             ts.on_start()
 

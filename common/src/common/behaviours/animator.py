@@ -18,9 +18,10 @@ class Animator(Behaviour):
         self._current_animation: Animation | None = None
         self.animations = {}
 
-    def on_start(self):
+    def on_pre_start(self):
         self._sprite_renderer = self.node.get_or_add_behaviour(SpriteRenderer)
 
+    def on_start(self):
         if "idle" in self.animations:
             self.play("idle")
 

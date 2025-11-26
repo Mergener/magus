@@ -10,7 +10,7 @@ from game.player import Player
 
 
 class Lobby(Behaviour):
-    def on_start(self):
+    def on_pre_start(self):
         assert self.game
 
         self.play_button = self.node.get_child(1).get_or_add_behaviour(UIButton)
