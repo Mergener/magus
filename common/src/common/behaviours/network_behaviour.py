@@ -43,17 +43,17 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
 
     @property
     def net_entity(self):
-        if self._net_entity is None:  # type: ignore
+        if getattr(self, "_net_entity", None) is None:  # type: ignore
             self._net_entity = self.node.get_or_add_behaviour(NetworkEntity)
         return self._net_entity
 
     @final
-    def on_start(self):
+    def on_pre_start(self):
         assert self.game
 
-        parent_on_start = getattr(super(), "on_start", None)
-        if callable(parent_on_start):
-            parent_on_start()
+        parent_on_pre_start = getattr(super(), "on_pre_start", None)
+        if callable(parent_on_pre_start):
+            parent_on_pre_start()
 
         for packet_type, handler in self._packet_handlers.items():
             bound = handler.__get__(self, self.__class__)
@@ -62,17 +62,29 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
         prev_rcv_updates = self.receive_updates
         self.receive_updates = False
         if self.game.network.is_server():
-            self.on_server_start()
+            self.on_server_pre_start()
             if overrides_method(
                 NetworkBehaviour, self, "on_server_update"
             ) or overrides_method(NetworkBehaviour, self, "on_server_tick"):
                 self.receive_updates = prev_rcv_updates
         if self.game.network.is_client():
-            self.on_client_start()
+            self.on_client_pre_start()
             if overrides_method(
                 NetworkBehaviour, self, "on_client_update"
             ) or overrides_method(NetworkBehaviour, self, "on_client_tick"):
                 self.receive_updates = prev_rcv_updates
+
+    @final
+    def on_start(self):
+        assert self.game
+        parent_on_start = getattr(super(), "on_start", None)
+        if callable(parent_on_start):
+            parent_on_start()
+
+        if self.game.network.is_server():
+            self.on_server_start()
+        if self.game.network.is_client():
+            self.on_client_start()
 
     @final
     def on_update(self, dt: float):
@@ -89,6 +101,12 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
             self.on_server_tick(tick_id)
         if self.game.network.is_client():
             self.on_client_tick(tick_id)
+
+    def on_client_pre_start(self):
+        pass
+
+    def on_server_pre_start(self):
+        pass
 
     def on_client_start(self):
         pass

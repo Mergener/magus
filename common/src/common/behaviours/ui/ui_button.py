@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Any, Callable
 
 import pygame as pg
 
@@ -22,7 +22,7 @@ class UIButton(Widget):
         self._is_pressed: bool = False
         self._was_pressed_inside: bool = False
 
-        self.on_click: Callable[[], None] | None = None
+        self.on_click: Callable[[], Any] | None = None
         self._update_colors()
 
     def _update_colors(self):
@@ -70,7 +70,7 @@ class UIButton(Widget):
         if game_input.is_mouse_button_just_released(1):
             if self._is_pressed and self._is_hovered and self._was_pressed_inside:
                 if self.on_click is not None:
-                    self.on_click()
+                    self.game.simulation.run_task(self.on_click())
 
             self._is_pressed = False
             self._was_pressed_inside = False

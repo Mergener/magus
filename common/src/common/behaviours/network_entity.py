@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 from abc import ABC
-from typing import Callable, cast
+from typing import Any, Callable, cast
 
 import pygame as pg
 
@@ -11,7 +12,7 @@ from common.network import DeliveryMode, Packet
 
 
 class _PacketListenerState:
-    def __init__(self, listener: Callable[[EntityPacket], None]):
+    def __init__(self, listener: Callable[[EntityPacket], Any]):
         self.listener = listener
         self.last_received_tick = 0
 
@@ -30,7 +31,7 @@ class NetworkEntity(Behaviour):
     def id(self):
         return self._id
 
-    def on_start(self):
+    def on_pre_start(self):
         assert self.game
 
         if self.game.network.is_client():
@@ -76,7 +77,9 @@ class NetworkEntity(Behaviour):
                     continue
                 h.last_received_tick = packet.tick_id
 
-            h.listener(packet)
+            res = h.listener(packet)
+            if asyncio.iscoroutine(res):
+                asyncio.create_task(res)
 
     def listen[T: EntityPacket](
         self, packet_type: type[T], listener: Callable[[T], None]

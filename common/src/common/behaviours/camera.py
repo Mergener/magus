@@ -8,7 +8,7 @@ from common.behaviour import Behaviour
 class Camera(Behaviour):
     main: ClassVar[Self | None] = None
 
-    def on_start(self):
+    def on_pre_start(self):
         if Camera.main is None:
             Camera.main = self
 

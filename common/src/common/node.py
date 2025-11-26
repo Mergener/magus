@@ -249,6 +249,37 @@ class Node:
 
         return None
 
+    def find_behaviours_in_children[T: Behaviour](
+        self,
+        tb: type[T],
+        include_self: bool = True,
+        recursive: bool = False,
+        behaviour_list: list[T] | None = None,
+    ) -> list[T]:
+        if behaviour_list is None:
+            behaviour_list = []
+
+        if include_self:
+            b = self.get_behaviour(tb)
+            if b:
+                behaviour_list.append(b)
+
+        for c in self._children:
+            b = c.get_behaviour(tb)
+            if b:
+                behaviour_list.append(b)
+
+        if recursive:
+            for c in self._children:
+                c.find_behaviours_in_children(
+                    tb,
+                    include_self=False,
+                    recursive=True,
+                    behaviour_list=behaviour_list,
+                )
+
+        return behaviour_list
+
 
 _behaviour_types: dict[str, type[Behaviour]] | None = None
 

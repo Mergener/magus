@@ -1,3 +1,4 @@
+import asyncio
 import importlib
 import json
 import os
@@ -18,21 +19,20 @@ from common.behaviours.ui.ui_label import UILabel
 from common.game import Game
 from common.node import Node
 
-if __name__ == "__main__":
+
+async def main():
     pg.init()
 
     game = Game(
         display=pg.display.set_mode((1280, 720), pg.RESIZABLE),
-        scene=load_node_asset("scenes/client/lobby.json"),
+        scene=load_node_asset("scenes/client/main_menu.json"),
         network=NetClient("localhost", 16214),
         global_object=load_node_asset("client_global_object.json"),
     )
 
-    # game.network.publish(JoinGameRequest())
-
     while not game.stopped:
         try:
-            game.iterate()
+            await game.iterate()
             game.handle_pygame_events(pg.event.get())
 
         except KeyboardInterrupt:
@@ -43,3 +43,7 @@ if __name__ == "__main__":
             print(error_stack_trace, file=stderr)
 
     game.cleanup()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

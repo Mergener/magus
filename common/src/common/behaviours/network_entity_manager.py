@@ -22,7 +22,7 @@ class NetworkEntityManager(Behaviour):
         self._entities = getattr(self, "_entities", {})
         self._next_entity_id = 1
 
-    def on_start(self):
+    def on_pre_start(self):
         assert self.game
 
         self._entity_packet_listener = getattr(

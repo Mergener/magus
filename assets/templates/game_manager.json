@@ -1,0 +1,7 @@
+{
+  "behaviours": [
+    {
+      "__type": "game.game_manager.GameManager"
+    }
+  ]
+}

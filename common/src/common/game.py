@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+from sys import stderr
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -22,7 +24,7 @@ class Game:
         global_object: Node | None = None,
     ):
         from common.input import Input
-        from common.network import Network, NullNetwork
+        from common.network import NullNetwork
         from common.node import Node
         from common.simulation import Simulation
 
@@ -36,6 +38,7 @@ class Game:
         self._queued_nodes_to_transfer: list[Node] | None = None
         self._stopped = False
         self._input = Input()
+        self._scene_loaded_futures: list[asyncio.Future] = []
 
     @property
     def stopped(self):
@@ -72,7 +75,7 @@ class Game:
     def headless(self):
         return self._display is None
 
-    def iterate(self):
+    async def iterate(self):
         if self.stopped:
             return
 
@@ -94,6 +97,8 @@ class Game:
             self._queued_scene = None
             self._queued_nodes_to_transfer = None
 
+            self._resolve_scene_loaded_futures()
+
         self.network.poll()
         self.simulation.iterate()
 
@@ -105,14 +110,42 @@ class Game:
             self.simulation.render()
             pg.display.update()
 
+        try:
+            await asyncio.sleep(0)
+        except Exception as e:
+            print("No asyncio event loop detected.", file=stderr)
+            quit()
+
     def handle_pygame_events(self, events: list[pg.event.Event]):
         must_stop = self._input.handle_pygame_events(events)
         if must_stop:
             self.quit()
 
-    def load_scene(self, node: Node, nodes_to_transfer: list[Node] | None = None):
+    async def load_scene_async(
+        self, node: Node, nodes_to_transfer: list[Node] | None = None
+    ):
+        print(f"Loading new scene: {node.name}")
         self._queued_scene = node
         self._queued_nodes_to_transfer = nodes_to_transfer
+
+        loop = asyncio.get_event_loop()
+        future = loop.create_future()
+        self._scene_loaded_futures.append(future)
+
+        await future
+
+    def load_scene(self, node: Node, nodes_to_transfer: list[Node] | None = None):
+        print(f"Loading new scene: {node.name}")
+        self._queued_scene = node
+        self._queued_nodes_to_transfer = nodes_to_transfer
+
+    def _resolve_scene_loaded_futures(self):
+        futures_to_resolve = self._scene_loaded_futures.copy()
+        self._scene_loaded_futures.clear()
+
+        for future in futures_to_resolve:
+            if not future.done():
+                future.set_result(None)
 
     def cleanup(self):
         self.network.disconnect()
