@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from collections import defaultdict
 
 import pygame as pg
@@ -28,6 +29,8 @@ class Simulation:
         self._will_stop_rendering: set[tuple[Behaviour, int]] = set()
 
         self._to_start: set[Behaviour] = set()
+        self._frame_futures: list[asyncio.Future] = []
+        self._tick_futures: list[asyncio.Future] = []
 
     @property
     def tick_id(self):
@@ -92,8 +95,11 @@ class Simulation:
             ts._started = True
             ts.on_start()
 
+        self._resolve_frame_futures()
+
         if self._tick_accum_time > self.tick_interval:
             self._tick_accum_time -= self.tick_interval
+            self._resolve_tick_futures()
             for t in self._tickables:
                 t.on_tick(self._tick_id)
             self._tick_id += 1
@@ -116,3 +122,41 @@ class Simulation:
         for l in sorted(self._renderables.keys()):
             for r in self._renderables[l]:
                 r.on_render()
+
+    async def wait_next_frame(self):
+        loop = asyncio.get_event_loop()
+        future = loop.create_future()
+        self._frame_futures.append(future)
+        return await future
+
+    async def wait_next_tick(self):
+        loop = asyncio.get_event_loop()
+        future = loop.create_future()
+        self._tick_futures.append(future)
+        return await future
+
+    async def wait_seconds(self, seconds: float):
+        start_time = pg.time.get_ticks() / 1000.0
+        target_time = start_time + seconds
+
+        while True:
+            current_time = pg.time.get_ticks() / 1000.0
+            if current_time >= target_time:
+                break
+            await self.wait_next_frame()
+
+    def _resolve_frame_futures(self):
+        futures_to_resolve = self._frame_futures.copy()
+        self._frame_futures.clear()
+
+        for future in futures_to_resolve:
+            if not future.done():
+                future.set_result(None)
+
+    def _resolve_tick_futures(self):
+        futures_to_resolve = self._tick_futures.copy()
+        self._tick_futures.clear()
+
+        for future in futures_to_resolve:
+            if not future.done():
+                future.set_result(None)
