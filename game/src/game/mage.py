@@ -58,6 +58,10 @@ class Mage(NetworkBehaviour):
             return
 
         motion = delta.normalize() * self.speed * tick_interval
+        if motion.length_squared() > delta.length_squared():
+            motion = delta
+            self._move_destination = None
+
         self.transform.local_position += motion
 
     @entity_packet_handler(MoveToOrder)

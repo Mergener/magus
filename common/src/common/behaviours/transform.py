@@ -42,7 +42,7 @@ class Transform(Behaviour):
         self._local_position = new_pos
 
     @property
-    def position(self):
+    def position(self) -> pg.Vector2:
         if self.parent is not None:
             parent_position = self.parent.transform.position
             parent_rotation = self.parent.transform.rotation
@@ -57,7 +57,7 @@ class Transform(Behaviour):
         self.local_position += delta
 
     @property
-    def rotation(self):
+    def rotation(self) -> float:
         return self._rotation
 
     @rotation.setter
