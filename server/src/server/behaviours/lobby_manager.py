@@ -11,6 +11,7 @@ from game.lobby import (
     LobbyInfo,
     PlayerJoined,
     PlayerLeft,
+    QuitLobby,
     StartGameRequest,
     UpdateLobbyInfo,
 )
@@ -96,7 +97,7 @@ class LobbyManager(Behaviour):
     def on_init(self):
         self._players: list[Player] = []
 
-    def on_start(self):
+    def on_pre_start(self):
         assert self.game
 
         self.lobby_info = LobbyInfo()
@@ -110,6 +111,9 @@ class LobbyManager(Behaviour):
         self._update_lobby_info_handler = self.game.network.listen(
             UpdateLobbyInfo, lambda m, p: self._handle_update_lobby_info(m, p)
         )
+        self._quit_lobby_handler = self.game.network.listen(
+            QuitLobby, lambda _, p: self._handle_disconnection(p)
+        )
         self._disconnection_handler = self.game.network.listen_disconnected(
             lambda p: self._handle_disconnection(p)
         )
@@ -118,4 +122,5 @@ class LobbyManager(Behaviour):
         assert self.game
         self.game.network.unlisten(JoinGameRequest, self._join_request_handler)
         self.game.network.unlisten(StartGameRequest, self._start_game_handler)
+        self.game.network.unlisten(QuitLobby, self._quit_lobby_handler)
         self.game.network.unlisten_disconnected(self._disconnection_handler)

@@ -92,6 +92,18 @@ class PlayerJoined(EntityPacket):
         return DeliveryMode.RELIABLE_ORDERED
 
 
+class QuitLobby(Packet):
+    def on_write(self, writer: ByteWriter):
+        pass
+
+    def on_read(self, reader: ByteReader):
+        pass
+
+    @property
+    def delivery_mode(self) -> DeliveryMode:
+        return DeliveryMode.RELIABLE_ORDERED
+
+
 class PlayerLeft(EntityPacket):
     def __init__(self, entity_id: int, index: int):
         super().__init__(entity_id, None)

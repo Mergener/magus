@@ -15,7 +15,7 @@ class Player(NetworkBehaviour):
         Server-only.
         The peer associated with this player.
         """
-        return self.net_peer
+        return self._net_peer
 
     def local_player(self):
         return self._local_player

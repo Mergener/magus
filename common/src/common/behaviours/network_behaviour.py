@@ -43,7 +43,7 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
 
     @property
     def net_entity(self):
-        if self._net_entity is None:  # type: ignore
+        if getattr(self, "_net_entity", None) is None:  # type: ignore
             self._net_entity = self.node.get_or_add_behaviour(NetworkEntity)
         return self._net_entity
 

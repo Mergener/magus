@@ -5,7 +5,7 @@ from common.behaviour import Behaviour
 from common.behaviours.network_entity_manager import NetworkEntityManager
 from common.behaviours.ui.ui_button import UIButton
 from common.game import Game
-from game.lobby import GameStarting, PlayerJoined, StartGameRequest
+from game.lobby import GameStarting, PlayerJoined, QuitLobby, StartGameRequest
 from game.player import Player
 
 
@@ -14,9 +14,9 @@ class Lobby(Behaviour):
         assert self.game
 
         self.play_button = self.node.get_child(1).get_or_add_behaviour(UIButton)
-        self.exit_button = self.node.get_child(2).get_or_add_behaviour(UIButton)
+        self.back_button = self.node.get_child(2).get_or_add_behaviour(UIButton)
 
-        self.exit_button.on_click = lambda: cast(Game, self.game).quit()
+        self.back_button.on_click = lambda: self._on_back_button_pressed()
         self.play_button.on_click = lambda: cast(Game, self.game).network.publish(
             StartGameRequest()
         )
@@ -53,3 +53,8 @@ class Lobby(Behaviour):
         self.game.load_scene(
             load_node_asset("scenes/client/game.json"), players + [entity_mgr.node]
         )
+
+    def _on_back_button_pressed(self):
+        assert self.game
+        self.game.network.publish(QuitLobby())
+        self.game.load_scene(load_node_asset("scenes/client/main_menu.json"))

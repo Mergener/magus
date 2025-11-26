@@ -6,8 +6,7 @@
       "behaviours": [
         { "__type": "common.behaviours.camera.Camera" }
       ]
-    },
-    "templates/entity_manager.json"
+    }
   ],
   "behaviours": []
 }
