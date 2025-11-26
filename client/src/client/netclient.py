@@ -1,4 +1,5 @@
 from sys import stderr
+from typing import Collection
 
 import enet
 
@@ -67,3 +68,7 @@ class NetClient(Network):
 
     def is_client(self) -> bool:
         return True
+
+    @property
+    def connected_peers(self) -> Collection[NetPeer]:
+        return [self._peer] if self._peer else []

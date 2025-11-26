@@ -1,3 +1,5 @@
+from typing import Collection
+
 import enet
 
 from common.binary import ByteReader, ByteWriter
@@ -72,3 +74,7 @@ class NetServer(Network):
 
     def is_client(self) -> bool:
         return False
+
+    @property
+    def connected_peers(self) -> Collection[NetPeer]:
+        return self._peers.values()
