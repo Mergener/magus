@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABC
-from typing import TYPE_CHECKING, Any, Callable, cast
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar, cast
 
 import pygame as pg
 
@@ -20,6 +21,28 @@ class _PacketListenerState:
         self.last_received_tick = 0
 
 
+PlausibleSyncVarType = bool | int | float | str | pg.Vector2
+
+TVar = TypeVar("TVar", bound=PlausibleSyncVarType)
+
+
+@dataclass
+class SyncVar(Generic[TVar]):
+    _id: int
+    _current_value: TVar
+    _last_sent_value: TVar | None
+    _last_recv_tick: int
+    _delivery_mode: DeliveryMode
+
+    @property
+    def value(self):
+        return self._current_value
+
+    @value.setter
+    def value(self, v):
+        self._current_value = v
+
+
 class NetworkEntity(Behaviour):
     _entity_manager: NetworkEntityManager
 
@@ -32,7 +55,10 @@ class NetworkEntity(Behaviour):
         self._packet_listeners: dict[type[EntityPacket], list[_PacketListenerState]] = (
             {}
         )
+        self._sync_vars: list[SyncVar] = []
         self._reached = True
+        self._next_sync_var_id = 0
+        self._may_register_sync_vars = True
 
     @property
     def id(self):
@@ -42,6 +68,22 @@ class NetworkEntity(Behaviour):
     def entity_manager(self):
         return self._entity_manager
 
+    def use_sync_var[T: PlausibleSyncVarType](
+        self,
+        type: type[T],
+        initial_value: T | None = None,
+        delivery_mode=DeliveryMode.RELIABLE,
+    ):
+        if initial_value is None:
+            initial_value = type()
+
+        sync_var = SyncVar(
+            self._next_sync_var_id, initial_value, None, 0, delivery_mode
+        )
+        self._next_sync_var_id += 1
+        self._sync_vars.append(sync_var)
+        return sync_var
+
     def on_pre_start(self):
         assert self.game
 
@@ -49,6 +91,10 @@ class NetworkEntity(Behaviour):
             self.listen(PositionUpdate, lambda msg: self._handle_pos_update(msg))
             self.listen(RotationUpdate, lambda msg: self._handle_rotation_update(msg))
             self.listen(ScaleUpdate, lambda msg: self._handle_scale_update(msg))
+            self.listen(SyncVarUpdate, lambda msg: self._handle_sync_var_update(msg))
+
+    def on_start(self) -> Any:
+        self._may_register_sync_vars = False
 
     def _handle_rotation_update(self, packet: RotationUpdate):
         self.transform.rotation = packet.rotation
@@ -97,6 +143,19 @@ class NetworkEntity(Behaviour):
 
         self._last_recv_pos = new_pos
 
+    def _handle_sync_var_update(self, update: SyncVarUpdate):
+        for p in self._sync_vars:
+            if p._id != update.sync_var_id:
+                continue
+
+            p._current_value = update.value
+
+            if self.game:
+                p._last_recv_tick = self.game.simulation.tick_id
+            else:
+                p._last_recv_tick = 0
+            break
+
     def on_tick(self, tick_id: int) -> Any:
         assert self.game
         if self.game.network.is_server():
@@ -106,6 +165,19 @@ class NetworkEntity(Behaviour):
                 self.game.network.publish(
                     PositionUpdate(tick_id, self.id, pos.x, pos.y)
                 )
+
+            for sv in self._sync_vars:
+                if sv._current_value != sv._last_sent_value:
+                    sv._last_sent_value = sv._current_value
+                    self.game.network.publish(
+                        SyncVarUpdate(
+                            self.id,
+                            tick_id,
+                            sv._id,
+                            sv._current_value,
+                            sv._delivery_mode,
+                        )
+                    )
 
     def on_update(self, dt: float):
         assert self.game
@@ -174,6 +246,58 @@ class EntityPacket(Packet, ABC):
             self.tick_id = reader.read_uint32()
         else:
             self.tick_id = None
+
+
+_sync_var_writers: dict[
+    type[PlausibleSyncVarType], Callable[[Any, ByteWriter], Any]
+] = {
+    bool: lambda x, writer: writer.write_bool(x),
+    int: lambda x, writer: writer.write_int32(x),
+    float: lambda x, writer: writer.write_float32(x),
+    str: lambda x, writer: writer.write_str(x),
+    pg.Vector2: lambda x, writer: (
+        writer.write_float32(x.x),
+        writer.write_float32(x.y),
+    ),
+}
+
+
+_sync_var_readers: dict[type[PlausibleSyncVarType], Callable[[ByteReader], Any]] = {
+    bool: lambda reader: reader.read_bool(),
+    int: lambda reader: reader.read_int32(),
+    float: lambda reader: reader.read_float32(),
+    str: lambda reader: reader.read_str(),
+    pg.Vector2: lambda reader: pg.Vector2(reader.read_float32(), reader.read_float32()),
+}
+
+
+class SyncVarUpdate(EntityPacket):
+    def __init__(
+        self,
+        entity_id: int,
+        tick_id: int,
+        sync_var_id: int,
+        value: PlausibleSyncVarType,
+        delivery_mode: DeliveryMode,
+    ):
+        super().__init__(entity_id, tick_id)
+        self.sync_var_id = sync_var_id
+        self.value = value
+        self._delivery_mode = delivery_mode
+
+    def on_write(self, writer: ByteWriter):
+        super().on_write(writer)
+        writer.write_uint8(self.sync_var_id)
+        _sync_var_writers[type(self.value)](self.value, writer)
+
+    def on_read(self, reader: ByteReader):
+        super().on_read(reader)
+        self.sync_var_id = reader.read_uint8()
+        self.value = _sync_var_readers[type(self.value)](reader)
+
+    @property
+    def delivery_mode(self) -> DeliveryMode:
+        return self._delivery_mode
 
 
 class PositionUpdate(EntityPacket):

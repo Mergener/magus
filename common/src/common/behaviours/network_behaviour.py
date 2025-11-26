@@ -2,10 +2,18 @@ from __future__ import annotations
 
 import functools
 from abc import ABC, ABCMeta
-from typing import Callable, ClassVar, final
+from dataclasses import dataclass
+from typing import Callable, ClassVar, Generic, TypeVar, final
+
+import pygame as pg
 
 from common.behaviour import Behaviour
-from common.behaviours.network_entity import EntityPacket, NetworkEntity
+from common.behaviours.network_entity import (
+    EntityPacket,
+    NetworkEntity,
+    PlausibleSyncVarType,
+)
+from common.network import DeliveryMode
 from common.utils import overrides_method
 
 
@@ -53,6 +61,14 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
     @property
     def entity_manager(self):
         return self.net_entity.entity_manager
+
+    def use_sync_var[T: PlausibleSyncVarType](
+        self,
+        type: type[T],
+        initial_value: T | None = None,
+        delivery_mode=DeliveryMode.RELIABLE,
+    ):
+        return self.net_entity.use_sync_var(type, initial_value, delivery_mode)
 
     @final
     def on_pre_start(self):
