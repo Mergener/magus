@@ -44,11 +44,23 @@ class UILabel(Widget):
             return
 
         try:
+            # Quick hack:
+            # Since our text will scale with screen size, a little trick to maintain quality
+            # is to render the texture in a larger font size and scale that down, instead
+            # of upscaling smaller texts and losing quality.
+            FONT_FACTOR = 10
+
             font = load_font_asset(
-                self._font_name or "Arial", self._font_size, self._bold, self._italic
+                self._font_name or "Arial",
+                self._font_size * FONT_FACTOR,
+                self._bold,
+                self._italic,
             )
             surface = font.render(self._text, self._anti_alias, self._color)
             self._texture_base.set_surface(surface)
+            self._texture_base.surface_scale = pg.Vector2(
+                1 / FONT_FACTOR, 1 / FONT_FACTOR
+            )
             self._update_alignment()
         except Exception as e:
             print(f"Failed to render text: {e}")
