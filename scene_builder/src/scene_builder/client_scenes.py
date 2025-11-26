@@ -88,6 +88,7 @@ def build_mage_template():
         json.dump(animation.serialize(), f)
 
     mage = mage_node.add_behaviour(Mage)
+    mage.transform.local_scale = pg.Vector2(1.7, 1.7)
     animator = mage_node.get_or_add_behaviour(Animator)
     animator.animations = {"idle": animation}
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 from abc import ABC, ABCMeta
 from typing import Callable, ClassVar, final
 
@@ -12,6 +13,7 @@ def entity_packet_handler(t):
     def inner(fn):
         fn._packet_type = t  # type: ignore
 
+        @functools.wraps(fn)
         def wrapper(self, packet):
             fn(self, packet)
 
@@ -35,6 +37,7 @@ class NetworkBehaviourMeta(ABCMeta):
         }
 
         cls._packet_handlers = {**inherited, **own}  # type: ignore
+
         return cls
 
 
@@ -46,6 +49,10 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
         if getattr(self, "_net_entity", None) is None:  # type: ignore
             self._net_entity = self.node.get_or_add_behaviour(NetworkEntity)
         return self._net_entity
+
+    @property
+    def entity_manager(self):
+        return self.net_entity.entity_manager
 
     @final
     def on_pre_start(self):
@@ -61,17 +68,22 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
 
         prev_rcv_updates = self.receive_updates
         self.receive_updates = False
+        self.on_common_pre_start()
         if self.game.network.is_server():
             self.on_server_pre_start()
-            if overrides_method(
-                NetworkBehaviour, self, "on_server_update"
-            ) or overrides_method(NetworkBehaviour, self, "on_server_tick"):
+            if (
+                overrides_method(NetworkBehaviour, self, "on_server_update")
+                or overrides_method(NetworkBehaviour, self, "on_server_tick")
+                or overrides_method(NetworkBehaviour, self, "on_common_update")
+            ):
                 self.receive_updates = prev_rcv_updates
         if self.game.network.is_client():
             self.on_client_pre_start()
-            if overrides_method(
-                NetworkBehaviour, self, "on_client_update"
-            ) or overrides_method(NetworkBehaviour, self, "on_client_tick"):
+            if (
+                overrides_method(NetworkBehaviour, self, "on_client_update")
+                or overrides_method(NetworkBehaviour, self, "on_client_tick")
+                or overrides_method(NetworkBehaviour, self, "on_common_tick")
+            ):
                 self.receive_updates = prev_rcv_updates
 
     @final
@@ -81,6 +93,7 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
         if callable(parent_on_start):
             parent_on_start()
 
+        self.on_common_start()
         if self.game.network.is_server():
             self.on_server_start()
         if self.game.network.is_client():
@@ -89,6 +102,7 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
     @final
     def on_update(self, dt: float):
         assert self.game
+        self.on_common_update(dt)
         if self.game.network.is_server():
             self.on_server_update(dt)
         if self.game.network.is_client():
@@ -97,6 +111,7 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
     @final
     def on_tick(self, tick_id: int):
         assert self.game
+        self.on_common_tick(tick_id)
         if self.game.network.is_server():
             self.on_server_tick(tick_id)
         if self.game.network.is_client():
@@ -105,23 +120,35 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
     def on_client_pre_start(self):
         pass
 
-    def on_server_pre_start(self):
-        pass
-
     def on_client_start(self):
-        pass
-
-    def on_server_start(self):
         pass
 
     def on_client_update(self, dt: float):
         pass
 
-    def on_server_update(self, dt: float):
-        pass
-
     def on_client_tick(self, tick_id: int):
         pass
 
+    def on_server_pre_start(self):
+        pass
+
+    def on_server_start(self):
+        pass
+
+    def on_server_update(self, dt: float):
+        pass
+
     def on_server_tick(self, tick_id: int):
+        pass
+
+    def on_common_pre_start(self):
+        pass
+
+    def on_common_start(self):
+        pass
+
+    def on_common_update(self, dt: float):
+        pass
+
+    def on_common_tick(self, tick_id: int):
         pass

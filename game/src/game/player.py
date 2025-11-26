@@ -1,13 +1,23 @@
+from typing import TYPE_CHECKING
+
 from common.behaviours.network_behaviour import NetworkBehaviour, entity_packet_handler
 from common.network import NetPeer
+from common.utils import notnull
 from game.lobby import PlayerJoined
+from game.mage import Mage
+
+if TYPE_CHECKING:
+    from game.game_manager import GameManager
 
 
 class Player(NetworkBehaviour):
+    mage: Mage
+
     def on_init(self):
         self.index: int = 0
         self._local_player: bool = False
         self._net_peer: NetPeer | None = None
+        self._game_manager: GameManager | None = None
 
     @property
     def net_peer(self):

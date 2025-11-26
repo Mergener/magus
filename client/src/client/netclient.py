@@ -49,7 +49,10 @@ class NetClient(Network):
 
                 reader = ByteReader(raw_data)
                 decoded = Packet.decode(reader)
-                print(f"Received {decoded}")
+
+                if decoded.delivery_mode != DeliveryMode.UNRELIABLE:
+                    print(f"Received {decoded}")
+
                 self.notify(decoded, self._peer)
 
             elif event.type == enet.EVENT_TYPE_DISCONNECT:

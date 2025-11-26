@@ -29,8 +29,6 @@ class Animator(Behaviour):
         if self._current_animation is None or self._sprite_renderer is None:
             return
 
-        print(self.transform.position)
-
         current_frame = self._current_animation.frames[self._frame_idx]
 
         interval = 1 / (self._current_animation.fps * current_frame.speed)
