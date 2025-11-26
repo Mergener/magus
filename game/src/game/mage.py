@@ -33,7 +33,7 @@ class Mage(NetworkBehaviour):
     def on_init(self):
         self._animator = self.node.get_or_add_behaviour(Animator)
         self._move_destination = None
-        self.speed = 200
+        self.speed = self.use_sync_var(float, 500)
 
     def on_client_update(self, dt: float):
         assert self.game
@@ -46,18 +46,22 @@ class Mage(NetworkBehaviour):
                     )
                 )
 
+        print(self.speed.value)
+
     def on_server_tick(self, tick_id: int):
         assert self.game
+
+        tick_interval = self.game.simulation.tick_interval
+        self.speed.value -= 5 * tick_interval
 
         if self._move_destination is None:
             return
 
-        tick_interval = self.game.simulation.tick_interval
         delta = self._move_destination - self.transform.position
         if delta.x == 0 and delta.y == 0:
             return
 
-        motion = delta.normalize() * self.speed * tick_interval
+        motion = delta.normalize() * self.speed.value * tick_interval
         if motion.length_squared() > delta.length_squared():
             motion = delta
             self._move_destination = None

@@ -70,15 +70,17 @@ class NetworkEntity(Behaviour):
 
     def use_sync_var[T: PlausibleSyncVarType](
         self,
-        type: type[T],
+        t: type[T],
         initial_value: T | None = None,
         delivery_mode=DeliveryMode.RELIABLE,
     ):
+        assert self._may_register_sync_vars
+
         if initial_value is None:
-            initial_value = type()
+            initial_value = t()  # type: ignore
 
         sync_var = SyncVar(
-            self._next_sync_var_id, initial_value, None, 0, delivery_mode
+            self._next_sync_var_id, initial_value, None, 0, delivery_mode  # type: ignore
         )
         self._next_sync_var_id += 1
         self._sync_vars.append(sync_var)
@@ -146,6 +148,10 @@ class NetworkEntity(Behaviour):
     def _handle_sync_var_update(self, update: SyncVarUpdate):
         for p in self._sync_vars:
             if p._id != update.sync_var_id:
+                continue
+            if p._last_recv_tick is not None and (
+                update.tick_id is None or p._last_recv_tick >= update.tick_id
+            ):
                 continue
 
             p._current_value = update.value
@@ -271,7 +277,14 @@ _sync_var_readers: dict[type[PlausibleSyncVarType], Callable[[ByteReader], Any]]
 }
 
 
+_sync_var_type_ids = {bool: 0, int: 1, float: 2, str: 3, pg.Vector2: 4}
+
+
+_sync_var_id_types = [bool, int, float, str, pg.Vector2]
+
+
 class SyncVarUpdate(EntityPacket):
+
     def __init__(
         self,
         entity_id: int,
@@ -288,12 +301,20 @@ class SyncVarUpdate(EntityPacket):
     def on_write(self, writer: ByteWriter):
         super().on_write(writer)
         writer.write_uint8(self.sync_var_id)
-        _sync_var_writers[type(self.value)](self.value, writer)
+
+        t = type(self.value)
+        writer.write_uint8(_sync_var_type_ids[t])
+
+        _sync_var_writers[t](self.value, writer)
 
     def on_read(self, reader: ByteReader):
         super().on_read(reader)
         self.sync_var_id = reader.read_uint8()
-        self.value = _sync_var_readers[type(self.value)](reader)
+
+        t = _sync_var_id_types[reader.read_uint8()]
+
+        self.value = _sync_var_readers[t](reader)
+        self._delivery_mode = DeliveryMode.RELIABLE
 
     @property
     def delivery_mode(self) -> DeliveryMode:
