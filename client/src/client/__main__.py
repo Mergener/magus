@@ -28,8 +28,6 @@ if __name__ == "__main__":
         global_object=load_node_asset("client_global_object.json"),
     )
 
-    # game.network.publish(JoinGameRequest())
-
     while not game.stopped:
         try:
             game.iterate()
