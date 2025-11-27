@@ -43,3 +43,7 @@ python -m server
 
 To generate an executable, run the corresponding bundle script (`bundle.sh` for Linux/macOS, `bundle.bat` for Windows).
 The built executable will be located in the `bin/` directory.
+
+## Acknowledgments
+
+Acknlowledgments for third-party assets or any other contributions are listed in `acknowledgments.md`.
