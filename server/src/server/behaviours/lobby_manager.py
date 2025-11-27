@@ -66,7 +66,7 @@ class LobbyManager(Behaviour):
 
         player = player_entity.node.get_behaviour(Player)
         assert player
-        player._handle_player_joined(player_joined)
+        player._handle_player_joined(player_joined, peer)
         player._net_peer = peer
 
         self._players.append(player)

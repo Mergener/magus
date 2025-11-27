@@ -9,14 +9,14 @@ import pygame as pg
 
 from common.behaviour import Behaviour
 from common.binary import ByteReader, ByteWriter
-from common.network import DeliveryMode, Packet
+from common.network import DeliveryMode, NetPeer, Packet
 
 if TYPE_CHECKING:
     from common.behaviours.network_entity_manager import NetworkEntityManager
 
 
 class _PacketListenerState:
-    def __init__(self, listener: Callable[[EntityPacket], Any]):
+    def __init__(self, listener: Callable[[EntityPacket, NetPeer], Any]):
         self.listener = listener
         self.last_received_tick = 0
 
@@ -90,21 +90,30 @@ class NetworkEntity(Behaviour):
         assert self.game
 
         if self.game.network.is_client():
-            self.listen(PositionUpdate, lambda msg: self._handle_pos_update(msg))
-            self.listen(RotationUpdate, lambda msg: self._handle_rotation_update(msg))
-            self.listen(ScaleUpdate, lambda msg: self._handle_scale_update(msg))
-            self.listen(SyncVarUpdate, lambda msg: self._handle_sync_var_update(msg))
+            self.listen(
+                PositionUpdate, lambda msg, peer: self._handle_pos_update(msg, peer)
+            )
+            self.listen(
+                RotationUpdate,
+                lambda msg, peer: self._handle_rotation_update(msg, peer),
+            )
+            self.listen(
+                ScaleUpdate, lambda msg, peer: self._handle_scale_update(msg, peer)
+            )
+            self.listen(
+                SyncVarUpdate, lambda msg, peer: self._handle_sync_var_update(msg, peer)
+            )
 
     def on_start(self) -> Any:
         self._may_register_sync_vars = False
 
-    def _handle_rotation_update(self, packet: RotationUpdate):
+    def _handle_rotation_update(self, packet: RotationUpdate, peer: NetPeer):
         self.transform.rotation = packet.rotation
 
-    def _handle_scale_update(self, packet: ScaleUpdate):
+    def _handle_scale_update(self, packet: ScaleUpdate, peer: NetPeer):
         self.transform.local_scale = pg.Vector2(packet.x, packet.y)
 
-    def _handle_pos_update(self, packet: PositionUpdate):
+    def _handle_pos_update(self, packet: PositionUpdate, peer: NetPeer):
         assert self.game
 
         if packet.tick_id < self._last_updated_tick:
@@ -145,7 +154,7 @@ class NetworkEntity(Behaviour):
 
         self._last_recv_pos = new_pos
 
-    def _handle_sync_var_update(self, update: SyncVarUpdate):
+    def _handle_sync_var_update(self, update: SyncVarUpdate, peer: NetPeer):
         for p in self._sync_vars:
             if p._id != update.sync_var_id:
                 continue
@@ -202,7 +211,7 @@ class NetworkEntity(Behaviour):
                 self.transform.position = self._last_recv_pos
                 self._reached = True
 
-    def _handle_entity_packet(self, packet: EntityPacket):
+    def _handle_entity_packet(self, packet: EntityPacket, peer: NetPeer):
         handlers = self._packet_listeners.get(packet.__class__)
         if handlers is None:
             return
@@ -213,19 +222,19 @@ class NetworkEntity(Behaviour):
                     continue
                 h.last_received_tick = packet.tick_id
 
-            res = h.listener(packet)
+            res = h.listener(packet, peer)
             if asyncio.iscoroutine(res):
                 asyncio.create_task(res)
 
     def listen[T: EntityPacket](
-        self, packet_type: type[T], listener: Callable[[T], None]
+        self, packet_type: type[T], listener: Callable[[T, NetPeer], None]
     ):
         listeners = self._packet_listeners.get(packet_type)
         if listeners is None:
             listeners = []
             self._packet_listeners[packet_type] = listeners
         listeners.append(
-            _PacketListenerState(cast(Callable[[EntityPacket], None], listener))
+            _PacketListenerState(cast(Callable[[EntityPacket, NetPeer], Any], listener))
         )
 
     def on_destroy(self):

@@ -22,8 +22,8 @@ def entity_packet_handler(t):
         fn._packet_type = t  # type: ignore
 
         @functools.wraps(fn)
-        def wrapper(self, packet):
-            fn(self, packet)
+        def wrapper(self, packet, peer):
+            fn(self, packet, peer)
 
         return wrapper
 

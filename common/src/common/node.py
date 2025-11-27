@@ -88,6 +88,27 @@ class Node:
                 return b
         return None
 
+    def get_behaviour_in_children[T: Behaviour](
+        self, t: type[T], recursive: bool = True, include_self: bool = True
+    ) -> T | None:
+        if include_self:
+            b = self.get_behaviour(t)
+            if b:
+                return b
+
+        for c in self._children:
+            b = c.get_behaviour(t)
+            if b:
+                return b
+
+        if recursive:
+            for c in self._children:
+                b = c.get_behaviour_in_children(t, include_self=False)
+                if b:
+                    return b
+
+        return None
+
     def add_behaviour[T: Behaviour](self, tb: type[T]) -> T:
         b = tb(self)
         self._behaviours.append(b)
@@ -308,8 +329,8 @@ def _get_behaviour_type_by_name(name: str | None):
     if bt is not None:
         return bt
 
+    module_name, class_name = name.rsplit(".", 1)
     try:
-        module_name, class_name = name.rsplit(".", 1)
         module = importlib.import_module(module_name)
         bt = getattr(module, class_name)
     except Exception as e:

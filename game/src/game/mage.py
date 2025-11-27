@@ -5,7 +5,10 @@ from common.behaviours.camera import Camera
 from common.behaviours.network_behaviour import NetworkBehaviour, entity_packet_handler
 from common.behaviours.network_entity import EntityPacket
 from common.binary import ByteReader, ByteWriter
-from common.network import DeliveryMode
+from common.network import DeliveryMode, NetPeer
+from common.utils import notnull
+from game.game_manager import GameManager
+from game.player import Player
 
 
 class MoveToOrder(EntityPacket):
@@ -34,6 +37,13 @@ class Mage(NetworkBehaviour):
         self._animator = self.node.get_or_add_behaviour(Animator)
         self._move_destination = None
         self.speed = self.use_sync_var(float, 500)
+        self.owner_index = self.use_sync_var(int)
+
+    def on_common_pre_start(self):
+        assert self.game
+        self._game_manager = notnull(
+            self.game.scene.get_behaviour_in_children(GameManager)
+        )
 
     def on_client_update(self, dt: float):
         assert self.game
@@ -45,8 +55,6 @@ class Mage(NetworkBehaviour):
                         self.net_entity.id, Camera.main.screen_to_world_space(mouse_pos)
                     )
                 )
-
-        print(self.speed.value)
 
     def on_server_tick(self, tick_id: int):
         assert self.game
@@ -68,6 +76,15 @@ class Mage(NetworkBehaviour):
 
         self.transform.local_position += motion
 
+    @property
+    def owner(self) -> Player:
+        return notnull(self._game_manager.get_player_by_index(self.owner_index.value))
+
     @entity_packet_handler(MoveToOrder)
-    def _handle_move_to_order(self, order: MoveToOrder):
+    def _handle_move_to_order(self, order: MoveToOrder, peer: NetPeer):
+        order_player = self._game_manager.get_player_by_peer(peer)
+        owner = self.owner
+        if order_player.index != owner.index:
+            return
+
         self._move_destination = order.where

@@ -9,7 +9,7 @@ from common.assets import load_node_asset
 from common.behaviour import Behaviour
 from common.behaviours.network_entity import EntityPacket, NetworkEntity, PositionUpdate
 from common.binary import ByteReader, ByteWriter
-from common.network import DeliveryMode, Packet
+from common.network import DeliveryMode, NetPeer, Packet
 from common.node import Node
 
 
@@ -29,7 +29,7 @@ class NetworkEntityManager(Behaviour):
             self,
             "_entity_packet_listener",
             self.game.network.listen(
-                EntityPacket, lambda msg, _: self._handle_entity_packet(msg)
+                EntityPacket, lambda msg, peer: self._handle_entity_packet(msg, peer)
             ),
         )
         if self.game.network.is_client():
@@ -69,7 +69,7 @@ class NetworkEntityManager(Behaviour):
                 entity.transform.position.x,
                 entity.transform.position.y,
             ),
-            override_delivery_mode=DeliveryMode.RELIABLE,
+            override_delivery_mode=DeliveryMode.RELIABLE_ORDERED,
         )
         return entity
 
@@ -123,7 +123,7 @@ class NetworkEntityManager(Behaviour):
         entity.node.destroy()
         del self._entities[p.id]
 
-    def _handle_entity_packet(self, p: EntityPacket):
+    def _handle_entity_packet(self, p: EntityPacket, peer: NetPeer):
         entity = self._entities.get(p.id)
         if entity is None:
             print(
@@ -131,7 +131,7 @@ class NetworkEntityManager(Behaviour):
                 file=stderr,
             )
             return
-        entity._handle_entity_packet(p)
+        entity._handle_entity_packet(p, peer)
 
     def _handle_spawn_entity(self, p: SpawnEntity):
         self._do_spawn_entity(p)
