@@ -47,7 +47,7 @@ class Mage(NetworkBehaviour):
 
     def on_client_update(self, dt: float):
         assert self.game
-        if self.game.input.is_mouse_button_just_pressed(1):
+        if self.game.input.is_mouse_button_just_pressed(pg.BUTTON_RIGHT):
             mouse_pos = self.game.input.mouse_pos
             if Camera.main:
                 self.game.network.publish(
