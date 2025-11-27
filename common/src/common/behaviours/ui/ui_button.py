@@ -62,12 +62,12 @@ class UIButton(Widget):
         was_hovered = self._is_hovered
         self._is_hovered = self._is_mouse_over_button()
 
-        if game_input.is_mouse_button_just_pressed(1):
+        if game_input.is_mouse_button_just_pressed(pg.BUTTON_LEFT):
             if self._is_hovered:
                 self._is_pressed = True
                 self._was_pressed_inside = True
 
-        if game_input.is_mouse_button_just_released(1):
+        if game_input.is_mouse_button_just_released(pg.BUTTON_LEFT):
             if self._is_pressed and self._is_hovered and self._was_pressed_inside:
                 if self.on_click is not None:
                     self.game.simulation.run_task(self.on_click())
@@ -75,7 +75,7 @@ class UIButton(Widget):
             self._is_pressed = False
             self._was_pressed_inside = False
 
-        if self._is_pressed and not game_input.is_mouse_button_pressed(1):
+        if self._is_pressed and not game_input.is_mouse_button_pressed(pg.BUTTON_LEFT):
             self._is_pressed = False
             self._was_pressed_inside = False
 

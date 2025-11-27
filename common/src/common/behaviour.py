@@ -3,6 +3,9 @@ from typing import TYPE_CHECKING, Any
 
 from common.node import Node
 
+if TYPE_CHECKING:
+    from common.behaviours.transform import Transform
+
 
 class Behaviour(ABC):
     def __init__(self, node: Node):

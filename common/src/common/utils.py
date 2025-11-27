@@ -9,3 +9,8 @@ def overrides_method(base_class: type, instance: object, method_name: str):
 
 def memberwise_multiply(v1: pg.Vector2, v2: pg.Vector2):
     return pg.Vector2(v1.x * v2.x, v1.y * v2.y)
+
+
+def notnull[T](value: T | None) -> T:
+    assert value is not None
+    return value

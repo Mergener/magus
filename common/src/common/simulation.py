@@ -60,7 +60,7 @@ class Simulation:
         return 1 / self.tick_interval
 
     @tick_rate.setter
-    def tick_rate(self, tick_rate):
+    def tick_rate(self, tick_rate: float):
         self.tick_interval = 1 / tick_rate
 
     def add_updatable(self, b: Behaviour):

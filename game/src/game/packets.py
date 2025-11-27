@@ -7,6 +7,7 @@ from game.lobby import (
     PlayerLeft,
     StartGameRequest,
 )
+from game.mage import MoveToOrder
 
 register_packets(
     [
@@ -16,5 +17,6 @@ register_packets(
         PlayerJoined,
         PlayerLeft,
         DoneLoadingGameScene,
+        MoveToOrder,
     ]
 )

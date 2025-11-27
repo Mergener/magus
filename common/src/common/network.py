@@ -309,13 +309,16 @@ class Network(ABC):
         if packet_type == object:
             return
 
+        for p in packet_type.__bases__:
+            if not issubclass(p, Packet) and p != Packet:
+                continue
+
+            self.notify(packet, source_peer, p)
+
         listeners = self._packet_listeners[packet_type]
         for l in listeners:
             try:
                 if packet_type != CombinedPacket:
-                    for p in packet_type.__bases__:
-                        self.notify(packet, source_peer, p)
-
                     res = l(packet, source_peer)
 
                     if asyncio.iscoroutine(res):

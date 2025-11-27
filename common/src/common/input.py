@@ -121,16 +121,19 @@ class Input:
         if button not in self._drag_start_pos:
             return (0, 0)
         sx, sy = self._drag_start_pos[button]
-        return (self._mouse_pos[0] - sx, self._mouse_pos[1] - sy)
+        return pg.Vector2(self._mouse_pos[0] - sx, self._mouse_pos[1] - sy)
 
     @property
     def mouse_pos(self):
-        return self._mouse_pos
+        x, y = self._mouse_pos
+        return pg.Vector2(x, y)
 
     @property
     def mouse_delta(self):
-        return self._mouse_delta
+        x, y = self._mouse_delta
+        return pg.Vector2(x, y)
 
     @property
     def scroll_delta(self):
-        return self._scroll_delta
+        x, y = self._scroll_delta
+        return pg.Vector2(x, y)

@@ -3,13 +3,13 @@ from __future__ import annotations
 from abc import ABC
 from dataclasses import dataclass
 from sys import stderr
-from typing import cast
+from typing import Callable, cast
 
 from common.assets import load_node_asset
 from common.behaviour import Behaviour
-from common.behaviours.network_entity import EntityPacket, NetworkEntity
+from common.behaviours.network_entity import EntityPacket, NetworkEntity, PositionUpdate
 from common.binary import ByteReader, ByteWriter
-from common.network import DeliveryMode, Packet
+from common.network import DeliveryMode, NetPeer, Packet
 from common.node import Node
 
 
@@ -29,7 +29,7 @@ class NetworkEntityManager(Behaviour):
             self,
             "_entity_packet_listener",
             self.game.network.listen(
-                EntityPacket, lambda msg, _: self._handle_entity_packet(msg)
+                EntityPacket, lambda msg, peer: self._handle_entity_packet(msg, peer)
             ),
         )
         if self.game.network.is_client():
@@ -62,6 +62,15 @@ class NetworkEntityManager(Behaviour):
         )
         entity = self._do_spawn_entity(spawn_entity_packet)
         self.game.network.publish(spawn_entity_packet)
+        self.game.network.publish(
+            PositionUpdate(
+                self.game.simulation.tick_id,
+                entity.id,
+                entity.transform.position.x,
+                entity.transform.position.y,
+            ),
+            override_delivery_mode=DeliveryMode.RELIABLE_ORDERED,
+        )
         return entity
 
     def destroy_entity(self, entity: int | NetworkEntity):
@@ -88,6 +97,7 @@ class NetworkEntityManager(Behaviour):
         node = load_node_asset(template)
         node.parent = parent
         entity = node.get_or_add_behaviour(NetworkEntity)
+        entity._entity_manager = self
 
         self._next_entity_id = self._fill_node_ids(p.id, entity.node)
 
@@ -113,7 +123,7 @@ class NetworkEntityManager(Behaviour):
         entity.node.destroy()
         del self._entities[p.id]
 
-    def _handle_entity_packet(self, p: EntityPacket):
+    def _handle_entity_packet(self, p: EntityPacket, peer: NetPeer):
         entity = self._entities.get(p.id)
         if entity is None:
             print(
@@ -121,7 +131,7 @@ class NetworkEntityManager(Behaviour):
                 file=stderr,
             )
             return
-        entity._handle_entity_packet(p)
+        entity._handle_entity_packet(p, peer)
 
     def _handle_spawn_entity(self, p: SpawnEntity):
         self._do_spawn_entity(p)
@@ -135,6 +145,9 @@ class NetworkEntityManager(Behaviour):
     def on_deserialize(self, in_dict: dict):
         self._templates = in_dict.get("templates", {})
         print(f"Loaded net entity templates: {self._templates}")
+
+    def query_entities(self, predicate: Callable[[NetworkEntity], bool]):
+        return (e for e in self._entities.values() if predicate(e))
 
 
 class SpawnEntity(Packet):

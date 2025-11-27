@@ -7,6 +7,7 @@ from common.behaviour import Behaviour
 from common.behaviours.network_entity_manager import NetworkEntityManager
 from common.network import NetPeer
 from game.entities import Entities
+from game.game_manager import GameManager
 from game.lobby import (
     DoneLoadingGameScene,
     GameStarting,
@@ -65,7 +66,7 @@ class LobbyManager(Behaviour):
 
         player = player_entity.node.get_behaviour(Player)
         assert player
-        player._handle_player_joined(player_joined)
+        player._handle_player_joined(player_joined, peer)
         player._net_peer = peer
 
         self._players.append(player)
@@ -89,7 +90,9 @@ class LobbyManager(Behaviour):
         await asyncio.gather(response_promise, load_promise)
 
         # TODO: Handle player failing to load scene.
-        entity_mgr.spawn_entity(Entities.GAME_MANAGER.value)
+        game_mgr_node = entity_mgr.spawn_entity(Entities.GAME_MANAGER.value).node
+        game_mgr = game_mgr_node.get_or_add_behaviour(GameManager)
+        game_mgr._players = self._players
 
     def _handle_disconnection(self, peer):
         assert self.game
