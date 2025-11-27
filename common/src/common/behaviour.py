@@ -71,7 +71,7 @@ class Behaviour(ABC):
         return self._node.parent
 
     @property
-    def transform(self) -> Transform:
+    def transform(self):
         return self._node.transform
 
     @property
