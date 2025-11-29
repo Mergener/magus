@@ -9,7 +9,7 @@ from common.assets import load_node_asset
 from common.behaviour import Behaviour
 from common.behaviours.network_entity import EntityPacket, NetworkEntity, PositionUpdate
 from common.binary import ByteReader, ByteWriter
-from common.network import DeliveryMode, NetPeer, Packet
+from common.network import DeliveryMode, MultiPacket, NetPeer, Packet
 from common.node import Node
 
 
@@ -49,7 +49,10 @@ class NetworkEntityManager(Behaviour):
             )
 
     def spawn_entity(
-        self, template_id: str, parent: NetworkEntity | None = None
+        self,
+        template_id: str | None = None,
+        parent: NetworkEntity | None = None,
+        include_packets: Callable[[int], list[Packet]] | None = None,
     ) -> NetworkEntity:
         assert self.game
         if not self.game.network.is_server():
@@ -61,16 +64,25 @@ class NetworkEntityManager(Behaviour):
             parent.id if parent is not None else None,
         )
         entity = self._do_spawn_entity(spawn_entity_packet)
-        self.game.network.publish(spawn_entity_packet)
-        self.game.network.publish(
-            PositionUpdate(
-                self.game.simulation.tick_id,
-                entity.id,
-                entity.transform.position.x,
-                entity.transform.position.y,
-            ),
-            override_delivery_mode=DeliveryMode.RELIABLE_ORDERED,
+
+        full_packet = MultiPacket(
+            [
+                spawn_entity_packet,
+                PositionUpdate(
+                    self.game.simulation.tick_id,
+                    entity.id,
+                    entity.transform.position.x,
+                    entity.transform.position.y,
+                ),
+            ],
+            DeliveryMode.RELIABLE_ORDERED,
         )
+
+        if include_packets is not None:
+            full_packet.packets += include_packets(entity.id)
+
+        self.game.network.publish(full_packet)
+
         return entity
 
     def destroy_entity(self, entity: int | NetworkEntity):
@@ -93,8 +105,11 @@ class NetworkEntityManager(Behaviour):
             if parent_entity is not None:
                 parent = parent_entity.node
 
-        template = self._templates[p.template]
-        node = load_node_asset(template)
+        if p.template:
+            template = self._templates[p.template]
+            node = load_node_asset(template)
+        else:
+            node = Node()
         node.parent = parent
         entity = node.get_or_add_behaviour(NetworkEntity)
         entity._entity_manager = self
@@ -127,7 +142,7 @@ class NetworkEntityManager(Behaviour):
         entity = self._entities.get(p.entity_id)
         if entity is None:
             print(
-                f"Received {p.__class__.__name__} packet for non-existing entity {p.id}",
+                f"Received {p.__class__.__name__} packet for non-existing entity {p.entity_id}",
                 file=stderr,
             )
             return
@@ -146,12 +161,15 @@ class NetworkEntityManager(Behaviour):
         self._templates = in_dict.get("templates", {})
         print(f"Loaded net entity templates: {self._templates}")
 
+    def get_entity_by_id(self, entity_id: int):
+        return self._entities.get(entity_id)
+
     def query_entities(self, predicate: Callable[[NetworkEntity], bool]):
         return (e for e in self._entities.values() if predicate(e))
 
 
 class SpawnEntity(Packet):
-    def __init__(self, id: int, template: str, parent_id: int | None = None):
+    def __init__(self, id: int, template: str | None, parent_id: int | None = None):
         self.id = id
         self.parent_id = parent_id
         self.template = template
@@ -162,7 +180,12 @@ class SpawnEntity(Packet):
             writer.write_int32(self.parent_id)
         else:
             writer.write_int32(self.id)
-        writer.write_str(self.template)
+
+        if self.template is not None:
+            writer.write_bool(True)
+            writer.write_str(self.template)
+        else:
+            writer.write_bool(False)
 
     def on_read(self, reader: ByteReader):
         self.id = reader.read_int32()
@@ -171,7 +194,12 @@ class SpawnEntity(Packet):
             self.parent_id = reader.read_int32()
         else:
             self.parent_id = None
-        self.template = reader.read_str()
+
+        has_template = reader.read_bool()
+        if has_template:
+            self.template = reader.read_str()
+        else:
+            self.template = None
 
     @property
     def delivery_mode(self) -> DeliveryMode:

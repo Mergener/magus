@@ -138,7 +138,7 @@ class NullPacket(Packet):
         return DeliveryMode.UNRELIABLE
 
 
-class CombinedPacket(Packet):
+class MultiPacket(Packet):
     def __init__(
         self, packets: list[Packet], delivery_mode: DeliveryMode | None = None
     ):
@@ -318,13 +318,13 @@ class Network(ABC):
         listeners = self._packet_listeners[packet_type]
         for l in listeners:
             try:
-                if packet_type != CombinedPacket:
+                if packet_type != MultiPacket:
                     res = l(packet, source_peer)
 
                     if asyncio.iscoroutine(res):
                         asyncio.create_task(res)
                 else:
-                    for sub_packet in cast(CombinedPacket, packet).packets:
+                    for sub_packet in cast(MultiPacket, packet).packets:
                         self.notify(sub_packet, source_peer)
             except Exception as e:
                 error_stack_trace = traceback.format_exc()

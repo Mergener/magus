@@ -6,7 +6,7 @@ class CompositeValue[T: int | float]:
     def __init__(
         self,
         behaviour: NetworkBehaviour,
-        t: type[T] = float,
+        t: type[T] = float,  # type: ignore
         base: T | None = None,
         increment: T | None = None,
         multiplier: T | None = None,

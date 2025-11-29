@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 from abc import ABC, ABCMeta
 from dataclasses import dataclass
-from typing import Callable, ClassVar, Generic, TypeVar, final
+from typing import Any, Callable, ClassVar, Generic, TypeVar, final
 
 import pygame as pg
 
@@ -13,18 +13,18 @@ from common.behaviours.network_entity import (
     NetworkEntity,
     PlausibleSyncVarType,
 )
-from common.network import DeliveryMode
+from common.network import DeliveryMode, NetPeer
 from common.utils import overrides_method
 
 
-def entity_packet_handler(t):
+def entity_packet_handler[T: EntityPacket](t: type[T]):
     """
     Marks an instance method from a NetworkBehaviour derived class
     as a handler for a given EntityPacket derived type t, meaning the
     method will be called whenever the entity receives a packet of type t.
     """
 
-    def inner(fn):
+    def inner(fn: Callable[[Any, T, NetPeer], Any]):
         fn._packet_type = t  # type: ignore
 
         @functools.wraps(fn)
