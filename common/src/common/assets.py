@@ -5,11 +5,9 @@ import sys
 import traceback
 from abc import ABC, abstractmethod
 from sys import stderr
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Self
 
 import pygame as pg
-
-from common.node import Node
 
 
 class ImageAsset:
@@ -92,30 +90,66 @@ def load_image_asset(path: str) -> ImageAsset:
         return fallback
 
 
-def load_node_asset(path: str) -> Node:
-    global _node_asset_cache
+class Serializable(ABC):
+    @abstractmethod
+    def serialize(self, out_dict: dict | None = None) -> dict:
+        pass
+
+    @abstractmethod
+    def deserialize(self, in_dict: dict) -> Self:
+        pass
+
+
+def load_object_asset[T: Serializable](
+    path: str, t: type[T], ctor: Callable[[], T] | None = None
+) -> T:
+    global _object_asset_cache
+
+    cache = _object_asset_cache.get(t)
+    if cache is None:
+        cache = {}
+        _object_asset_cache[t] = cache
+
+    def create_object():
+        if ctor is not None:
+            return ctor()
+        try:
+            obj = t()
+            return obj
+        except:
+            obj = t.__new__(t)
+            return obj
 
     full_path = None
     try:
         full_path = resource_path(path)
 
-        cached = _node_asset_cache.get(full_path)
+        cached = cache.get(full_path)
         if cached:
-            return cached.clone()
+            return cached
 
         with open(full_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        node = Node().deserialize(data)
+        obj = create_object().deserialize(data)
 
-        _node_asset_cache[full_path] = node
-        return node.clone()
+        cache[full_path] = obj
+        return obj
     except Exception as e:
         error_stack_trace = traceback.format_exc()
-        print(f"Failed to load node from {path}: {error_stack_trace}", file=stderr)
+        print(
+            f"Failed to load {t.__name__} asset from {path}: {error_stack_trace}",
+            file=stderr,
+        )
 
-        fallback = Node()
-        _node_asset_cache[full_path or path] = fallback.clone()
+        fallback = create_object()
+        cache[full_path or path] = fallback
         return fallback
+
+
+def load_node_asset(path: str):
+    from common.node import Node
+
+    return load_object_asset(path, Node).clone()
 
 
 def load_animation_asset(path: str):
@@ -193,7 +227,7 @@ def _get_placeholder_surface():
     return placeholder_texture
 
 
-_node_asset_cache = {}  # type: ignore
+_object_asset_cache = {}  # type: ignore
 _image_asset_cache = {}  # type: ignore
 _animation_asset_cache = {}  # type: ignore
 _font_asset_cache = {}  # type: ignore

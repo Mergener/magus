@@ -18,6 +18,12 @@ from common.utils import overrides_method
 
 
 def entity_packet_handler(t):
+    """
+    Marks an instance method from a NetworkBehaviour derived class
+    as a handler for a given EntityPacket derived type t, meaning the
+    method will be called whenever the entity receives a packet of type t.
+    """
+
     def inner(fn):
         fn._packet_type = t  # type: ignore
 
@@ -26,6 +32,38 @@ def entity_packet_handler(t):
             fn(self, packet, peer)
 
         return wrapper
+
+    return inner
+
+
+def client_method(method):
+    """
+    Marks an instance method from a NetworkBehaviour derived class
+    as a client method, meaning that calls to the method when network.is_client()
+    is False will be ignored.
+    """
+
+    @functools.wraps(method)
+    def inner(self, *args, **kwargs):
+        if self.game.network.is_client():
+            return method(self, *args, **kwargs)
+        return None
+
+    return inner
+
+
+def server_method(method):
+    """
+    Marks an instance method from a NetworkBehaviour derived class
+    as a server method, meaning that calls to the method when network.is_server()
+    is False will be ignored.
+    """
+
+    @functools.wraps(method)
+    def inner(self, *args, **kwargs):
+        if self.game.network.is_server():
+            return method(self, *args, **kwargs)
+        return None
 
     return inner
 

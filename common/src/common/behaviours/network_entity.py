@@ -58,7 +58,7 @@ class NetworkEntity(Behaviour):
         self._sync_vars: list[SyncVar] = []
         self._reached = True
         self._next_sync_var_id = 0
-        self._may_register_sync_vars = True
+        self._require_sync_var_creation_sync = False
 
     @property
     def id(self):
@@ -74,8 +74,6 @@ class NetworkEntity(Behaviour):
         initial_value: T | None = None,
         delivery_mode=DeliveryMode.RELIABLE,
     ):
-        assert self._may_register_sync_vars
-
         if initial_value is None:
             initial_value = t()  # type: ignore
 
@@ -105,7 +103,7 @@ class NetworkEntity(Behaviour):
             )
 
     def on_start(self) -> Any:
-        self._may_register_sync_vars = False
+        self._require_sync_var_creation_sync = True
 
     def _handle_rotation_update(self, packet: RotationUpdate, peer: NetPeer):
         self.transform.rotation = packet.rotation
@@ -243,21 +241,21 @@ class NetworkEntity(Behaviour):
 
 
 class EntityPacket(Packet, ABC):
-    def __init__(self, id: int, tick_id: int | None = None):
-        self.id = id
+    def __init__(self, entity_id: int, tick_id: int | None = None):
+        self.entity_id = entity_id
         self.tick_id = tick_id
 
     def on_write(self, writer: ByteWriter):
         if self.tick_id is not None:
-            writer.write_int32(-self.id)
+            writer.write_int32(-self.entity_id)
             writer.write_uint32(self.tick_id)
         else:
-            writer.write_int32(self.id)
+            writer.write_int32(self.entity_id)
 
     def on_read(self, reader: ByteReader):
-        self.id = reader.read_int32()
-        if self.id < 0:
-            self.id = -self.id
+        self.entity_id = reader.read_int32()
+        if self.entity_id < 0:
+            self.entity_id = -self.entity_id
             self.tick_id = reader.read_uint32()
         else:
             self.tick_id = None

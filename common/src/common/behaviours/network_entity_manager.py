@@ -124,7 +124,7 @@ class NetworkEntityManager(Behaviour):
         del self._entities[p.id]
 
     def _handle_entity_packet(self, p: EntityPacket, peer: NetPeer):
-        entity = self._entities.get(p.id)
+        entity = self._entities.get(p.entity_id)
         if entity is None:
             print(
                 f"Received {p.__class__.__name__} packet for non-existing entity {p.id}",

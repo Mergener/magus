@@ -6,7 +6,7 @@ from typing import cast
 import numpy as np
 import pygame as pg
 
-from common.assets import ImageAsset
+from common.assets import ImageAsset, Serializable
 
 DEFAULT_ANIMATION_FPS = 6
 
@@ -75,7 +75,7 @@ class AnimationFrame:
         return self
 
 
-class Animation:
+class Animation(Serializable):
     def __init__(
         self,
         frames: list[AnimationFrame],
@@ -98,12 +98,12 @@ class Animation:
 
         return out_dict
 
-    def deserialize(self, in_value: dict) -> Animation:
+    def deserialize(self, in_dict: dict) -> Animation:
         self.frames = [
             AnimationFrame.__new__(AnimationFrame).deserialize(d)
-            for d in in_value.get("frames", [])
+            for d in in_dict.get("frames", [])
         ]
-        self.fps = in_value.get("fps", DEFAULT_ANIMATION_FPS)
+        self.fps = in_dict.get("fps", DEFAULT_ANIMATION_FPS)
         self.path = ""
         return self
 

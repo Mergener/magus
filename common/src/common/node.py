@@ -4,13 +4,15 @@ import importlib
 import traceback
 from typing import TYPE_CHECKING, Self, cast
 
+from common.assets import Serializable
+
 if TYPE_CHECKING:
     from common.behaviour import Behaviour
     from common.behaviours.transform import Transform
     from common.game import Game
 
 
-class Node:
+class Node(Serializable):
     def __init__(self, game: Game | None = None, name: str | None = None):
         from common.behaviours.transform import Transform
 

@@ -7,6 +7,7 @@ from common.behaviours.network_entity import EntityPacket
 from common.binary import ByteReader, ByteWriter
 from common.network import DeliveryMode, NetPeer
 from common.utils import notnull
+from game.composite_value import CompositeValue
 from game.game_manager import GameManager
 from game.player import Player
 
@@ -36,7 +37,7 @@ class Mage(NetworkBehaviour):
     def on_init(self):
         self._animator = self.node.get_or_add_behaviour(Animator)
         self._move_destination = None
-        self.speed = self.use_sync_var(float, 500)
+        self.speed = CompositeValue(self, base=500)
         self.owner_index = self.use_sync_var(int)
 
     def on_common_pre_start(self):
@@ -60,7 +61,7 @@ class Mage(NetworkBehaviour):
         assert self.game
 
         tick_interval = self.game.simulation.tick_interval
-        self.speed.value -= 5 * tick_interval
+        self.speed.increment.value -= 5 * tick_interval
 
         if self._move_destination is None:
             return
@@ -69,7 +70,7 @@ class Mage(NetworkBehaviour):
         if delta.x == 0 and delta.y == 0:
             return
 
-        motion = delta.normalize() * self.speed.value * tick_interval
+        motion = delta.normalize() * self.speed.current * tick_interval
         if motion.length_squared() > delta.length_squared():
             motion = delta
             self._move_destination = None
@@ -88,3 +89,9 @@ class Mage(NetworkBehaviour):
             return
 
         self._move_destination = order.where
+
+    def on_serialize(self, out_dict: dict):
+        out_dict["speed"] = self.speed.base
+
+    def on_deserialize(self, in_dict: dict):
+        self.speed.base = in_dict.get("speed", 500)
