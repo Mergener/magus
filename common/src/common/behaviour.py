@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import importlib
 import traceback
 from abc import ABC
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from common.behaviours.transform import Transform
     from common.node import Node
 
 
