@@ -103,11 +103,39 @@ class Node:
 
         if recursive:
             for c in self._children:
-                b = c.get_behaviour_in_children(t, include_self=False)
+                b = c.get_behaviour_in_children(t, include_self=False, recursive=True)
                 if b:
                     return b
 
         return None
+
+    def get_behaviours_in_children[T: Behaviour](
+        self,
+        t: type[T],
+        recursive: bool = True,
+        include_self: bool = True,
+        behaviour_list: list[T] | None = None,
+    ) -> list[T]:
+        if behaviour_list is None:
+            behaviour_list = []
+
+        if include_self:
+            b = self.get_behaviour(t)
+            if b:
+                behaviour_list.append(b)
+
+        for c in self._children:
+            b = c.get_behaviour(t)
+            if b:
+                behaviour_list.append(b)
+
+        if recursive:
+            for c in self._children:
+                c.get_behaviours_in_children(
+                    t, include_self=False, behaviour_list=behaviour_list, recursive=True
+                )
+
+        return behaviour_list
 
     def add_behaviour[T: Behaviour](self, tb: type[T]) -> T:
         b = tb(self)
