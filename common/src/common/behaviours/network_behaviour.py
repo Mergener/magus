@@ -27,6 +27,8 @@ def entity_packet_handler[T: EntityPacket](t: type[T]):
     def inner(fn: Callable[[Any, T, NetPeer], Any]):
         fn._packet_type = t  # type: ignore
 
+        print(f"Added entity packet listener for {t.__name__}: {fn.__name__}")
+
         @functools.wraps(fn)
         def wrapper(self, packet, peer):
             fn(self, packet, peer)
@@ -83,6 +85,7 @@ class NetworkBehaviourMeta(ABCMeta):
         }
 
         cls._packet_handlers = {**inherited, **own}  # type: ignore
+        print(f"Generated {cls.__name__} entity packet handlers", cls._packet_handlers)  # type: ignore
 
         return cls
 

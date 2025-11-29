@@ -156,7 +156,7 @@ class MultiPacket(Packet):
 
     @property
     def delivery_mode(self) -> DeliveryMode:
-        if self._delivery_mode is not None:
+        if hasattr(self, "_delivery_mode") and self._delivery_mode is not None:
             return self._delivery_mode
 
         most_reliable_mode = DeliveryMode.UNRELIABLE
@@ -164,6 +164,9 @@ class MultiPacket(Packet):
             if p.delivery_mode.value > most_reliable_mode.value:
                 most_reliable_mode = p.delivery_mode
         return most_reliable_mode
+
+    def __str__(self):
+        return f"MultiPacket: {[str(p) for p in self.packets]}"
 
 
 class NetPeer:
@@ -181,7 +184,8 @@ class NetPeer:
         self._enet_peer.send(channel, packet)
 
     def send(self, packet: Packet, override_mode: DeliveryMode | None = None):
-        print(f"Sending {packet} to {self.address}")
+        if packet.delivery_mode != DeliveryMode.UNRELIABLE:
+            print(f"Sending {packet} to {self.address}")
         writer = ByteWriter()
         packet.encode(writer)
         mode = override_mode or packet.delivery_mode
@@ -306,14 +310,21 @@ class Network(ABC):
         assert packet_type is None or isinstance(packet, packet_type)
         packet_type = packet_type if packet_type is not None else type(packet)
 
-        if packet_type == object:
+        if packet_type == Packet:
             return
 
-        for p in packet_type.__bases__:
-            if not issubclass(p, Packet) and p != Packet:
-                continue
+        if packet.delivery_mode != DeliveryMode.UNRELIABLE:
+            print(f"Received {packet}")
 
-            self.notify(packet, source_peer, p)
+        if packet_type == MultiPacket:
+            for sub_packet in cast(MultiPacket, packet).packets:
+                self.notify(sub_packet, source_peer)
+        else:
+            for p in packet_type.__bases__:
+                if not issubclass(p, Packet) and p != Packet:
+                    continue
+
+                self.notify(packet, source_peer, p)
 
         listeners = self._packet_listeners[packet_type]
         for l in listeners:
@@ -323,9 +334,6 @@ class Network(ABC):
 
                     if asyncio.iscoroutine(res):
                         asyncio.create_task(res)
-                else:
-                    for sub_packet in cast(MultiPacket, packet).packets:
-                        self.notify(sub_packet, source_peer)
             except Exception as e:
                 error_stack_trace = traceback.format_exc()
                 print(

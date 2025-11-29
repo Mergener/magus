@@ -59,6 +59,8 @@ class NetworkEntity(Behaviour):
         self._reached = True
         self._next_sync_var_id = 0
         self._require_sync_var_creation_sync = False
+        self._started = False
+        self._pre_start_packet_queue: list[tuple[EntityPacket, NetPeer]] | None = []
 
     @property
     def id(self):
@@ -105,6 +107,14 @@ class NetworkEntity(Behaviour):
     def on_start(self) -> Any:
         self._require_sync_var_creation_sync = True
 
+        assert self._pre_start_packet_queue is not None
+        for t in self._pre_start_packet_queue:
+            packet, peer = t
+            self._handle_entity_packet(packet, peer)
+
+        self._pre_start_packet_queue = None
+        self._started = True
+
     def _handle_rotation_update(self, packet: RotationUpdate, peer: NetPeer):
         self.transform.rotation = packet.rotation
 
@@ -136,6 +146,7 @@ class NetworkEntity(Behaviour):
         time_diff = (
             packet.tick_id - self._last_updated_tick
         ) / self.game.simulation.tick_rate
+        time_diff = max(time_diff, 0.00001)  # Prevent division by zero errors
 
         self._last_updated_tick = packet.tick_id
 
@@ -210,6 +221,11 @@ class NetworkEntity(Behaviour):
                 self._reached = True
 
     def _handle_entity_packet(self, packet: EntityPacket, peer: NetPeer):
+        if not self._started:
+            assert self._pre_start_packet_queue is not None
+            self._pre_start_packet_queue.append((packet, peer))
+            return
+
         handlers = self._packet_listeners.get(packet.__class__)
         if handlers is None:
             return
@@ -321,7 +337,7 @@ class SyncVarUpdate(EntityPacket):
         t = _sync_var_id_types[reader.read_uint8()]
 
         self.value = _sync_var_readers[t](reader)
-        self._delivery_mode = DeliveryMode.RELIABLE
+        self._delivery_mode = DeliveryMode.UNRELIABLE
 
     @property
     def delivery_mode(self) -> DeliveryMode:

@@ -1,8 +1,13 @@
 from common.behaviours.network_behaviour import NetworkBehaviour
+from common.behaviours.network_entity import SyncVar
 from common.network import DeliveryMode
 
 
 class CompositeValue[T: int | float]:
+    base: SyncVar[T]
+    increment: SyncVar[T]
+    multiplier: SyncVar[T]
+
     def __init__(
         self,
         behaviour: NetworkBehaviour,
@@ -14,13 +19,13 @@ class CompositeValue[T: int | float]:
     ):
         self.base = behaviour.use_sync_var(
             t, base if base is not None else 0, delivery_mode
-        )
+        )  # type: ignore
         self.increment = behaviour.use_sync_var(
             t, increment if increment is not None else 0, delivery_mode
-        )
+        )  # type: ignore
         self.multiplier = behaviour.use_sync_var(
             t, multiplier if multiplier is not None else 1, delivery_mode
-        )
+        )  # type: ignore
 
     @property
     def current(self):

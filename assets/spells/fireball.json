@@ -1,0 +1,11 @@
+{
+    "name": "Fireball",
+    "tooltip": "Launches a fiery ball towards the targeted location, dealing %data.damage% to the first enemy it hits and knocking them back.",
+    "levels": 1,
+    "cooldown": 6,
+    "target_mode": 0,
+    "state_behaviour": "game.spells.fireball.FireballState",
+    "data ": {
+        "damage": [8]
+    }
+}

@@ -64,21 +64,21 @@ class AddSpell(EntityPacket):
     def __init__(self, mage_entity_id: int, spell_entity_id: int, spell_info_name: str):
         super().__init__(mage_entity_id)
         self.spell_entity_id = spell_entity_id
-        self.spell_state_behaviour = spell_info_name
+        self.spell_info_name = spell_info_name
 
     def on_write(self, writer: ByteWriter):
         super().on_write(writer)
         writer.write_int32(self.spell_entity_id)
-        writer.write_str(self.spell_file_name)
+        writer.write_str(self.spell_info_name)
 
     def on_read(self, reader: ByteReader):
         super().on_read(reader)
         self.spell_entity_id = reader.read_int32()
-        self.spell_file_name = reader.read_str()
+        self.spell_info_name = reader.read_str()
 
     @property
     def delivery_mode(self) -> DeliveryMode:
-        return DeliveryMode.RELIABLE
+        return DeliveryMode.RELIABLE_ORDERED
 
 
 class Mage(NetworkBehaviour):
@@ -88,7 +88,9 @@ class Mage(NetworkBehaviour):
         self._animator = self.node.get_or_add_behaviour(Animator)
         self._move_destination = None
         self._spells: list[SpellState] = []
-        self.speed = CompositeValue(self, base=500)
+        self.speed = CompositeValue(
+            self, base=500, delivery_mode=DeliveryMode.UNRELIABLE
+        )
         self.owner_index = self.use_sync_var(int)
 
     @property
@@ -101,16 +103,28 @@ class Mage(NetworkBehaviour):
             self.game.scene.get_behaviour_in_children(GameManager)
         )
 
+    def on_server_start(self):
+        spell = get_spell("fireball")
+        self.add_spell(spell)
+
     def on_client_update(self, dt: float):
         assert self.game
-        if self.game.input.is_mouse_button_just_pressed(pg.BUTTON_RIGHT):
-            mouse_pos = self.game.input.mouse_pos
-            if Camera.main:
+        if Camera.main:
+            mouse_world_pos = Camera.main.screen_to_world_space(
+                self.game.input.mouse_pos
+            )
+            if self.game.input.is_mouse_button_just_pressed(pg.BUTTON_RIGHT):
                 self.game.network.publish(
-                    MoveToOrder(
-                        self.net_entity.id, Camera.main.screen_to_world_space(mouse_pos)
-                    )
+                    MoveToOrder(self.net_entity.id, mouse_world_pos)
                 )
+            if self.game.input.is_mouse_button_just_pressed(pg.BUTTON_LEFT):
+                fireball = self.get_spell_state(get_spell("fireball"))
+                if fireball is not None:
+                    self.game.network.publish(
+                        CastPointTargetSpellOrder(
+                            self.net_entity.id, fireball.net_entity.id, mouse_world_pos
+                        )
+                    )
 
     def on_server_tick(self, tick_id: int):
         assert self.game
@@ -144,10 +158,10 @@ class Mage(NetworkBehaviour):
         self._move_destination = order.where
 
     def on_serialize(self, out_dict: dict):
-        out_dict["speed"] = self.speed.base
+        out_dict["speed"] = self.speed.base.value
 
     def on_deserialize(self, in_dict: dict):
-        self.speed.base = in_dict.get("speed", 500)
+        self.speed.base.value = in_dict.get("speed", 500)
 
     def get_spell_state(self, spell: SpellInfo):
         for s in self.spells:
@@ -190,17 +204,19 @@ class Mage(NetworkBehaviour):
 
     @entity_packet_handler(AddSpell)
     def _handle_add_spell(self, packet: AddSpell, peer: NetPeer):
+        print("_handle_add_spell")
         spell_entity = self.entity_manager.get_entity_by_id(packet.spell_entity_id)
         if spell_entity is None:
             return
 
-        spell = get_spell(packet.spell_file_name)
+        spell = get_spell(packet.spell_info_name)
         if spell is None:
             return
 
         self._do_add_spell(spell_entity, spell)
 
     def _do_add_spell(self, spell_entity: NetworkEntity, spell_info: SpellInfo):
+        print("Added spell!", spell_info.name)
         spell_state = spell_entity.node.add_behaviour(spell_info.state_behaviour)
         spell_state._spell = spell_info
         self._spells.append(spell_state)
