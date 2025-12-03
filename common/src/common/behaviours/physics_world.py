@@ -1,12 +1,15 @@
+from __future__ import annotations
+
 import math
 from collections import defaultdict
-from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pygame as pg
 
 from common.behaviour import Behaviour
-from common.behaviours.collider import Collider
+
+if TYPE_CHECKING:
+    from common.behaviours.collider import Collider
 
 # TODO: Maybe add support for other types of colliders
 
@@ -19,7 +22,7 @@ class PhysicsWorld(Behaviour):
         self.cell_w = 200
         self.cell_h = 200
 
-    def get_potential_contacts(self, rect: pg.Rect) -> list[Collider]:
+    def get_potential_contacts(self, rect: pg.Rect):
         collisions = []
         for cell in self._get_rect_grid_cells(rect):
             for c in self._collision_grid[cell]:

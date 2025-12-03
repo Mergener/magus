@@ -4,6 +4,7 @@ from common.behaviours.animator import Animator
 from common.behaviours.camera import Camera
 from common.behaviours.network_behaviour import NetworkBehaviour, entity_packet_handler
 from common.behaviours.network_entity import EntityPacket
+from common.behaviours.physics_object import PhysicsObject
 from common.binary import ByteReader, ByteWriter
 from common.network import DeliveryMode, NetPeer
 from common.utils import notnull
@@ -35,6 +36,7 @@ class Mage(NetworkBehaviour):
 
     def on_init(self):
         self._animator = self.node.get_or_add_behaviour(Animator)
+        self._physics_object = self.node.get_or_add_behaviour(PhysicsObject)
         self._move_destination = None
         self.speed = self.use_sync_var(float, 500)
         self.owner_index = self.use_sync_var(int)
@@ -74,7 +76,7 @@ class Mage(NetworkBehaviour):
             motion = delta
             self._move_destination = None
 
-        self.transform.local_position += motion
+        self._physics_object.move_and_collide(motion)
 
     @property
     def owner(self) -> Player:

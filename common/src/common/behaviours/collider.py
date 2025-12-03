@@ -32,10 +32,10 @@ class Collider(Behaviour):
     def on_init(self) -> Any:
         self._offset = pg.Vector2(0, 0)
         self._last_position = self.transform.position
-        self._prev_bouding_rect = self.get_bounding_rect()
+        self._shape = RectCollisionShape(pg.Vector2(100, 100))
+        self._bounding_rect = None
+        self._prev_bouding_rect = None
         self._cached_world: PhysicsWorld | None = None
-
-        self.shape = RectCollisionShape(pg.Vector2(100, 100))
 
     def on_pre_start(self) -> Any:
         from common.behaviours.physics_world import PhysicsWorld
@@ -45,15 +45,50 @@ class Collider(Behaviour):
         self._bounding_rect = None
         self.world.register_collider(self)
 
+    def on_start(self) -> Any:
+        self.shape = self.shape
+        self._update_bounding_rect()
+
     @property
-    def shape(self) -> CollisionShape:
+    def shape(self):
         return self._shape
 
     @shape.setter
     def shape(self, shape: CollisionShape):
         self._shape = shape
-        self._update_bounding_rect()
-        self.world.update_collider_rect(self, self._bounding_rect, self._bounding_rect)
+        self._prev_bouding_rect = self._update_bounding_rect()
+        if self.game:
+            self.world.update_collider_rect(
+                self, self._bounding_rect, self._bounding_rect
+            )
+
+    @property
+    def scaled_shape(self):
+        scale = self.transform.scale
+
+        if isinstance(self._shape, RectCollisionShape):
+            shape = RectCollisionShape(self._shape.size.copy())
+            shape.size.x *= scale.x
+            shape.size.y *= scale.y
+        elif isinstance(self._shape, CircleCollisionShape):
+            shape = CircleCollisionShape(self._shape.radius)
+            radius_scale = max(scale.x, scale.y)
+            shape.radius /= radius_scale
+
+        return shape
+
+    @scaled_shape.setter
+    def scaled_shape(self, shape: CollisionShape):
+        scale = self.transform.scale
+
+        if isinstance(shape, RectCollisionShape):
+            shape.size.x /= scale.x
+            shape.size.y /= scale.y
+        elif isinstance(shape, CircleCollisionShape):
+            radius_scale = max(scale.x, scale.y)
+            shape.radius /= radius_scale
+
+        self.shape = shape
 
     def _update_bounding_rect(self):
         pos = pg.Vector2(self.transform.position) + self._offset
@@ -110,13 +145,13 @@ class Collider(Behaviour):
 
     def on_serialize(self, out_dict: dict):
         serialize_vec2(out_dict, "offset", self._offset or pg.Vector2(0, 0))
-        if isinstance(self.shape, CircleCollisionShape):
-            shape_dict = {"type": "circle", "radius": self.shape.radius}
+        if isinstance(self.scaled_shape, CircleCollisionShape):
+            shape_dict = {"type": "circle", "radius": self.scaled_shape.radius}
         else:
             shape_dict = {
                 "type": "rect",
             }
-            serialize_vec2(shape_dict, "size", self.shape.size)
+            serialize_vec2(shape_dict, "size", self.scaled_shape.size)
 
         out_dict["shape"] = shape_dict
 
@@ -129,9 +164,9 @@ class Collider(Behaviour):
 
         shape_type = shape_dict.get("type")
         if shape_type == "circle":
-            self.shape = CircleCollisionShape(in_dict.get("radius", 0))
+            self.scaled_shape = CircleCollisionShape(in_dict.get("radius", 0))
         elif shape_type == "rect":
-            self.shape = RectCollisionShape(deserialize_vec2(shape_dict, "size"))
+            self.scaled_shape = RectCollisionShape(deserialize_vec2(shape_dict, "size"))
 
 
 def shape_collides(
