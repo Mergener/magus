@@ -82,13 +82,13 @@ class Node:
     def behaviours(self):
         return iter(self._behaviours)
 
-    def get_behaviour[T: Behaviour](self, t: type[T]) -> T | None:
+    def get_behaviour[T](self, t: type[T]) -> T | None:
         for b in self._behaviours:
             if isinstance(b, t):
                 return b
         return None
 
-    def get_behaviour_in_children[T: Behaviour](
+    def get_behaviour_in_children[T](
         self, t: type[T], recursive: bool = True, include_self: bool = True
     ) -> T | None:
         if include_self:
@@ -109,7 +109,7 @@ class Node:
 
         return None
 
-    def get_behaviours_in_children[T: Behaviour](
+    def get_behaviours_in_children[T](
         self,
         t: type[T],
         recursive: bool = True,
