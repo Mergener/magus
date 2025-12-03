@@ -6,17 +6,8 @@ from typing import Any
 import pygame as pg
 
 from common.behaviour import Behaviour
-from common.behaviours.collider import Collider, RectCollider
+from common.behaviours.collider import Collider
 from common.behaviours.physics_object import PhysicsObject
-
-
-@dataclass
-class Collision:
-    this_physics_object: PhysicsObject
-    this_collider: Collider
-    other_collider: Collider
-    other_physics_object: PhysicsObject | None
-
 
 # TODO: Maybe add support for other types of colliders
 
@@ -29,7 +20,7 @@ class PhysicsWorld(Behaviour):
         self.cell_w = 200
         self.cell_h = 200
 
-    def get_potential_collisions(self, rect: pg.Rect) -> list[Collider]:
+    def get_potential_contacts(self, rect: pg.Rect) -> list[Collider]:
         collisions = []
         for cell in self._get_rect_grid_cells(rect):
             for c in self._collision_grid[cell]:

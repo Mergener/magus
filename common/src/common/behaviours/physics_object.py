@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -6,8 +8,13 @@ import pygame as pg
 from common.behaviour import Behaviour
 from common.behaviours.collider import Collider
 
-if TYPE_CHECKING:
-    from common.behaviours.physics_world import Collision
+
+@dataclass
+class Collision:
+    this_physics_object: PhysicsObject
+    this_collider: Collider
+    other_collider: Collider
+    other_physics_object: PhysicsObject | None
 
 
 class PhysicsObject(Behaviour):
@@ -17,4 +24,7 @@ class PhysicsObject(Behaviour):
         assert self.game
         world = self.game.scene.get_behaviour_in_children(PhysicsWorld)
 
-        self.collider = self.node.get_behaviour(Collider)
+        self.collider = self.node.get_or_add_behaviour(Collider)
+
+    def move_and_collide(self):
+        pass
