@@ -8,6 +8,7 @@ import pygame as pg
 
 from common.behaviour import Behaviour
 from common.behaviours.physics_world import PhysicsWorld
+from common.utils import deserialize_vec2, serialize_vec2
 
 
 @dataclass
@@ -100,3 +101,28 @@ class Collider(Behaviour):
         new_rect = self.get_bounding_rect()
         self.world.update_collider_rect(self, self._prev_bouding_rect, new_rect)
         self._prev_bouding_rect = new_rect
+
+    def on_serialize(self, out_dict: dict):
+        serialize_vec2(out_dict, "offset", self._offset or pg.Vector2(0, 0))
+        if isinstance(self.shape, CircleCollisionShape):
+            shape_dict = {"type": "circle", "radius": self.shape.radius}
+        else:
+            shape_dict = {
+                "type": "rect",
+            }
+            serialize_vec2(shape_dict, "size", self.shape.size)
+
+        out_dict["shape"] = shape_dict
+
+    def on_deserialize(self, in_dict: dict):
+        self._offset = deserialize_vec2(in_dict, "offset")
+
+        shape_dict = in_dict.get("shape")
+        if not shape_dict:
+            return
+
+        shape_type = shape_dict.get("type")
+        if shape_type == "circle":
+            self.shape = CircleCollisionShape(in_dict.get("radius", 0))
+        elif shape_type == "rect":
+            self.shape = RectCollisionShape(deserialize_vec2(shape_dict, "size"))
