@@ -33,6 +33,8 @@ class Simulation:
         self._tick_futures: list[asyncio.Future] = []
         self._pending_tasks: set[asyncio.Task] = set()
 
+        self.render_debug = False
+
     def _spawn_task(self, coro):
         task = asyncio.create_task(coro)
         self._pending_tasks.add(task)
@@ -74,7 +76,9 @@ class Simulation:
             self._will_stop_ticking.discard(b)
 
     def add_renderable(self, b: Behaviour, layer: int):
-        if overrides_method(Behaviour, b, "on_render"):
+        if overrides_method(Behaviour, b, "on_render") or overrides_method(
+            Behaviour, b, "on_debug_render"
+        ):
             self._will_render.add((b, layer))
 
     def remove_updatable(self, b: Behaviour):
@@ -138,9 +142,14 @@ class Simulation:
         self._will_stop_rendering.clear()
         self._will_render.clear()
 
-        for l in sorted(self._renderables.keys()):
+        sorted_render_layers = self._renderables.keys()
+        for l in sorted(sorted_render_layers):
             for r in self._renderables[l]:
                 r.on_render()
+
+            if self.render_debug:
+                for r in self._renderables[l]:
+                    r.on_debug_render()
 
     async def wait_next_frame(self):
         loop = asyncio.get_event_loop()

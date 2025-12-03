@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import ABC
 from dataclasses import dataclass
 from typing import Any
 
@@ -8,7 +7,7 @@ import pygame as pg
 
 from common.behaviour import Behaviour
 from common.behaviours.physics_world import PhysicsWorld
-from common.utils import clamp, deserialize_vec2, serialize_vec2
+from common.utils import Rect, clamp, deserialize_vec2, serialize_vec2
 
 
 @dataclass
@@ -25,28 +24,20 @@ CollisionShape = RectCollisionShape | CircleCollisionShape
 
 
 class Collider(Behaviour):
-    _shape: CollisionShape
-    _bounding_rect: pg.Rect | None
-    _last_position: pg.Vector2
-
-    def on_init(self) -> Any:
+    def on_init(self):
         self._offset = pg.Vector2(0, 0)
-        self._last_position = self.transform.position
+        self._last_position = self.transform.position.copy()
         self._shape = RectCollisionShape(pg.Vector2(100, 100))
         self._bounding_rect = None
         self._prev_bouding_rect = None
-        self._cached_world: PhysicsWorld | None = None
+        self._cached_world = None
 
-    def on_pre_start(self) -> Any:
-        from common.behaviours.physics_world import PhysicsWorld
-
-        assert self.game
-
+    def on_pre_start(self):
         self._bounding_rect = None
         self.world.register_collider(self)
 
-    def on_start(self) -> Any:
-        self.shape = self.shape
+    def on_start(self):
+        self.shape = self._shape
         self._update_bounding_rect()
 
     @property
@@ -65,152 +56,180 @@ class Collider(Behaviour):
     @property
     def scaled_shape(self):
         scale = self.transform.scale
-
-        if isinstance(self._shape, RectCollisionShape):
-            shape = RectCollisionShape(self._shape.size.copy())
-            shape.size.x *= scale.x
-            shape.size.y *= scale.y
-        elif isinstance(self._shape, CircleCollisionShape):
-            shape = CircleCollisionShape(self._shape.radius)
-            radius_scale = max(scale.x, scale.y)
-            shape.radius /= radius_scale
-
-        return shape
+        s = self._shape
+        if isinstance(s, RectCollisionShape):
+            size = pg.Vector2(s.size.x * scale.x, s.size.y * scale.y)
+            return RectCollisionShape(size)
+        r = max(scale.x, scale.y)
+        return CircleCollisionShape(s.radius * r)
 
     @scaled_shape.setter
     def scaled_shape(self, shape: CollisionShape):
         scale = self.transform.scale
-
         if isinstance(shape, RectCollisionShape):
             shape.size.x /= scale.x
             shape.size.y /= scale.y
-        elif isinstance(shape, CircleCollisionShape):
-            radius_scale = max(scale.x, scale.y)
-            shape.radius /= radius_scale
-
+        else:
+            r = max(scale.x, scale.y)
+            shape.radius /= r
         self.shape = shape
 
     def _update_bounding_rect(self):
-        pos = pg.Vector2(self.transform.position) + self._offset
+        pos = self.transform.position + self._offset
 
         if isinstance(self._shape, RectCollisionShape):
-            size = self._shape.size
-            self._bounding_rect = pg.Rect(
-                int(pos.x), int(pos.y), int(size.x), int(size.y)
-            )
-        elif isinstance(self._shape, CircleCollisionShape):
-            r = self._shape.radius
-            self._bounding_rect = pg.Rect(
-                int(pos.x - r),
-                int(pos.y - r),
-                int(r * 2),
-                int(r * 2),
-            )
+            self._bounding_rect = Rect(pos, self._shape.size)
         else:
-            raise TypeError("Unknown collision shape type.")
+            r = self._shape.radius
+            size = pg.Vector2(r * 2, r * 2)
+            self._bounding_rect = Rect(pos, size)
 
         return self._bounding_rect
 
     @property
     def world(self):
         assert self.game
-        world = self._cached_world
-        if world is None:
-            world = self.game.scene.get_behaviour_in_children(PhysicsWorld)
-            if not world:
-                world = self.game.scene.add_child().add_behaviour(PhysicsWorld)
-            self._cached_world = world
-        return world
+        if self._cached_world is None:
+            w = self.game.scene.get_behaviour_in_children(PhysicsWorld)
+            if not w:
+                w = self.game.scene.add_child().add_behaviour(PhysicsWorld)
+            self._cached_world = w
+        return self._cached_world
 
-    def get_bounding_rect(self, offset: pg.Vector2 | None = None) -> pg.Rect:
-        if self._bounding_rect is None:
-            rect = self._update_bounding_rect()
-        else:
-            rect = self._bounding_rect
-
+    def get_bounding_rect(self, offset: pg.Vector2 | None = None) -> Rect:
+        rect = self._bounding_rect or self._update_bounding_rect()
         if offset is not None:
-            rect = pg.Rect(pg.Vector2(rect.x, rect.y) + offset, rect.size)
-
+            return Rect(rect.center + offset, rect.size)
         return rect
 
-    def on_tick(self, tick_id: int) -> Any:
-        current_pos = self.transform.position
-        if current_pos == self._last_position:
+    def on_tick(self, tick_id: int):
+        p = self.transform.position
+        if p == self._last_position:
             return
-
-        self._last_position = current_pos
+        self._last_position = p.copy()
         new_rect = self.get_bounding_rect()
         self.world.update_collider_rect(self, self._prev_bouding_rect, new_rect)
         self._prev_bouding_rect = new_rect
 
     def on_serialize(self, out_dict: dict):
-        serialize_vec2(out_dict, "offset", self._offset or pg.Vector2(0, 0))
-        if isinstance(self.scaled_shape, CircleCollisionShape):
-            shape_dict = {"type": "circle", "radius": self.scaled_shape.radius}
-        else:
-            shape_dict = {
-                "type": "rect",
-            }
-            serialize_vec2(shape_dict, "size", self.scaled_shape.size)
+        serialize_vec2(out_dict, "offset", self._offset)
+        s = self._shape
 
-        out_dict["shape"] = shape_dict
+        if isinstance(s, CircleCollisionShape):
+            out_dict["shape"] = {"type": "circle", "radius": s.radius}
+        else:
+            d = {"type": "rect"}
+            serialize_vec2(d, "size", s.size)
+            out_dict["shape"] = d
 
     def on_deserialize(self, in_dict: dict):
         self._offset = deserialize_vec2(in_dict, "offset")
-
-        shape_dict = in_dict.get("shape")
-        if not shape_dict:
+        sd = in_dict.get("shape")
+        if not sd:
             return
 
-        shape_type = shape_dict.get("type")
-        if shape_type == "circle":
-            self.scaled_shape = CircleCollisionShape(in_dict.get("radius", 0))
-        elif shape_type == "rect":
-            self.scaled_shape = RectCollisionShape(deserialize_vec2(shape_dict, "size"))
+        t = sd.get("type")
+        if t == "circle":
+            self.shape = CircleCollisionShape(sd.get("radius", 0))
+        elif t == "rect":
+            self.shape = RectCollisionShape(deserialize_vec2(sd, "size"))
+
+    def on_debug_render(self):
+        from common.behaviours.camera import Camera
+
+        camera = Camera.main
+        if camera is None or self.game is None or self.game.display is None:
+            return
+
+        surface = self.game.display
+
+        rect = self.get_bounding_rect()
+        tl = rect.topleft
+        w, h = rect.size
+
+        pts = [
+            tl,
+            pg.Vector2(tl.x + w, tl.y),
+            pg.Vector2(tl.x + w, tl.y - h),
+            pg.Vector2(tl.x, tl.y - h),
+        ]
+        pts = [camera.world_to_screen_space(p) for p in pts]
+
+        s = pg.Surface(surface.get_size(), pg.SRCALPHA)
+        pg.draw.polygon(s, (255, 0, 0, 50), pts)
+        surface.blit(s, (0, 0))
+
+        shape = self.shape
+        pos = self.transform.position
+
+        if isinstance(shape, RectCollisionShape):
+            hw = shape.size.x * 0.5
+            hh = shape.size.y * 0.5
+            pts2 = [
+                pg.Vector2(pos.x - hw, pos.y + hh),
+                pg.Vector2(pos.x + hw, pos.y + hh),
+                pg.Vector2(pos.x + hw, pos.y - hh),
+                pg.Vector2(pos.x - hw, pos.y - hh),
+            ]
+            pts2 = [camera.world_to_screen_space(p) for p in pts2]
+            s2 = pg.Surface(surface.get_size(), pg.SRCALPHA)
+            pg.draw.polygon(s2, (0, 0, 255, 75), pts2)
+            surface.blit(s2, (0, 0))
+
+        elif isinstance(shape, CircleCollisionShape):
+            center = camera.world_to_screen_space(pos)
+            radius = camera.world_to_screen_scale(shape.radius)
+            s2 = pg.Surface(surface.get_size(), pg.SRCALPHA)
+            pg.draw.circle(s2, (0, 0, 255, 75), center, radius)
+            surface.blit(s2, (0, 0))
 
 
-def shape_collides(
-    shape_a: tuple[pg.Vector2, CollisionShape],
-    shape_b: tuple[pg.Vector2, CollisionShape],
-):
-    pos_a, sh_a = shape_a
-    pos_b, sh_b = shape_b
+def shape_collides(a, b):
+    pos_a, sh_a = a
+    pos_b, sh_b = b
 
     if isinstance(sh_a, RectCollisionShape) and isinstance(sh_b, RectCollisionShape):
-        rect_a = pg.Rect(pos_a.x, pos_a.y, sh_a.size.x, sh_a.size.y)
-        rect_b = pg.Rect(pos_b.x, pos_b.y, sh_b.size.x, sh_b.size.y)
-        return rect_a.colliderect(rect_b)
+        return _rect_rect(pos_a, sh_a.size, pos_b, sh_b.size)
 
     if isinstance(sh_a, CircleCollisionShape) and isinstance(
         sh_b, CircleCollisionShape
     ):
-        center_a = pos_a + pg.Vector2(sh_a.radius, sh_a.radius)
-        center_b = pos_b + pg.Vector2(sh_b.radius, sh_b.radius)
-        dist_sq = center_a.distance_squared_to(center_b)
-        rad_sum = sh_a.radius + sh_b.radius
-        return dist_sq <= rad_sum * rad_sum
+        return _circle_circle(pos_a, sh_a.radius, pos_b, sh_b.radius)
 
     if isinstance(sh_a, CircleCollisionShape) and isinstance(sh_b, RectCollisionShape):
-        return _circle_rect_collision(pos_a, sh_a, pos_b, sh_b)
+        return _circle_rect(pos_a, sh_a.radius, pos_b, sh_b.size)
 
     if isinstance(sh_a, RectCollisionShape) and isinstance(sh_b, CircleCollisionShape):
-        return _circle_rect_collision(pos_b, sh_b, pos_a, sh_a)
+        return _circle_rect(pos_b, sh_b.radius, pos_a, sh_a.size)
 
-    raise TypeError("Unknown collision shape combination.")
+    raise TypeError
 
 
-def _circle_rect_collision(
-    cpos: pg.Vector2,
-    circle: CircleCollisionShape,
-    rpos: pg.Vector2,
-    rect: RectCollisionShape,
-):
-    cx, cy = cpos.x + circle.radius, cpos.y + circle.radius
+def _rect_rect(pos_a, size_a, pos_b, size_b):
+    dx = abs(pos_a.x - pos_b.x)
+    dy = abs(pos_a.y - pos_b.y)
+    return dx <= (size_a.x + size_b.x) * 0.5 and dy <= (size_a.y + size_b.y) * 0.5
 
-    nearest_x = clamp(cx, rpos.x, rpos.x + rect.size.x)
-    nearest_y = clamp(cy, rpos.y, rpos.y + rect.size.y)
 
-    dx = cx - nearest_x
-    dy = cy - nearest_y
+def _circle_circle(pos_a, ra, pos_b, rb):
+    d = pos_a.distance_squared_to(pos_b)
+    rs = ra + rb
+    return d <= rs * rs
 
-    return (dx * dx + dy * dy) <= (circle.radius * circle.radius)
+
+def _circle_rect(cpos, r, rpos, rsize):
+    cx, cy = cpos.x, cpos.y
+    rx, ry = rpos.x, rpos.y
+    hw, hh = rsize.x * 0.5, rsize.y * 0.5
+
+    left = rx - hw
+    right = rx + hw
+    bottom = ry - hh
+    top = ry + hh
+
+    nx = clamp(cx, left, right)
+    ny = clamp(cy, bottom, top)
+
+    dx = cx - nx
+    dy = cy - ny
+    return dx * dx + dy * dy <= r * r

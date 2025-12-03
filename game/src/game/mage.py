@@ -62,7 +62,6 @@ class Mage(NetworkBehaviour):
         assert self.game
 
         tick_interval = self.game.simulation.tick_interval
-        self.speed.value -= 5 * tick_interval
 
         if self._move_destination is None:
             return
