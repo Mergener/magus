@@ -7,7 +7,6 @@ import pygame as pg
 
 from common.behaviour import Behaviour
 from common.behaviours.collider import Collider
-from common.behaviours.physics_object import PhysicsObject
 
 # TODO: Maybe add support for other types of colliders
 

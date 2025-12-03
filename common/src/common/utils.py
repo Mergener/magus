@@ -32,3 +32,7 @@ def deserialize_vec2(in_dict: dict, name: str, fallback: pg.Vector2 | None = Non
     y = vec_dict.get("y", fallback.x)
 
     return pg.Vector2(x, y)
+
+
+def clamp(value: float, min_v: float, max_v: float):
+    return max(min_v, min(value, max_v))
