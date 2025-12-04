@@ -30,14 +30,16 @@ class PhysicsObject(Behaviour):
         return self.collider.world
 
     def move_and_collide(self, motion: pg.Vector2) -> Collision | None:
+        TOL = 0.1
+
         world = self.world
         if world is None:
             return None
 
-        current_world_pos = self.transform.position
-        new_world_pos = current_world_pos + motion
-
+        old_rect = self.collider.get_bounding_rect()
         new_rect = self.collider.get_bounding_rect(motion)
+        new_world_pos = old_rect.center + motion
+        collision: Collision | None = None
 
         for c in world.get_potential_contacts(new_rect):
             if c is self.collider:
@@ -46,12 +48,25 @@ class PhysicsObject(Behaviour):
             c_rect = c.get_bounding_rect()
             c_pos = c_rect.center
 
-            if not shape_collides(
-                (new_rect.center, self.collider.scaled_shape), (c_pos, c.scaled_shape)
-            ):
-                continue
+            collides = shape_collides(
+                (new_world_pos, self.collider.scaled_shape), (c_pos, c.scaled_shape)
+            )
+            while collides:
+                motion /= 2
+                new_world_pos = old_rect.center + motion
+                collides = shape_collides(
+                    (new_world_pos, self.collider.scaled_shape), (c_pos, c.scaled_shape)
+                )
 
-            return Collision(
+                if motion.length_squared() <= TOL:
+                    return Collision(
+                        this_physics_object=self,
+                        this_collider=self.collider,
+                        other_collider=c,
+                        other_physics_object=c.node.get_behaviour(PhysicsObject),
+                    )
+
+            collision = Collision(
                 this_physics_object=self,
                 this_collider=self.collider,
                 other_collider=c,
@@ -59,4 +74,4 @@ class PhysicsObject(Behaviour):
             )
 
         self.transform.position = new_world_pos
-        return None
+        return collision
