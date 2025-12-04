@@ -10,7 +10,7 @@ from common.utils import overrides_method
 
 
 class Simulation:
-    def __init__(self, tick_rate: float = 15):
+    def __init__(self, tick_rate: float = 24):
         self.tick_rate = tick_rate
         self._last_tick: float = 0
         self._tick_accum_time: float = 0

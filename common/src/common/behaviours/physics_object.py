@@ -22,6 +22,9 @@ class Collision:
 
 
 class PhysicsObject(Behaviour):
+    def on_init(self) -> Any:
+        self.mass: float = 1
+
     def on_pre_start(self):
         self.collider = self.node.get_or_add_behaviour(Collider)
 
@@ -30,11 +33,13 @@ class PhysicsObject(Behaviour):
         return self.collider.world
 
     def move_and_collide(self, motion: pg.Vector2) -> Collision | None:
-        TOL = 0.1
+        SQ_TOL = 0.1 * 0.1
 
         world = self.world
         if world is None:
             return None
+
+        sq_error = motion.length_squared()
 
         old_rect = self.collider.get_bounding_rect()
         new_rect = self.collider.get_bounding_rect(motion)
@@ -51,20 +56,24 @@ class PhysicsObject(Behaviour):
             collides = shape_collides(
                 (new_world_pos, self.collider.scaled_shape), (c_pos, c.scaled_shape)
             )
-            while collides:
-                motion /= 2
-                new_world_pos = old_rect.center + motion
+            if not collides:
+                continue
+
+            lb = 0
+            ub = 1
+            middle = (lb + ub) / 2
+            while sq_error > SQ_TOL:
+                if collides:
+                    ub = middle
+                else:
+                    lb = middle
+                sq_error /= 4
+
+                new_world_pos = old_rect.center + motion * middle
                 collides = shape_collides(
                     (new_world_pos, self.collider.scaled_shape), (c_pos, c.scaled_shape)
                 )
-
-                if motion.length_squared() <= TOL:
-                    return Collision(
-                        this_physics_object=self,
-                        this_collider=self.collider,
-                        other_collider=c,
-                        other_physics_object=c.node.get_behaviour(PhysicsObject),
-                    )
+                middle = (lb + ub) / 2
 
             collision = Collision(
                 this_physics_object=self,
@@ -73,5 +82,16 @@ class PhysicsObject(Behaviour):
                 other_physics_object=c.node.get_behaviour(PhysicsObject),
             )
 
+            other_po = collision.other_physics_object
+            if other_po is not None:
+                mass_ratio = self.mass / other_po.mass
+                other_po.move_and_collide((motion - (middle * motion)) * mass_ratio)
+
         self.transform.position = new_world_pos
         return collision
+
+    def on_serialize(self, out_dict: dict):
+        out_dict["mass"] = self.mass
+
+    def on_deserialize(self, in_dict: dict):
+        self.mass = in_dict.get("mass", 1)

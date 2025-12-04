@@ -7,7 +7,11 @@ from client.scenes.main_menu import MainMenu
 from common.animation import Animation, AnimationFrame, SliceMode, slice_image
 from common.assets import load_image_asset, resource_path
 from common.behaviours.animator import Animator
-from common.behaviours.collider import Collider, RectCollisionShape
+from common.behaviours.collider import (
+    CircleCollisionShape,
+    Collider,
+    RectCollisionShape,
+)
 from common.behaviours.physics_object import PhysicsObject
 from common.behaviours.ui.canvas import Canvas
 from common.behaviours.ui.ui_button import UIButton
@@ -95,6 +99,7 @@ def build_mage_template():
     animator.animations = {"idle": animation}
     collider = mage_node.add_behaviour(Collider)
     collider.base_shape = RectCollisionShape(pg.Vector2(slices[0].rect.size) / 2)
+    # collider.base_shape = CircleCollisionShape(slices[0].rect.size[0])
     mage_node.add_behaviour(PhysicsObject)
 
     save_node(mage_node, "templates/mage.json")
