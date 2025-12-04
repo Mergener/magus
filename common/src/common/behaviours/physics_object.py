@@ -9,9 +9,6 @@ import pygame as pg
 from common.behaviour import Behaviour
 from common.behaviours.collider import Collider, shape_collides
 
-if TYPE_CHECKING:
-    from common.behaviours.physics_object import PhysicsObject
-
 
 @dataclass
 class Collision:

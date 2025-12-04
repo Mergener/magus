@@ -33,7 +33,7 @@ CollisionShape = RectCollisionShape | CircleCollisionShape
 class Collider(Behaviour):
     def on_init(self):
         self._offset = pg.Vector2(0, 0)
-        self._shape = RectCollisionShape(pg.Vector2(100, 100))
+        self._shape: CollisionShape = RectCollisionShape(pg.Vector2(100, 100))
         self._bounding_rect = None
         self._last_world_bounding_rect = None
         self._last_position = self.transform.position.copy()
