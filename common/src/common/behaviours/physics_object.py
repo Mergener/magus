@@ -20,10 +20,31 @@ class Collision:
     other_collider: Collider
     other_physics_object: PhysicsObject | None
 
+    def inverted(self):
+        assert self.other_physics_object is not None
+        return Collision(
+            this_physics_object=self.other_physics_object,
+            this_collider=self.other_collider,
+            other_collider=self.this_collider,
+            other_physics_object=self.this_physics_object,
+        )
+
+
+class CollisionHandler:
+    def on_collision_enter(self, collision: Collision):
+        pass
+
+    def on_collision_exit(
+        self, collider: Collider, physics_object: PhysicsObject | None
+    ):
+        pass
+
 
 class PhysicsObject(Behaviour):
     def on_init(self) -> Any:
         self.mass: float = 1
+        self._pending_motion = pg.Vector2()
+        self._contacts: set[Collider] = set()
 
     def on_pre_start(self):
         self.collider = self.node.get_or_add_behaviour(Collider)
@@ -32,66 +53,106 @@ class PhysicsObject(Behaviour):
     def world(self):
         return self.collider.world
 
-    def move_and_collide(self, motion: pg.Vector2) -> Collision | None:
-        SQ_TOL = 0.1 * 0.1
+    def move_and_collide(self, motion: pg.Vector2):
+        self._pending_motion += motion
 
+    def on_tick(self, tick_id: int):
+        if self._pending_motion.length_squared() == 0:
+            return
+
+        self._perform_motion(self._pending_motion)
+        self._pending_motion = pg.Vector2(0, 0)
+
+    def _perform_motion(self, motion: pg.Vector2):
+        SQ_TOL = 0.1 * 0.1
         world = self.world
         if world is None:
-            return None
-
-        sq_error = motion.length_squared()
+            return
 
         old_rect = self.collider.get_bounding_rect()
+        sq_error = motion.length_squared()
+
+        new_pos = old_rect.center + motion
         new_rect = self.collider.get_bounding_rect(motion)
-        new_world_pos = old_rect.center + motion
+
+        new_contacts: set[Collider] = set()
         collision: Collision | None = None
 
-        for c in world.get_potential_contacts(new_rect):
-            if c is self.collider:
+        for other in world.get_potential_contacts(new_rect):
+            if other is self.collider:
                 continue
 
-            c_rect = c.get_bounding_rect()
-            c_pos = c_rect.center
+            other_rect = other.get_bounding_rect()
+            other_pos = other_rect.center
 
             collides = shape_collides(
-                (new_world_pos, self.collider.scaled_shape), (c_pos, c.scaled_shape)
+                (new_pos, self.collider.scaled_shape),
+                (other_pos, other.scaled_shape),
             )
+
             if not collides:
                 continue
 
-            lb = 0
-            ub = 1
-            middle = (lb + ub) / 2
+            new_contacts.add(other)
+
+            lb, ub = 0.0, 1.0
+            mid = 0.5
+
             while sq_error > SQ_TOL:
                 if collides:
-                    ub = middle
+                    ub = mid
                 else:
-                    lb = middle
+                    lb = mid
+
                 sq_error /= 4
+                new_pos = old_rect.center + motion * mid
 
-                new_world_pos = old_rect.center + motion * middle
                 collides = shape_collides(
-                    (new_world_pos, self.collider.scaled_shape), (c_pos, c.scaled_shape)
+                    (new_pos, self.collider.scaled_shape),
+                    (other_pos, other.scaled_shape),
                 )
-                middle = (lb + ub) / 2
 
+                mid = (lb + ub) * 0.5
+
+            other_po = other.node.get_behaviour(PhysicsObject)
             collision = Collision(
                 this_physics_object=self,
                 this_collider=self.collider,
-                other_collider=c,
-                other_physics_object=c.node.get_behaviour(PhysicsObject),
+                other_collider=other,
+                other_physics_object=other_po,
             )
 
-            other_po = collision.other_physics_object
+            if other not in self._contacts:
+                self._fire_collision_enter(collision)
+                if other_po:
+                    other_po._fire_collision_enter(collision.inverted())
+
             if other_po is not None:
-                mass_ratio = self.mass / other_po.mass
-                other_po.move_and_collide((motion - (middle * motion)) * mass_ratio)
+                remaining_motion = motion - motion * mid
+                push = remaining_motion * (self.mass / other_po.mass)
+                other_po.move_and_collide(push)
 
-        self.transform.position = new_world_pos
-        return collision
+        self.transform.position = new_pos
 
-    def on_serialize(self, out_dict: dict):
-        out_dict["mass"] = self.mass
+        for prev in self._contacts:
+            if prev not in new_contacts:
+                po = prev.node.get_behaviour(PhysicsObject)
+                self._fire_collision_exit(prev, po)
+                if po:
+                    po._fire_collision_exit(prev, self)
 
-    def on_deserialize(self, in_dict: dict):
-        self.mass = in_dict.get("mass", 1)
+        self._contacts = new_contacts
+
+    def _fire_collision_enter(self, collision: Collision):
+        print("Collision enter")
+        for b in self.node.behaviours:
+            if isinstance(b, CollisionHandler):
+                b.on_collision_enter(collision)
+
+    def _fire_collision_exit(
+        self, collider: Collider, physics_object: PhysicsObject | None
+    ):
+        print("Collision exit")
+        for b in self.node.behaviours:
+            if isinstance(b, CollisionHandler):
+                b.on_collision_exit(collider, physics_object)

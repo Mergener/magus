@@ -8,7 +8,13 @@ from pygame.transform import scale
 
 from common.behaviour import Behaviour
 from common.behaviours.physics_world import PhysicsWorld
-from common.utils import Rect, clamp, deserialize_vec2, serialize_vec2
+from common.utils import (
+    Rect,
+    clamp,
+    deserialize_vec2,
+    memberwise_multiply,
+    serialize_vec2,
+)
 
 
 @dataclass
@@ -55,7 +61,7 @@ class Collider(Behaviour):
         scale = self.transform.scale
         s = self._shape
         if isinstance(s, RectCollisionShape):
-            size = pg.Vector2(s.size.x * scale.x, s.size.y * scale.y)
+            size = memberwise_multiply(s.size, scale)
             return RectCollisionShape(size)
         r = max(scale.x, scale.y)
         return CircleCollisionShape(s.radius * r)
@@ -214,7 +220,9 @@ class Collider(Behaviour):
             self._world.unregister_collider(self)
 
 
-def shape_collides(a, b):
+def shape_collides(
+    a: tuple[pg.Vector2, CollisionShape], b: tuple[pg.Vector2, CollisionShape]
+):
     pos_a, sh_a = a
     pos_b, sh_b = b
 
