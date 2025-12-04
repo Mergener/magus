@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -14,10 +15,10 @@ if TYPE_CHECKING:
 
 @dataclass
 class Collision:
-    this_physics_object: "PhysicsObject"
+    this_physics_object: PhysicsObject
     this_collider: Collider
     other_collider: Collider
-    other_physics_object: "PhysicsObject | None"
+    other_physics_object: PhysicsObject | None
 
 
 class PhysicsObject(Behaviour):
@@ -28,26 +29,36 @@ class PhysicsObject(Behaviour):
     def world(self):
         return self.collider.world
 
-    def move_and_collide(self, motion: pg.Vector2):
-        new_pos = self.transform.local_position + motion
-        new_rect = self.collider.get_bounding_rect(new_pos)
+    def move_and_collide(self, motion: pg.Vector2) -> Collision | None:
+        world = self.world
+        if world is None:
+            return None
 
-        for c in self.world.get_potential_contacts(new_rect):
+        ret: Collision | None = None
+
+        current_world_pos = self.transform.position
+        new_world_pos = current_world_pos + motion
+
+        new_rect = self.collider.get_bounding_rect(motion)
+
+        for c in world.get_potential_contacts(new_rect):
             if c is self.collider:
                 continue
 
             c_rect = c.get_bounding_rect()
-            c_pos = pg.Vector2(c_rect.x, c_rect.y)
+            c_pos = c_rect.center
 
-            if not shape_collides((new_pos, self.collider.shape), (c_pos, c.shape)):
+            if not shape_collides(
+                (new_rect.center, self.collider.scaled_shape), (c_pos, c.scaled_shape)
+            ):
                 continue
 
-            return Collision(
-                self,
-                self.collider,
-                c,
-                c.node.get_behaviour(PhysicsObject),
+            ret = Collision(
+                this_physics_object=self,
+                this_collider=self.collider,
+                other_collider=c,
+                other_physics_object=c.node.get_behaviour(PhysicsObject),
             )
 
-        self.transform.local_position = new_pos
-        return None
+        self.transform.position = new_world_pos
+        return ret

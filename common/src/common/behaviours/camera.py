@@ -30,8 +30,8 @@ class Camera(Behaviour):
         world_y = point.y - screen_rect.centery + self.transform.position.y
         return pg.Vector2(world_x, world_y)
 
-    def world_to_screen_scale(self, x: float):
+    def world_to_screen_scale(self, x: float = 1):
         return x
 
-    def screen_to_world_scale(self, x: float):
+    def screen_to_world_scale(self, x: float = 1):
         return x

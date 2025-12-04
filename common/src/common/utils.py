@@ -42,8 +42,24 @@ def clamp(value: float, min_v: float, max_v: float):
 
 class Rect:
     def __init__(self, center: pg.Vector2, size: pg.Vector2):
-        self.center = pg.Vector2(center)
-        self.size = pg.Vector2(size)
+        self._center = pg.Vector2(center)
+        self._size = pg.Vector2(size)
+
+    @property
+    def center(self):
+        return self._center
+
+    @center.setter
+    def center(self, value: pg.Vector2):
+        self._center = value.copy()
+
+    @property
+    def size(self):
+        return self._size
+
+    @size.setter
+    def size(self, value: pg.Vector2):
+        self._size = value.copy()
 
     @property
     def x(self):
@@ -116,9 +132,12 @@ class Rect:
         dy = abs(p.y - self.center.y)
         return dx <= self.half_width and dy <= self.half_height
 
-    def intersects(self, other):
+    def intersects(self, other: Rect):
         dx = abs(self.center.x - other.center.x)
         dy = abs(self.center.y - other.center.y)
         return dx <= (self.half_width + other.half_width) and dy <= (
             self.half_height + other.half_height
         )
+
+    def __str__(self):
+        return f"Rect(cx={self.x}, cy={self.y}, w={self.width}, h={self.height})"

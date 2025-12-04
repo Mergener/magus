@@ -94,7 +94,7 @@ def build_mage_template():
     animator = mage_node.get_or_add_behaviour(Animator)
     animator.animations = {"idle": animation}
     collider = mage_node.add_behaviour(Collider)
-    collider.shape = RectCollisionShape(pg.Vector2(slices[0].rect.size))
+    collider.base_shape = RectCollisionShape(pg.Vector2(slices[0].rect.size) / 2)
     mage_node.add_behaviour(PhysicsObject)
 
     save_node(mage_node, "templates/mage.json")
