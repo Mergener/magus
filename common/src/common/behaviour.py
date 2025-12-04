@@ -54,6 +54,9 @@ class Behaviour(ABC):
         """Called every simulation render cycle."""
         pass
 
+    def on_debug_render(self) -> Any:
+        """Called every simulation render cycle if RENDER_DEBUG is True."""
+
     def on_serialize(self, out_dict: dict):
         pass
 

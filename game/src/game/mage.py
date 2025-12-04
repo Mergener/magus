@@ -10,6 +10,7 @@ from common.behaviours.network_behaviour import (
     server_method,
 )
 from common.behaviours.network_entity import EntityPacket, NetworkEntity
+from common.behaviours.physics_object import PhysicsObject
 from common.binary import ByteReader, ByteWriter
 from common.network import DeliveryMode, NetPeer
 from common.utils import notnull
@@ -86,12 +87,15 @@ class Mage(NetworkBehaviour):
 
     def on_init(self):
         self._animator = self.node.get_or_add_behaviour(Animator)
+        self._physics_object = self.node.get_or_add_behaviour(PhysicsObject)
         self._move_destination = None
         self._spells: list[SpellState] = []
         self.speed = CompositeValue(
             self, base=500, delivery_mode=DeliveryMode.UNRELIABLE
         )
         self.owner_index = self.use_sync_var(int)
+        self._last_pressed_move_order_target = pg.Vector2(0, 0)
+        self._last_sent_move_order_tick = 0
 
     @property
     def spells(self):
@@ -109,22 +113,22 @@ class Mage(NetworkBehaviour):
 
     def on_client_update(self, dt: float):
         assert self.game
-        if Camera.main:
-            mouse_world_pos = Camera.main.screen_to_world_space(
-                self.game.input.mouse_pos
-            )
-            if self.game.input.is_mouse_button_just_pressed(pg.BUTTON_RIGHT):
-                self.game.network.publish(
-                    MoveToOrder(self.net_entity.id, mouse_world_pos)
-                )
-            if self.game.input.is_mouse_button_just_pressed(pg.BUTTON_LEFT):
-                fireball = self.get_spell_state(get_spell("fireball"))
-                if fireball is not None:
-                    self.game.network.publish(
-                        CastPointTargetSpellOrder(
-                            self.net_entity.id, fireball.net_entity.id, mouse_world_pos
-                        )
-                    )
+        just_pressed = self.game.input.is_mouse_button_just_pressed(pg.BUTTON_RIGHT)
+        pressed = self.game.input.is_mouse_button_pressed(pg.BUTTON_RIGHT)
+        camera = Camera.main
+        if camera is not None and (pressed or just_pressed):
+            mouse_pos = self.game.input.mouse_pos
+            target_pos = camera.screen_to_world_space(mouse_pos)
+            current_tick = self.game.simulation.tick_id
+
+            if just_pressed or (
+                pressed
+                and current_tick != self._last_sent_move_order_tick
+                and target_pos != self._last_pressed_move_order_target
+            ):
+                self.game.network.publish(MoveToOrder(self.net_entity.id, target_pos))
+                self._last_pressed_move_order_target = target_pos
+                self._last_sent_move_order_tick = current_tick
 
     def on_server_tick(self, tick_id: int):
         assert self.game
@@ -144,7 +148,7 @@ class Mage(NetworkBehaviour):
             motion = delta
             self._move_destination = None
 
-        self.transform.local_position += motion
+        self._physics_object.move_and_collide(motion)
 
     @property
     def owner(self) -> Player:
