@@ -34,8 +34,6 @@ class PhysicsObject(Behaviour):
         if world is None:
             return None
 
-        ret: Collision | None = None
-
         current_world_pos = self.transform.position
         new_world_pos = current_world_pos + motion
 
@@ -53,7 +51,7 @@ class PhysicsObject(Behaviour):
             ):
                 continue
 
-            ret = Collision(
+            return Collision(
                 this_physics_object=self,
                 this_collider=self.collider,
                 other_collider=c,
@@ -61,4 +59,4 @@ class PhysicsObject(Behaviour):
             )
 
         self.transform.position = new_world_pos
-        return ret
+        return None
