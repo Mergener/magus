@@ -103,6 +103,9 @@ class NetworkEntity(Behaviour):
             self.listen(
                 SyncVarUpdate, lambda msg, peer: self._handle_sync_var_update(msg, peer)
             )
+            self.listen(
+                SyncVarUpdate, lambda msg, peer: self._handle_sync_var_update(msg, peer)
+            )
 
     def on_start(self) -> Any:
         self._require_sync_var_creation_sync = True
@@ -226,6 +229,8 @@ class NetworkEntity(Behaviour):
             self._pre_start_packet_queue.append((packet, peer))
             return
 
+        assert self.game
+
         handlers = self._packet_listeners.get(packet.__class__)
         if handlers is None:
             return
@@ -236,9 +241,7 @@ class NetworkEntity(Behaviour):
                     continue
                 h.last_received_tick = packet.tick_id
 
-            res = h.listener(packet, peer)
-            if asyncio.iscoroutine(res):
-                asyncio.create_task(res)
+            self.game.simulation.run_task(h.listener(packet, peer))
 
     def listen[T: EntityPacket](
         self, packet_type: type[T], listener: Callable[[T, NetPeer], None]
@@ -254,6 +257,10 @@ class NetworkEntity(Behaviour):
     def on_destroy(self):
         assert self.game
         self._packet_listeners.clear()
+
+        # The following is mainly for notifying clients about the entity destruction.
+        # Note that destroying a node is an idempotent action.
+        self.entity_manager.destroy_entity(self)
 
 
 class EntityPacket(Packet, ABC):

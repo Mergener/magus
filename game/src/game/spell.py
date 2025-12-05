@@ -5,7 +5,7 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from re import T
-from typing import Self, cast, final
+from typing import TYPE_CHECKING, Self, cast, final
 
 import pygame as pg
 
@@ -14,6 +14,9 @@ from common.behaviour import get_behaviour_type_by_name, get_behaviour_type_name
 from common.behaviours.network_behaviour import NetworkBehaviour
 from common.network import DeliveryMode
 from common.utils import get_object_attribute_from_dotted_path, notnull
+
+if TYPE_CHECKING:
+    from game.mage import Mage
 
 
 class TargetMode(Enum):
@@ -101,6 +104,7 @@ class SpellInfo(Serializable):
 
 
 class SpellState(NetworkBehaviour):
+    _mage: Mage
     _spell: SpellInfo
 
     def on_init(self):

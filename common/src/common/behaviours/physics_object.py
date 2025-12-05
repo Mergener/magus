@@ -28,12 +28,12 @@ class Collision:
 
 
 class CollisionHandler:
-    def on_collision_enter(self, collision: Collision):
+    def on_collision_enter(self, collision: Collision) -> Any:
         pass
 
     def on_collision_exit(
         self, collider: Collider, physics_object: PhysicsObject | None
-    ):
+    ) -> Any:
         pass
 
 
@@ -141,15 +141,17 @@ class PhysicsObject(Behaviour):
         self._contacts = new_contacts
 
     def _fire_collision_enter(self, collision: Collision):
-        print("Collision enter")
+        assert self.game
         for b in self.node.behaviours:
             if isinstance(b, CollisionHandler):
-                b.on_collision_enter(collision)
+                self.game.simulation.run_task(b.on_collision_enter(collision))
 
     def _fire_collision_exit(
         self, collider: Collider, physics_object: PhysicsObject | None
     ):
-        print("Collision exit")
+        assert self.game
         for b in self.node.behaviours:
             if isinstance(b, CollisionHandler):
-                b.on_collision_exit(collider, physics_object)
+                self.game.simulation.run_task(
+                    b.on_collision_exit(collider, physics_object)
+                )

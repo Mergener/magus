@@ -160,6 +160,10 @@ class Node(Serializable):
 
         return cast(Transform, self._behaviours[0])
 
+    @property
+    def destroyed(self):
+        return self._destroyed
+
     def destroy(self):
         if self._destroyed or self._game is None:
             return

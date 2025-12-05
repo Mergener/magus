@@ -108,12 +108,12 @@ class Simulation:
         starting = self._to_start
         self._to_start = set()
         for ts in starting:
-            if ts._started:
+            if ts._started or ts.node.destroyed:
                 continue
             self.run_task(ts.on_pre_start())
 
         for ts in starting:
-            if ts._started:
+            if ts._started or ts.node.destroyed:
                 continue
             ts._started = True
             self.run_task(ts.on_start())
@@ -124,10 +124,14 @@ class Simulation:
             self._tick_accum_time -= self.tick_interval
             self._resolve_tick_futures()
             for t in self._tickables:
+                if t.node.destroyed:
+                    continue
                 self.run_task(t.on_tick(self._tick_id))
             self._tick_id += 1
 
         for u in self._updatables:
+            if u.node.destroyed:
+                continue
             self.run_task(u.on_update(dt))
 
     def render(self):
@@ -145,10 +149,14 @@ class Simulation:
         sorted_render_layers = self._renderables.keys()
         for l in sorted(sorted_render_layers):
             for r in self._renderables[l]:
+                if r.node.destroyed:
+                    continue
                 r.on_render()
 
             if self.render_debug:
                 for r in self._renderables[l]:
+                    if r.node.destroyed:
+                        continue
                     r.on_debug_render()
 
     async def wait_next_frame(self):

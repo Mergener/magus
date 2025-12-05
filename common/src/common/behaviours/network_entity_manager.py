@@ -87,15 +87,14 @@ class NetworkEntityManager(Behaviour):
 
     def destroy_entity(self, entity: int | NetworkEntity):
         assert self.game
-        if not self.game.network.is_server():
-            raise Exception("Cannot destroy entity if network is not a server.")
 
-        if isinstance(entity, NetworkEntity):
-            entity = entity.id
+        if isinstance(entity, int):
+            found_entity = self.get_entity_by_id(entity)
+            if found_entity is None:
+                return
+            entity = found_entity
 
-        destroy_entity_packet = DestroyEntity(cast(int, entity))
-        self._do_destroy_entity(destroy_entity_packet)
-        self.game.network.publish(destroy_entity_packet)
+        self._do_destroy_entity(entity)
 
     def _do_spawn_entity(self, p: SpawnEntity):
         assert self.game
@@ -129,14 +128,10 @@ class NetworkEntityManager(Behaviour):
             entity_id = self._fill_node_ids(entity_id, c)
         return entity_id
 
-    def _do_destroy_entity(self, p: DestroyEntity):
-        entity = self._entities.get(p.id)
-        if entity is None:
-            print(f"Tried destroying unknown entity {p.id}", file=stderr)
-            return
-
+    def _do_destroy_entity(self, entity: NetworkEntity):
         entity.node.destroy()
-        del self._entities[p.id]
+        if entity.id in self._entities:
+            del self._entities[entity.id]
 
     def _handle_entity_packet(self, p: EntityPacket, peer: NetPeer):
         entity = self._entities.get(p.entity_id)
@@ -152,7 +147,10 @@ class NetworkEntityManager(Behaviour):
         self._do_spawn_entity(p)
 
     def _handle_destroy_entity(self, p: DestroyEntity):
-        self._do_destroy_entity(p)
+        entity = self.get_entity_by_id(p.id)
+        if entity is None:
+            return
+        self._do_destroy_entity(entity)
 
     def on_serialize(self, out_dict: dict):
         out_dict["templates"] = self._templates

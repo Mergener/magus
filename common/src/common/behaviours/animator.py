@@ -60,8 +60,10 @@ class Animator(Behaviour):
 
     def play(self, animation_name: str, force_restart: bool = False):
         anim = self.animations.get(animation_name)
-        if anim == None and animation_name != "null":
+        if anim is None and animation_name != "null":
             print(f"Warn: Calling play() in unregistered animation {animation_name}")
+        elif animation_name == "null" and self._sprite_renderer is not None:
+            self._sprite_renderer.texture = None
 
         if not force_restart and anim == self._current_animation:
             return

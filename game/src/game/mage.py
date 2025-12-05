@@ -241,6 +241,7 @@ class Mage(NetworkBehaviour):
         print(spell_info.__dict__)
         spell_state = spell_entity.node.add_behaviour(spell_info.state_behaviour)
         spell_state._spell = spell_info
+        spell_state._mage = self
         self._spells.append(spell_state)
 
     @entity_packet_handler(CastPointTargetSpellOrder)

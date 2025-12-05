@@ -31,7 +31,7 @@ def entity_packet_handler[T: EntityPacket](t: type[T]):
 
         @functools.wraps(fn)
         def wrapper(self, packet, peer):
-            fn(self, packet, peer)
+            return fn(self, packet, peer)
 
         return wrapper
 
@@ -117,7 +117,7 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
 
         parent_on_pre_start = getattr(super(), "on_pre_start", None)
         if callable(parent_on_pre_start):
-            parent_on_pre_start()
+            self.game.simulation.run_task(parent_on_pre_start())
 
         for packet_type, handler in self._packet_handlers.items():
             bound = handler.__get__(self, self.__class__)
@@ -125,9 +125,9 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
 
         prev_rcv_updates = self.receive_updates
         self.receive_updates = False
-        self.on_common_pre_start()
+        self.game.simulation.run_task(self.on_common_pre_start())
         if self.game.network.is_server():
-            self.on_server_pre_start()
+            self.game.simulation.run_task(self.on_server_pre_start())
             if (
                 overrides_method(NetworkBehaviour, self, "on_server_update")
                 or overrides_method(NetworkBehaviour, self, "on_server_tick")
@@ -135,7 +135,7 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
             ):
                 self.receive_updates = prev_rcv_updates
         if self.game.network.is_client():
-            self.on_client_pre_start()
+            self.game.simulation.run_task(self.on_client_pre_start())
             if (
                 overrides_method(NetworkBehaviour, self, "on_client_update")
                 or overrides_method(NetworkBehaviour, self, "on_client_tick")
@@ -148,64 +148,64 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
         assert self.game
         parent_on_start = getattr(super(), "on_start", None)
         if callable(parent_on_start):
-            parent_on_start()
+            self.game.simulation.run_task(parent_on_start())
 
-        self.on_common_start()
+        self.game.simulation.run_task(self.on_common_start())
         if self.game.network.is_server():
-            self.on_server_start()
+            self.game.simulation.run_task(self.on_server_start())
         if self.game.network.is_client():
-            self.on_client_start()
+            self.game.simulation.run_task(self.on_client_start())
 
     @final
     def on_update(self, dt: float):
         assert self.game
-        self.on_common_update(dt)
+        self.game.simulation.run_task(self.on_common_update(dt))
         if self.game.network.is_server():
-            self.on_server_update(dt)
+            self.game.simulation.run_task(self.on_server_update(dt))
         if self.game.network.is_client():
-            self.on_client_update(dt)
+            self.game.simulation.run_task(self.on_client_update(dt))
 
     @final
     def on_tick(self, tick_id: int):
         assert self.game
-        self.on_common_tick(tick_id)
+        self.game.simulation.run_task(self.on_common_tick(tick_id))
         if self.game.network.is_server():
-            self.on_server_tick(tick_id)
+            self.game.simulation.run_task(self.on_server_tick(tick_id))
         if self.game.network.is_client():
-            self.on_client_tick(tick_id)
+            self.game.simulation.run_task(self.on_client_tick(tick_id))
 
-    def on_client_pre_start(self):
+    def on_client_pre_start(self) -> Any:
         pass
 
-    def on_client_start(self):
+    def on_client_start(self) -> Any:
         pass
 
-    def on_client_update(self, dt: float):
+    def on_client_update(self, dt: float) -> Any:
         pass
 
-    def on_client_tick(self, tick_id: int):
+    def on_client_tick(self, tick_id: int) -> Any:
         pass
 
-    def on_server_pre_start(self):
+    def on_server_pre_start(self) -> Any:
         pass
 
-    def on_server_start(self):
+    def on_server_start(self) -> Any:
         pass
 
-    def on_server_update(self, dt: float):
+    def on_server_update(self, dt: float) -> Any:
         pass
 
-    def on_server_tick(self, tick_id: int):
+    def on_server_tick(self, tick_id: int) -> Any:
         pass
 
-    def on_common_pre_start(self):
+    def on_common_pre_start(self) -> Any:
         pass
 
-    def on_common_start(self):
+    def on_common_start(self) -> Any:
         pass
 
-    def on_common_update(self, dt: float):
+    def on_common_update(self, dt: float) -> Any:
         pass
 
-    def on_common_tick(self, tick_id: int):
+    def on_common_tick(self, tick_id: int) -> Any:
         pass

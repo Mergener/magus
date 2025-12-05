@@ -41,20 +41,25 @@ def get_object_attribute_from_dotted_path(obj: Any, path: str, level: int) -> st
     return str(current)
 
 
-def serialize_vec2(out_dict: dict, name: str, v: pg.Vector2):
-    out_dict[name] = {"x": v.x, "y": v.y}
+def serialize_vec2(v: pg.Vector2, out_dict: dict | None = None):
+    if out_dict is None:
+        out_dict = {}
+
+    out_dict["x"] = v.x
+    out_dict["y"] = v.y
+
+    return out_dict
 
 
-def deserialize_vec2(in_dict: dict, name: str, fallback: pg.Vector2 | None = None):
+def deserialize_vec2(in_dict: dict | None, fallback: pg.Vector2 | None = None):
+    if in_dict is None:
+        in_dict = {}
+
     if fallback is None:
         fallback = pg.Vector2(0, 0)
 
-    vec_dict = in_dict.get(name)
-    if not isinstance(vec_dict, dict):
-        return fallback
-
-    x = vec_dict.get("x", fallback.x)
-    y = vec_dict.get("y", fallback.x)
+    x = in_dict.get("x", fallback.x)
+    y = in_dict.get("y", fallback.y)
 
     return pg.Vector2(x, y)
 
