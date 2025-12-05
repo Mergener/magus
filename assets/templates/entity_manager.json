@@ -5,7 +5,8 @@
       "templates": {
         "game_manager": "templates/game_manager.json",
         "player": "templates/player.json",
-        "mage": "templates/mage.json"
+        "mage": "templates/mage.json",
+        "fireball_projectile": "templates/spells/fireball_projectile.json"
       }
     }
   ]

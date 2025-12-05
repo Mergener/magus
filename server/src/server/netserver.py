@@ -22,6 +22,8 @@ class NetServer(Network):
         override_delivery_mode: DeliveryMode | None = None,
         exclude_peers: list[NetPeer] | None = None,
     ):
+        if packet.delivery_mode != DeliveryMode.UNRELIABLE:
+            print(f"Broadcasting {packet}")
         writer = ByteWriter()
         packet.encode(writer)
         mode = override_delivery_mode or packet.delivery_mode
@@ -54,7 +56,6 @@ class NetServer(Network):
                     data = bytes(event.packet.data)
                     reader = ByteReader(data)
                     packet = Packet.decode(reader)
-                    print(f"Received {packet}")
                     self.notify(packet, net_peer)
 
             elif event.type == enet.EVENT_TYPE_DISCONNECT:

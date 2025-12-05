@@ -140,18 +140,18 @@ class Collider(Behaviour):
             self._last_scale = s.copy()
 
     def on_serialize(self, out_dict: dict):
-        serialize_vec2(out_dict, "offset", self._offset)
+        out_dict["offset"] = serialize_vec2(self._offset)
         s = self._shape
 
         if isinstance(s, CircleCollisionShape):
             out_dict["shape"] = {"type": "circle", "radius": s.radius}
         else:
-            d = {"type": "rect"}
-            serialize_vec2(d, "size", s.size)
+            assert isinstance(s, RectCollisionShape)
+            d = {"type": "rect", "size": serialize_vec2(s.size)}
             out_dict["shape"] = d
 
     def on_deserialize(self, in_dict: dict):
-        self._offset = deserialize_vec2(in_dict, "offset")
+        self._offset = deserialize_vec2(in_dict.get("offset"))
         sd = in_dict.get("shape")
         if not sd:
             return
@@ -160,7 +160,7 @@ class Collider(Behaviour):
         if t == "circle":
             self.base_shape = CircleCollisionShape(sd.get("radius", 0))
         elif t == "rect":
-            self.base_shape = RectCollisionShape(deserialize_vec2(sd, "size"))
+            self.base_shape = RectCollisionShape(deserialize_vec2(sd.get("size")))
 
     def on_debug_render(self):
         from common.behaviours.camera import Camera

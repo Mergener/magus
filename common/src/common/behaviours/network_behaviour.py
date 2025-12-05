@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 from abc import ABC, ABCMeta
 from dataclasses import dataclass
-from typing import Callable, ClassVar, Generic, TypeVar, final
+from typing import Any, Callable, ClassVar, Generic, TypeVar, final
 
 import pygame as pg
 
@@ -13,19 +13,59 @@ from common.behaviours.network_entity import (
     NetworkEntity,
     PlausibleSyncVarType,
 )
-from common.network import DeliveryMode
+from common.network import DeliveryMode, NetPeer
 from common.utils import overrides_method
 
 
-def entity_packet_handler(t):
-    def inner(fn):
+def entity_packet_handler[T: EntityPacket](t: type[T]):
+    """
+    Marks an instance method from a NetworkBehaviour derived class
+    as a handler for a given EntityPacket derived type t, meaning the
+    method will be called whenever the entity receives a packet of type t.
+    """
+
+    def inner(fn: Callable[[Any, T, NetPeer], Any]):
         fn._packet_type = t  # type: ignore
+
+        print(f"Added entity packet listener for {t.__name__}: {fn.__name__}")
 
         @functools.wraps(fn)
         def wrapper(self, packet, peer):
-            fn(self, packet, peer)
+            return fn(self, packet, peer)
 
         return wrapper
+
+    return inner
+
+
+def client_method(method):
+    """
+    Marks an instance method from a NetworkBehaviour derived class
+    as a client method, meaning that calls to the method when network.is_client()
+    is False will be ignored.
+    """
+
+    @functools.wraps(method)
+    def inner(self, *args, **kwargs):
+        if self.game.network.is_client():
+            return method(self, *args, **kwargs)
+        return None
+
+    return inner
+
+
+def server_method(method):
+    """
+    Marks an instance method from a NetworkBehaviour derived class
+    as a server method, meaning that calls to the method when network.is_server()
+    is False will be ignored.
+    """
+
+    @functools.wraps(method)
+    def inner(self, *args, **kwargs):
+        if self.game.network.is_server():
+            return method(self, *args, **kwargs)
+        return None
 
     return inner
 
@@ -45,6 +85,7 @@ class NetworkBehaviourMeta(ABCMeta):
         }
 
         cls._packet_handlers = {**inherited, **own}  # type: ignore
+        print(f"Generated {cls.__name__} entity packet handlers", cls._packet_handlers)  # type: ignore
 
         return cls
 
@@ -76,7 +117,7 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
 
         parent_on_pre_start = getattr(super(), "on_pre_start", None)
         if callable(parent_on_pre_start):
-            parent_on_pre_start()
+            self.game.simulation.run_task(parent_on_pre_start())
 
         for packet_type, handler in self._packet_handlers.items():
             bound = handler.__get__(self, self.__class__)
@@ -84,9 +125,9 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
 
         prev_rcv_updates = self.receive_updates
         self.receive_updates = False
-        self.on_common_pre_start()
+        self.game.simulation.run_task(self.on_common_pre_start())
         if self.game.network.is_server():
-            self.on_server_pre_start()
+            self.game.simulation.run_task(self.on_server_pre_start())
             if (
                 overrides_method(NetworkBehaviour, self, "on_server_update")
                 or overrides_method(NetworkBehaviour, self, "on_server_tick")
@@ -94,7 +135,7 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
             ):
                 self.receive_updates = prev_rcv_updates
         if self.game.network.is_client():
-            self.on_client_pre_start()
+            self.game.simulation.run_task(self.on_client_pre_start())
             if (
                 overrides_method(NetworkBehaviour, self, "on_client_update")
                 or overrides_method(NetworkBehaviour, self, "on_client_tick")
@@ -107,64 +148,64 @@ class NetworkBehaviour(Behaviour, ABC, metaclass=NetworkBehaviourMeta):
         assert self.game
         parent_on_start = getattr(super(), "on_start", None)
         if callable(parent_on_start):
-            parent_on_start()
+            self.game.simulation.run_task(parent_on_start())
 
-        self.on_common_start()
+        self.game.simulation.run_task(self.on_common_start())
         if self.game.network.is_server():
-            self.on_server_start()
+            self.game.simulation.run_task(self.on_server_start())
         if self.game.network.is_client():
-            self.on_client_start()
+            self.game.simulation.run_task(self.on_client_start())
 
     @final
     def on_update(self, dt: float):
         assert self.game
-        self.on_common_update(dt)
+        self.game.simulation.run_task(self.on_common_update(dt))
         if self.game.network.is_server():
-            self.on_server_update(dt)
+            self.game.simulation.run_task(self.on_server_update(dt))
         if self.game.network.is_client():
-            self.on_client_update(dt)
+            self.game.simulation.run_task(self.on_client_update(dt))
 
     @final
     def on_tick(self, tick_id: int):
         assert self.game
-        self.on_common_tick(tick_id)
+        self.game.simulation.run_task(self.on_common_tick(tick_id))
         if self.game.network.is_server():
-            self.on_server_tick(tick_id)
+            self.game.simulation.run_task(self.on_server_tick(tick_id))
         if self.game.network.is_client():
-            self.on_client_tick(tick_id)
+            self.game.simulation.run_task(self.on_client_tick(tick_id))
 
-    def on_client_pre_start(self):
+    def on_client_pre_start(self) -> Any:
         pass
 
-    def on_client_start(self):
+    def on_client_start(self) -> Any:
         pass
 
-    def on_client_update(self, dt: float):
+    def on_client_update(self, dt: float) -> Any:
         pass
 
-    def on_client_tick(self, tick_id: int):
+    def on_client_tick(self, tick_id: int) -> Any:
         pass
 
-    def on_server_pre_start(self):
+    def on_server_pre_start(self) -> Any:
         pass
 
-    def on_server_start(self):
+    def on_server_start(self) -> Any:
         pass
 
-    def on_server_update(self, dt: float):
+    def on_server_update(self, dt: float) -> Any:
         pass
 
-    def on_server_tick(self, tick_id: int):
+    def on_server_tick(self, tick_id: int) -> Any:
         pass
 
-    def on_common_pre_start(self):
+    def on_common_pre_start(self) -> Any:
         pass
 
-    def on_common_start(self):
+    def on_common_start(self) -> Any:
         pass
 
-    def on_common_update(self, dt: float):
+    def on_common_update(self, dt: float) -> Any:
         pass
 
-    def on_common_tick(self, tick_id: int):
+    def on_common_tick(self, tick_id: int) -> Any:
         pass

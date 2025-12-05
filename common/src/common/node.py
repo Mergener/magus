@@ -1,16 +1,20 @@
 from __future__ import annotations
 
-import importlib
-import traceback
 from typing import TYPE_CHECKING, Self, cast
 
+from common.assets import Serializable
+from common.behaviour import (
+    Behaviour,
+    get_behaviour_type_by_name,
+    get_behaviour_type_name,
+)
+
 if TYPE_CHECKING:
-    from common.behaviour import Behaviour
     from common.behaviours.transform import Transform
     from common.game import Game
 
 
-class Node:
+class Node(Serializable):
     def __init__(self, game: Game | None = None, name: str | None = None):
         from common.behaviours.transform import Transform
 
@@ -156,6 +160,10 @@ class Node:
 
         return cast(Transform, self._behaviours[0])
 
+    @property
+    def destroyed(self):
+        return self._destroyed
+
     def destroy(self):
         if self._destroyed or self._game is None:
             return
@@ -202,7 +210,7 @@ class Node:
                 continue
 
             bd = {
-                "__type": _get_behaviour_type_name(b),
+                "__type": get_behaviour_type_name(b),
                 "receive_updates": b.receive_updates,
                 "visible": b.visible,
             }
@@ -231,7 +239,7 @@ class Node:
                 node.parent = self
 
         for db in dict_behaviours:
-            behaviour_type = _get_behaviour_type_by_name(db.get("__type"))
+            behaviour_type = get_behaviour_type_by_name(db.get("__type"))
             if behaviour_type is None:
                 continue
 
@@ -328,52 +336,3 @@ class Node:
                 )
 
         return behaviour_list
-
-
-_behaviour_types: dict[str, type[Behaviour]] | None = None
-
-
-def _get_behaviour_type_name(b: Behaviour | type[Behaviour]):
-    from common.behaviour import Behaviour
-
-    if isinstance(b, Behaviour):
-        b = b.__class__
-    return f"{b.__module__}.{b.__name__}"
-
-
-def _get_behaviour_type_by_name(name: str | None):
-    global _behaviour_types
-
-    if name is None:
-        return None
-
-    if _behaviour_types is None:
-        _behaviour_types = {}
-        from common.behaviour import Behaviour
-
-        _import_behaviour_types_from_superclass(Behaviour)
-
-    bt = _behaviour_types.get(name)
-    if bt is not None:
-        return bt
-
-    module_name, class_name = name.rsplit(".", 1)
-    try:
-        module = importlib.import_module(module_name)
-        bt = getattr(module, class_name)
-    except Exception as e:
-        trace = traceback.format_exc()
-        print(f"Failed to import module {module_name}: {trace}")
-        return None
-
-    _behaviour_types[name] = bt
-    return bt
-
-
-def _import_behaviour_types_from_superclass(cls: type[Behaviour]):
-    global _behaviour_types
-    assert _behaviour_types is not None
-
-    for bt in cls.__subclasses__():
-        _behaviour_types[_get_behaviour_type_name(bt)] = bt
-        _import_behaviour_types_from_superclass(bt)

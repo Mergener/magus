@@ -58,7 +58,9 @@ class NetworkEntity(Behaviour):
         self._sync_vars: list[SyncVar] = []
         self._reached = True
         self._next_sync_var_id = 0
-        self._may_register_sync_vars = True
+        self._require_sync_var_creation_sync = False
+        self._started = False
+        self._pre_start_packet_queue: list[tuple[EntityPacket, NetPeer]] | None = []
 
     @property
     def id(self):
@@ -74,8 +76,6 @@ class NetworkEntity(Behaviour):
         initial_value: T | None = None,
         delivery_mode=DeliveryMode.RELIABLE,
     ):
-        assert self._may_register_sync_vars
-
         if initial_value is None:
             initial_value = t()  # type: ignore
 
@@ -103,9 +103,20 @@ class NetworkEntity(Behaviour):
             self.listen(
                 SyncVarUpdate, lambda msg, peer: self._handle_sync_var_update(msg, peer)
             )
+            self.listen(
+                SyncVarUpdate, lambda msg, peer: self._handle_sync_var_update(msg, peer)
+            )
 
     def on_start(self) -> Any:
-        self._may_register_sync_vars = False
+        self._require_sync_var_creation_sync = True
+
+        assert self._pre_start_packet_queue is not None
+        for t in self._pre_start_packet_queue:
+            packet, peer = t
+            self._handle_entity_packet(packet, peer)
+
+        self._pre_start_packet_queue = None
+        self._started = True
 
     def _handle_rotation_update(self, packet: RotationUpdate, peer: NetPeer):
         self.transform.rotation = packet.rotation
@@ -138,6 +149,7 @@ class NetworkEntity(Behaviour):
         time_diff = (
             packet.tick_id - self._last_updated_tick
         ) / self.game.simulation.tick_rate
+        time_diff = max(time_diff, 0.00001)  # Prevent division by zero errors
 
         self._last_updated_tick = packet.tick_id
 
@@ -212,6 +224,13 @@ class NetworkEntity(Behaviour):
                 self._reached = True
 
     def _handle_entity_packet(self, packet: EntityPacket, peer: NetPeer):
+        if not self._started:
+            assert self._pre_start_packet_queue is not None
+            self._pre_start_packet_queue.append((packet, peer))
+            return
+
+        assert self.game
+
         handlers = self._packet_listeners.get(packet.__class__)
         if handlers is None:
             return
@@ -222,9 +241,7 @@ class NetworkEntity(Behaviour):
                     continue
                 h.last_received_tick = packet.tick_id
 
-            res = h.listener(packet, peer)
-            if asyncio.iscoroutine(res):
-                asyncio.create_task(res)
+            self.game.simulation.run_task(h.listener(packet, peer))
 
     def listen[T: EntityPacket](
         self, packet_type: type[T], listener: Callable[[T, NetPeer], None]
@@ -241,23 +258,27 @@ class NetworkEntity(Behaviour):
         assert self.game
         self._packet_listeners.clear()
 
+        # The following is mainly for notifying clients about the entity destruction.
+        # Note that destroying a node is an idempotent action.
+        self.entity_manager.destroy_entity(self)
+
 
 class EntityPacket(Packet, ABC):
-    def __init__(self, id: int, tick_id: int | None = None):
-        self.id = id
+    def __init__(self, entity_id: int, tick_id: int | None = None):
+        self.entity_id = entity_id
         self.tick_id = tick_id
 
     def on_write(self, writer: ByteWriter):
         if self.tick_id is not None:
-            writer.write_int32(-self.id)
+            writer.write_int32(-self.entity_id)
             writer.write_uint32(self.tick_id)
         else:
-            writer.write_int32(self.id)
+            writer.write_int32(self.entity_id)
 
     def on_read(self, reader: ByteReader):
-        self.id = reader.read_int32()
-        if self.id < 0:
-            self.id = -self.id
+        self.entity_id = reader.read_int32()
+        if self.entity_id < 0:
+            self.entity_id = -self.entity_id
             self.tick_id = reader.read_uint32()
         else:
             self.tick_id = None
@@ -323,7 +344,7 @@ class SyncVarUpdate(EntityPacket):
         t = _sync_var_id_types[reader.read_uint8()]
 
         self.value = _sync_var_readers[t](reader)
-        self._delivery_mode = DeliveryMode.RELIABLE
+        self._delivery_mode = DeliveryMode.UNRELIABLE
 
     @property
     def delivery_mode(self) -> DeliveryMode:

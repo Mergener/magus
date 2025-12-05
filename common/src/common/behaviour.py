@@ -1,10 +1,12 @@
+from __future__ import annotations
+
+import importlib
+import traceback
 from abc import ABC
 from typing import TYPE_CHECKING, Any
 
-from common.node import Node
-
 if TYPE_CHECKING:
-    from common.behaviours.transform import Transform
+    from common.node import Node
 
 
 class Behaviour(ABC):
@@ -119,3 +121,52 @@ class Behaviour(ABC):
             self.node.game.simulation.add_renderable(self, self.render_layer)
         else:
             self.node.game.simulation.remove_renderable(self, self.render_layer)
+
+
+_behaviour_types: dict[str, type[Behaviour]] | None = None
+
+
+def get_behaviour_type_name(b: Behaviour | type[Behaviour]):
+    from common.behaviour import Behaviour
+
+    if isinstance(b, Behaviour):
+        b = b.__class__
+    return f"{b.__module__}.{b.__name__}"
+
+
+def get_behaviour_type_by_name(name: str | None):
+    global _behaviour_types
+
+    if name is None:
+        return None
+
+    if _behaviour_types is None:
+        _behaviour_types = {}
+        from common.behaviour import Behaviour
+
+        _import_behaviour_types_from_superclass(Behaviour)
+
+    bt = _behaviour_types.get(name)
+    if bt is not None:
+        return bt
+
+    module_name, class_name = name.rsplit(".", 1)
+    try:
+        module = importlib.import_module(module_name)
+        bt = getattr(module, class_name)
+    except Exception as e:
+        trace = traceback.format_exc()
+        print(f"Failed to import module {module_name}: {trace}")
+        return None
+
+    _behaviour_types[name] = bt
+    return bt
+
+
+def _import_behaviour_types_from_superclass(cls: type[Behaviour]):
+    global _behaviour_types
+    assert _behaviour_types is not None
+
+    for bt in cls.__subclasses__():
+        _behaviour_types[get_behaviour_type_name(bt)] = bt
+        _import_behaviour_types_from_superclass(bt)

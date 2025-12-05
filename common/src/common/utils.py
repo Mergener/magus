@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import pygame as pg
 
 
@@ -18,20 +20,46 @@ def notnull[T](value: T | None) -> T:
     return value
 
 
-def serialize_vec2(out_dict: dict, name: str, v: pg.Vector2):
-    out_dict[name] = {"x": v.x, "y": v.y}
+def get_object_attribute_from_dotted_path(obj: Any, path: str, level: int) -> str:
+    parts = path.split(".")
+    current = obj
+
+    for part in parts:
+        if isinstance(current, dict):
+            if part not in current:
+                return f"<unknown:{path}>"
+            current = current[part]
+        else:
+            if not hasattr(current, part):
+                return f"<unknown:{path}>"
+            current = getattr(current, part)
+
+    if isinstance(current, list):
+        idx = max(0, min(level - 1, len(current) - 1))
+        return str(current[idx])
+
+    return str(current)
 
 
-def deserialize_vec2(in_dict: dict, name: str, fallback: pg.Vector2 | None = None):
+def serialize_vec2(v: pg.Vector2, out_dict: dict | None = None):
+    if out_dict is None:
+        out_dict = {}
+
+    out_dict["x"] = v.x
+    out_dict["y"] = v.y
+
+    return out_dict
+
+
+def deserialize_vec2(in_dict: dict | None, fallback: pg.Vector2 | None = None):
+    if in_dict is None:
+        in_dict = {}
+
     if fallback is None:
         fallback = pg.Vector2(0, 0)
 
-    vec_dict = in_dict.get(name)
-    if not isinstance(vec_dict, dict):
-        return fallback
-
-    x = vec_dict.get("x", fallback.x)
-    y = vec_dict.get("y", fallback.x)
+    x = in_dict.get("x", fallback.x)
+    y = in_dict.get("y", fallback.y)
 
     return pg.Vector2(x, y)
 
