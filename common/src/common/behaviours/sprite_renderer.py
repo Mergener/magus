@@ -3,7 +3,6 @@ import pygame as pg
 from common.behaviour import Behaviour
 from common.behaviours.camera import Camera
 from common.primitives import Vector2
-from common.utils import deserialize_vec2, memberwise_multiply, serialize_vec2
 
 
 class SpriteRenderer(Behaviour):
@@ -27,12 +26,12 @@ class SpriteRenderer(Behaviour):
             self._active_texture = None
             return
 
-        final_scale = memberwise_multiply(self.transform.scale, self.image_scale)
+        final_scale = self.transform.scale.elementwise() * self.image_scale
 
         self._cached_scale = self.transform.scale
         self._cached_rot = self.transform.rotation  # world rotation cached
 
-        self._scaled_dimensions = memberwise_multiply(self._dimensions, final_scale)
+        self._scaled_dimensions = self._dimensions.elementwise() * final_scale
         scaled_tex = pg.transform.scale(tex, self._scaled_dimensions)
 
         rot = self.transform.rotation
@@ -98,11 +97,11 @@ class SpriteRenderer(Behaviour):
 
     def on_serialize(self, out_dict):
         out_dict["texture"] = self._texture_asset
-        out_dict["image_scale"] = serialize_vec2(self.image_scale)
+        out_dict["image_scale"] = self.image_scale.serialize()
 
     def on_deserialize(self, in_dict):
         self._texture_asset = in_dict["texture"]
-        self.image_scale = deserialize_vec2(in_dict.get("image_scale"), Vector2(1, 1))
+        self.image_scale.deserialize(in_dict.get("image_scale"), Vector2(1, 1))
 
         if not isinstance(self._texture_asset, str):
             self._texture_asset = None

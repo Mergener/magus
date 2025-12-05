@@ -1,8 +1,33 @@
 from __future__ import annotations
 
+import math
+
 import pygame as pg
 
-Vector2 = pg.Vector2
+from common.assets import Serializable
+
+
+class Vector2(pg.Vector2, Serializable):
+    def serialize(self, out_dict: dict | None = None) -> dict:
+        if out_dict is None:
+            out_dict = {}
+
+        out_dict["x"] = self.x
+        out_dict["y"] = self.y
+
+        return out_dict
+
+    def deserialize(self, in_dict: dict | None, fallback: Vector2 | None = None):
+        if in_dict is None:
+            in_dict = {}
+
+        if fallback is None:
+            fallback = Vector2(0, 0)
+
+        self.x = in_dict.get("x", fallback.x)
+        self.y = in_dict.get("y", fallback.y)
+
+        return self
 
 
 class Rect:

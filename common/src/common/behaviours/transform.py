@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 
 from common.behaviour import Behaviour
 from common.primitives import Vector2
-from common.utils import memberwise_multiply
 
 
 class Transform(Behaviour):
@@ -31,7 +30,7 @@ class Transform(Behaviour):
     def scale(self):
         scale = self._local_scale
         if self.parent != None:
-            scale = memberwise_multiply(self.local_scale, self.parent.transform.scale)
+            scale = self.local_scale.elementwise() * self.parent.transform.scale
         return scale
 
     @property

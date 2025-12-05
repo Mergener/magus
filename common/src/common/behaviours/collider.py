@@ -9,7 +9,7 @@ from pygame.transform import scale
 from common.behaviour import Behaviour
 from common.behaviours.physics_world import PhysicsWorld
 from common.primitives import Rect, Vector2
-from common.utils import clamp, deserialize_vec2, memberwise_multiply, serialize_vec2
+from common.utils import clamp
 
 
 @dataclass
@@ -56,7 +56,7 @@ class Collider(Behaviour):
         scale = self.transform.scale
         s = self._shape
         if isinstance(s, RectCollisionShape):
-            size = memberwise_multiply(s.size, scale)
+            size = s.size.elementwise() * scale
             return RectCollisionShape(size)
         r = max(scale.x, scale.y)
         return CircleCollisionShape(s.radius * r)
@@ -135,18 +135,18 @@ class Collider(Behaviour):
             self._last_scale = s.copy()
 
     def on_serialize(self, out_dict: dict):
-        out_dict["offset"] = serialize_vec2(self._offset)
+        out_dict["offset"] = self._offset.serialize()
         s = self._shape
 
         if isinstance(s, CircleCollisionShape):
             out_dict["shape"] = {"type": "circle", "radius": s.radius}
         else:
             assert isinstance(s, RectCollisionShape)
-            d = {"type": "rect", "size": serialize_vec2(s.size)}
+            d = {"type": "rect", "size": s.size.serialize()}
             out_dict["shape"] = d
 
     def on_deserialize(self, in_dict: dict):
-        self._offset = deserialize_vec2(in_dict.get("offset"))
+        self._offset.deserialize(in_dict.get("offset"))
         sd = in_dict.get("shape")
         if not sd:
             return
@@ -155,7 +155,7 @@ class Collider(Behaviour):
         if t == "circle":
             self.base_shape = CircleCollisionShape(sd.get("radius", 0))
         elif t == "rect":
-            self.base_shape = RectCollisionShape(deserialize_vec2(sd.get("size")))
+            self.base_shape = RectCollisionShape(Vector2().deserialize(sd.get("size")))
 
     def on_debug_render(self):
         from common.behaviours.camera import Camera
