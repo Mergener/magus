@@ -3,6 +3,7 @@ from typing import ClassVar, Self
 import pygame as pg
 
 from common.behaviour import Behaviour
+from common.primitives import Vector2
 
 
 class Camera(Behaviour):
@@ -12,23 +13,23 @@ class Camera(Behaviour):
         if Camera.main is None:
             Camera.main = self
 
-    def world_to_screen_space(self, point: pg.Vector2):
+    def world_to_screen_space(self, point: Vector2):
         if self.game is None or self.game.display is None:
-            return pg.Vector2(0, 0)
+            return Vector2(0, 0)
 
         screen_rect = self.game.display.get_rect()
         screen_x = point.x + screen_rect.centerx - self.transform.position.x
         screen_y = point.y + screen_rect.centery - self.transform.position.y
-        return pg.Vector2(screen_x, screen_y)
+        return Vector2(screen_x, screen_y)
 
-    def screen_to_world_space(self, point: pg.Vector2):
+    def screen_to_world_space(self, point: Vector2):
         if self.game is None or self.game.display is None:
-            return pg.Vector2(0, 0)
+            return Vector2(0, 0)
 
         screen_rect = self.game.display.get_rect()
         world_x = point.x - screen_rect.centerx + self.transform.position.x
         world_y = point.y - screen_rect.centery + self.transform.position.y
-        return pg.Vector2(world_x, world_y)
+        return Vector2(world_x, world_y)
 
     def world_to_screen_scale(self, x: float = 1):
         return x

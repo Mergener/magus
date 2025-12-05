@@ -10,6 +10,7 @@ from common.behaviours.network_behaviour import (
 from common.behaviours.network_entity import EntityPacket
 from common.behaviours.physics_object import Collision, CollisionHandler, PhysicsObject
 from common.network import DeliveryMode, NetPeer
+from common.primitives import Vector2
 from game.mage import Mage
 
 
@@ -22,7 +23,7 @@ class FireballBurst(EntityPacket):
 class FireballProjectile(NetworkBehaviour, CollisionHandler):
     caster: Mage
     speed: float
-    destination = pg.Vector2()
+    destination = Vector2()
     _owner_index: int
 
     def on_init(self):
@@ -78,9 +79,9 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
         assert self.game
         direction = self.destination - self.transform.position
 
-        pg_dir = pg.Vector2(direction.x, -direction.y)
+        pg_dir = Vector2(direction.x, -direction.y)
 
-        self.transform.rotation = pg.Vector2(1, 0).angle_to(pg_dir)
+        self.transform.rotation = Vector2(1, 0).angle_to(pg_dir)
 
     def on_server_tick(self, tick_id: int):
         assert self.game

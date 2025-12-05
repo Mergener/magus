@@ -7,6 +7,7 @@ import numpy as np
 import pygame as pg
 
 from common.assets import ImageAsset, Serializable
+from common.primitives import Vector2
 
 DEFAULT_ANIMATION_FPS = 6
 
@@ -17,16 +18,16 @@ class SliceMode(Enum):
 
 
 def slice_image(
-    img: ImageAsset, slicing: pg.Vector2, slice_mode: SliceMode, copy: bool = False
+    img: ImageAsset, slicing: Vector2, slice_mode: SliceMode, copy: bool = False
 ) -> list[ImageAsset]:
     surface = img.pygame_surface
     if slice_mode == SliceMode.RECTS_PER_AXIS:
         rects_per_axis = slicing
-        size_per_rect = pg.Vector2(
+        size_per_rect = Vector2(
             surface.get_width() // slicing.x, surface.get_height() // slicing.y
         )
     else:
-        rects_per_axis = pg.Vector2(
+        rects_per_axis = Vector2(
             surface.get_width() // slicing.x, surface.get_height() // slicing.y
         )
         size_per_rect = slicing
@@ -36,7 +37,7 @@ def slice_image(
     for i in range(int(rects_per_axis.y)):
         x = 0.0
         for j in range(int(rects_per_axis.x)):
-            sub_rect = pg.Rect(pg.Vector2(x, y), size_per_rect)
+            sub_rect = pg.Rect(Vector2(x, y), size_per_rect)
             if is_sub_rect_transparent(surface, sub_rect):
                 continue
 

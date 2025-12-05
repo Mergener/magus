@@ -8,6 +8,7 @@ import pygame as pg
 
 from common.behaviour import Behaviour
 from common.behaviours.collider import Collider, shape_collides
+from common.primitives import Vector2
 
 
 @dataclass
@@ -40,7 +41,7 @@ class CollisionHandler:
 class PhysicsObject(Behaviour):
     def on_init(self) -> Any:
         self.mass: float = 1
-        self._pending_motion = pg.Vector2()
+        self._pending_motion = Vector2()
         self._contacts: set[Collider] = set()
 
     def on_pre_start(self):
@@ -50,7 +51,7 @@ class PhysicsObject(Behaviour):
     def world(self):
         return self.collider.world
 
-    def move_and_collide(self, motion: pg.Vector2):
+    def move_and_collide(self, motion: Vector2):
         self._pending_motion += motion
 
     def on_tick(self, tick_id: int):
@@ -58,9 +59,9 @@ class PhysicsObject(Behaviour):
             return
 
         self._perform_motion(self._pending_motion)
-        self._pending_motion = pg.Vector2(0, 0)
+        self._pending_motion = Vector2(0, 0)
 
-    def _perform_motion(self, motion: pg.Vector2):
+    def _perform_motion(self, motion: Vector2):
         SQ_TOL = 0.1 * 0.1
         world = self.world
         if world is None:

@@ -8,13 +8,8 @@ from pygame.transform import scale
 
 from common.behaviour import Behaviour
 from common.behaviours.physics_world import PhysicsWorld
-from common.utils import (
-    Rect,
-    clamp,
-    deserialize_vec2,
-    memberwise_multiply,
-    serialize_vec2,
-)
+from common.primitives import Rect, Vector2
+from common.utils import clamp, deserialize_vec2, memberwise_multiply, serialize_vec2
 
 
 @dataclass
@@ -24,7 +19,7 @@ class CircleCollisionShape:
 
 @dataclass
 class RectCollisionShape:
-    size: pg.Vector2
+    size: Vector2
 
 
 CollisionShape = RectCollisionShape | CircleCollisionShape
@@ -32,8 +27,8 @@ CollisionShape = RectCollisionShape | CircleCollisionShape
 
 class Collider(Behaviour):
     def on_init(self):
-        self._offset = pg.Vector2(0, 0)
-        self._shape: CollisionShape = RectCollisionShape(pg.Vector2(100, 100))
+        self._offset = Vector2(0, 0)
+        self._shape: CollisionShape = RectCollisionShape(Vector2(100, 100))
         self._bounding_rect = None
         self._last_world_bounding_rect = None
         self._last_position = self.transform.position.copy()
@@ -88,10 +83,10 @@ class Collider(Behaviour):
             self._bounding_rect = Rect(pos, scaled_shape.size)
         elif isinstance(scaled_shape, CircleCollisionShape):
             r = scaled_shape.radius
-            size = pg.Vector2(r * 2, r * 2)
+            size = Vector2(r * 2, r * 2)
             self._bounding_rect = Rect(pos, size)
         else:
-            self._bounding_rect = Rect(pg.Vector2(0, 0), pg.Vector2(0, 0))
+            self._bounding_rect = Rect(Vector2(0, 0), Vector2(0, 0))
 
         world = self.world
         if world is not None:
@@ -119,7 +114,7 @@ class Collider(Behaviour):
                 w = self.game.scene.add_child().add_behaviour(PhysicsWorld)
             self._world = w
 
-    def get_bounding_rect(self, offset: pg.Vector2 | None = None) -> Rect:
+    def get_bounding_rect(self, offset: Vector2 | None = None) -> Rect:
         rect = self._bounding_rect or self._refresh_bounding_rect()
         if offset is not None:
             return Rect(rect.center + offset, rect.size)
@@ -185,14 +180,14 @@ class Collider(Behaviour):
             pg.draw.rect(
                 shape_surface,
                 pg.Color(0, 0, 255, 75),
-                pg.Rect(pg.Vector2(0, 0), world_to_screen_scale * shape.size),
+                pg.Rect(Vector2(0, 0), world_to_screen_scale * shape.size),
             )
         elif isinstance(shape, CircleCollisionShape):
             radius = world_to_screen_scale * shape.radius
             pg.draw.circle(
                 shape_surface,
                 pg.Color(0, 0, 255, 75),
-                pg.Vector2(radius, radius),
+                Vector2(radius, radius),
                 radius,
             )
 
@@ -201,7 +196,7 @@ class Collider(Behaviour):
                 bounding_rect_surface,
                 pg.Color(255, 0, 0, 75),
                 pg.Rect(
-                    pg.Vector2(0, 0),
+                    Vector2(0, 0),
                     camera.world_to_screen_scale()
                     * self._last_world_bounding_rect.size,
                 ),
@@ -221,7 +216,7 @@ class Collider(Behaviour):
 
 
 def shape_collides(
-    a: tuple[pg.Vector2, CollisionShape], b: tuple[pg.Vector2, CollisionShape]
+    a: tuple[Vector2, CollisionShape], b: tuple[Vector2, CollisionShape]
 ):
     pos_a, sh_a = a
     pos_b, sh_b = b
@@ -243,21 +238,19 @@ def shape_collides(
     raise TypeError
 
 
-def _rect_rect(
-    pos_a: pg.Vector2, size_a: pg.Vector2, pos_b: pg.Vector2, size_b: pg.Vector2
-):
+def _rect_rect(pos_a: Vector2, size_a: Vector2, pos_b: Vector2, size_b: Vector2):
     dx = abs(pos_a.x - pos_b.x)
     dy = abs(pos_a.y - pos_b.y)
     return dx <= (size_a.x + size_b.x) * 0.5 and dy <= (size_a.y + size_b.y) * 0.5
 
 
-def _circle_circle(pos_a: pg.Vector2, ra: float, pos_b: pg.Vector2, rb: float):
+def _circle_circle(pos_a: Vector2, ra: float, pos_b: Vector2, rb: float):
     d = pos_a.distance_squared_to(pos_b)
     rs = ra + rb
     return d <= rs * rs
 
 
-def _circle_rect(cpos: pg.Vector2, r: float, rpos: pg.Vector2, rsize: pg.Vector2):
+def _circle_rect(cpos: Vector2, r: float, rpos: Vector2, rsize: Vector2):
     cx, cy = cpos.x, cpos.y
     rx, ry = rpos.x, rpos.y
     hw, hh = rsize.x * 0.5, rsize.y * 0.5

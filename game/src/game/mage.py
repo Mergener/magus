@@ -13,6 +13,7 @@ from common.behaviours.network_entity import EntityPacket, NetworkEntity
 from common.behaviours.physics_object import PhysicsObject
 from common.binary import ByteReader, ByteWriter
 from common.network import DeliveryMode, NetPeer
+from common.primitives import Vector2
 from common.utils import notnull
 from game.composite_value import CompositeValue
 from game.game_manager import GameManager
@@ -21,7 +22,7 @@ from game.spell import SpellInfo, SpellState, get_spell
 
 
 class MoveToOrder(EntityPacket):
-    def __init__(self, entity_id: int, where: pg.Vector2):
+    def __init__(self, entity_id: int, where: Vector2):
         super().__init__(entity_id)
         self.where = where
 
@@ -32,7 +33,7 @@ class MoveToOrder(EntityPacket):
 
     def on_read(self, reader: ByteReader):
         super().on_read(reader)
-        self.where = pg.Vector2(reader.read_float32(), reader.read_float32())
+        self.where = Vector2(reader.read_float32(), reader.read_float32())
 
     @property
     def delivery_mode(self) -> DeliveryMode:
@@ -40,7 +41,7 @@ class MoveToOrder(EntityPacket):
 
 
 class CastPointTargetSpellOrder(EntityPacket):
-    def __init__(self, entity_id: int, spell_entity_id: int, where: pg.Vector2):
+    def __init__(self, entity_id: int, spell_entity_id: int, where: Vector2):
         super().__init__(entity_id)
         self.spell_entity_id = spell_entity_id
         self.where = where
@@ -54,7 +55,7 @@ class CastPointTargetSpellOrder(EntityPacket):
     def on_read(self, reader: ByteReader):
         super().on_read(reader)
         self.spell_entity_id = reader.read_int32()
-        self.where = pg.Vector2(reader.read_float32(), reader.read_float32())
+        self.where = Vector2(reader.read_float32(), reader.read_float32())
 
     @property
     def delivery_mode(self) -> DeliveryMode:
@@ -83,7 +84,7 @@ class AddSpell(EntityPacket):
 
 
 class Mage(NetworkBehaviour):
-    _move_destination: pg.Vector2 | None
+    _move_destination: Vector2 | None
 
     def on_init(self):
         self._animator = self.node.get_or_add_behaviour(Animator)
@@ -94,7 +95,7 @@ class Mage(NetworkBehaviour):
             self, base=500, delivery_mode=DeliveryMode.UNRELIABLE
         )
         self.owner_index = self.use_sync_var(int)
-        self._last_pressed_move_order_target = pg.Vector2(0, 0)
+        self._last_pressed_move_order_target = Vector2(0, 0)
         self._last_sent_move_order_tick = 0
 
     @property
@@ -210,7 +211,7 @@ class Mage(NetworkBehaviour):
         self._do_add_spell(spell_entity, spell)
 
     @server_method
-    def cast_spell_at_point(self, spell: SpellState | SpellInfo, where: pg.Vector2):
+    def cast_spell_at_point(self, spell: SpellState | SpellInfo, where: Vector2):
         if isinstance(spell, SpellInfo):
             spell_state = self.get_spell_state(spell)
             if spell_state is None:

@@ -4,6 +4,7 @@ import pygame as pg
 
 from common.behaviours.ui.canvas import Canvas
 from common.behaviours.ui.widget import Widget
+from common.primitives import Vector2
 from common.utils import memberwise_multiply
 
 REPEAT_FLAGS_NONE = 0
@@ -19,12 +20,12 @@ class UISurface(Widget):
         self._active_surface: pg.Surface | None = None
         self._tint = pg.Color(255, 255, 255, 255)
 
-        self._cached_scale: pg.Vector2 = self.transform.scale.copy()
+        self._cached_scale: Vector2 = self.transform.scale.copy()
         self._cached_rotation: float = self.transform.rotation
-        self._cached_ref_resolution: pg.Vector2 | None = None
+        self._cached_ref_resolution: Vector2 | None = None
         self._cached_canvas: Canvas | None = self.canvas
         self._cached_display_size: tuple[int, int] | None = None
-        self.surface_scale = pg.Vector2(1, 1)
+        self.surface_scale = Vector2(1, 1)
         self.repeat_flags: int = 0
 
     @property
@@ -123,7 +124,7 @@ class UISurface(Widget):
         if self.game.display is None or canvas is None or self._active_surface is None:
             return
 
-        half_surface_size = pg.Vector2(
+        half_surface_size = Vector2(
             self._active_surface.get_width() / 2, self._active_surface.get_height() / 2
         )
         pos = self.transform.position
@@ -132,7 +133,7 @@ class UISurface(Widget):
         screen_point = (
             canvas.canvas_to_screen_point(pos)
             - half_surface_size
-            + memberwise_multiply(self.anchor, pg.Vector2(sw, -sh))
+            + memberwise_multiply(self.anchor, Vector2(sw, -sh))
         )
         self.game.display.blit(self._active_surface, screen_point)
 
@@ -147,7 +148,7 @@ class UISurface(Widget):
         ):
             return pg.Rect(0, 0, 0, 0)
 
-        half_surface_size = pg.Vector2(
+        half_surface_size = Vector2(
             self._active_surface.get_width() / 2, self._active_surface.get_height() / 2
         )
         pos = self.transform.position
@@ -155,8 +156,6 @@ class UISurface(Widget):
         w, h = canvas.reference_resolution
 
         return pg.Rect(
-            pos
-            + memberwise_multiply(self.anchor, pg.Vector2(w, h))
-            - half_surface_size,
+            pos + memberwise_multiply(self.anchor, Vector2(w, h)) - half_surface_size,
             self._active_surface.get_size(),
         )

@@ -8,14 +8,15 @@ if TYPE_CHECKING:
     from common.node import Node
 
 from common.behaviour import Behaviour
+from common.primitives import Vector2
 from common.utils import memberwise_multiply
 
 
 class Transform(Behaviour):
     def __init__(self, node: Node):
         super().__init__(node)
-        self._local_position = pg.Vector2(0, 0)
-        self._local_scale = pg.Vector2(1, 1)
+        self._local_position = Vector2(0, 0)
+        self._local_scale = Vector2(1, 1)
         self._local_rotation = 0.0
 
     @property
@@ -23,7 +24,7 @@ class Transform(Behaviour):
         return self._local_scale
 
     @local_scale.setter
-    def local_scale(self, value: pg.Vector2):
+    def local_scale(self, value: Vector2):
         self._local_scale = value
 
     @property
@@ -38,11 +39,11 @@ class Transform(Behaviour):
         return self._local_position
 
     @local_position.setter
-    def local_position(self, new_pos: pg.Vector2):
+    def local_position(self, new_pos: Vector2):
         self._local_position = new_pos
 
     @property
-    def position(self) -> pg.Vector2:
+    def position(self) -> Vector2:
         if self.parent is not None:
             parent_position = self.parent.transform.position
             parent_rotation = self.parent.transform.rotation
@@ -52,7 +53,7 @@ class Transform(Behaviour):
             return self._local_position
 
     @position.setter
-    def position(self, new_pos: pg.Vector2):
+    def position(self, new_pos: Vector2):
         delta = new_pos - self.position
         self.local_position += delta
 
@@ -85,18 +86,18 @@ class Transform(Behaviour):
         out_dict["rotation"] = self._local_rotation
 
     def on_deserialize(self, in_dict: dict):
-        self._local_position = pg.Vector2(0, 0)
+        self._local_position = Vector2(0, 0)
         local_pos_dict = in_dict.get("local_position")
         if local_pos_dict:
-            self._local_position = pg.Vector2(
+            self._local_position = Vector2(
                 local_pos_dict.get("x", 0), local_pos_dict.get("y", 0)
             )
         else:
             pos_dict = in_dict.get("position")
             if pos_dict:
-                self.position = pg.Vector2(pos_dict.get("x", 0), pos_dict.get("y", 0))
+                self.position = Vector2(pos_dict.get("x", 0), pos_dict.get("y", 0))
 
-        self._local_scale = pg.Vector2(1, 1)
+        self._local_scale = Vector2(1, 1)
         scale_dict = in_dict.get("local_scale")
         if scale_dict:
             self._local_scale.x = scale_dict["x"]

@@ -2,6 +2,7 @@ import pygame as pg
 
 from common.behaviour import Behaviour
 from common.behaviours.camera import Camera
+from common.primitives import Vector2
 from common.utils import deserialize_vec2, memberwise_multiply, serialize_vec2
 
 
@@ -11,14 +12,14 @@ class SpriteRenderer(Behaviour):
         self._texture_asset: str | None = None
         self._active_texture: pg.Surface | None = None
 
-        self._dimensions = pg.Vector2(0, 0)
-        self._scaled_dimensions = pg.Vector2(0, 0)
+        self._dimensions = Vector2(0, 0)
+        self._scaled_dimensions = Vector2(0, 0)
 
         self._cached_scale = self.transform.scale
         self._cached_rot = self.transform.rotation
 
         self._tint = pg.Color(255, 255, 255, 255)
-        self._image_scale = pg.Vector2(1, 1)
+        self._image_scale = Vector2(1, 1)
 
     def _refresh_active_texture(self):
         tex = self._texture
@@ -69,9 +70,9 @@ class SpriteRenderer(Behaviour):
         self._texture = tex
 
         if tex:
-            self._dimensions = pg.Vector2(tex.get_width(), tex.get_height())
+            self._dimensions = Vector2(tex.get_width(), tex.get_height())
         else:
-            self._dimensions = pg.Vector2(0, 0)
+            self._dimensions = Vector2(0, 0)
 
         self._refresh_active_texture()
 
@@ -89,8 +90,7 @@ class SpriteRenderer(Behaviour):
         if camera is None or self.game is None or self.game.display is None:
             return
 
-        offset = self._active_texture.get_size()
-        offset = pg.Vector2(offset[0], offset[1])
+        offset = Vector2(self._active_texture.get_size())
 
         pos = camera.world_to_screen_space(self.transform.position - offset / 2)
 
@@ -102,9 +102,7 @@ class SpriteRenderer(Behaviour):
 
     def on_deserialize(self, in_dict):
         self._texture_asset = in_dict["texture"]
-        self.image_scale = deserialize_vec2(
-            in_dict.get("image_scale"), pg.Vector2(1, 1)
-        )
+        self.image_scale = deserialize_vec2(in_dict.get("image_scale"), Vector2(1, 1))
 
         if not isinstance(self._texture_asset, str):
             self._texture_asset = None
