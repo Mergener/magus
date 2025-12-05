@@ -92,9 +92,9 @@ class NetworkEntityManager(Behaviour):
             found_entity = self.get_entity_by_id(entity)
             if found_entity is None:
                 return
-            entity = found_entity
-
-        self._do_destroy_entity(entity)
+            self._do_destroy_entity(found_entity)
+        else:
+            self._do_destroy_entity(entity)
 
     def _do_spawn_entity(self, p: SpawnEntity):
         assert self.game
