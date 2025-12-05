@@ -1,3 +1,5 @@
 from scene_builder.client_scenes import build_client_scenes
+from scene_builder.fireball import build_fireball_projectile
 
 build_client_scenes()
+build_fireball_projectile()

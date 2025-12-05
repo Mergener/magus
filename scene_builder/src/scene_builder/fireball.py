@@ -1,8 +1,34 @@
+import pygame as pg
+
+from common.animation import Animation, AnimationFrame, SliceMode, slice_image
+from common.assets import load_image_asset, load_node_asset
+from common.behaviours.animator import Animator
 from common.node import Node
-from scene_builder.base import save_node
+from game.spells.fireball_projectile import FireballProjectile
+from scene_builder.base import save_animation, save_node
 
 
 def build_fireball_projectile():
-    fireball_projectile = Node()
+    projectile = Node()
 
-    save_node(fireball_projectile, "templates/spells/fireball_projectile.json")
+    projectile.add_behaviour(FireballProjectile)
+
+    spritesheet = load_image_asset("img/spells/fireball.png")
+    sprites = slice_image(spritesheet, pg.Vector2(4, 10), SliceMode.RECTS_PER_AXIS)
+    frames = [AnimationFrame(s) for s in sprites]
+
+    # Animations
+    spawn = Animation(frames[0:12], 25, "animations/fireball/spawn.json")
+    idle = Animation(frames[12:28], 25, "animations/fireball/idle.json")
+    burst = Animation(frames[28:], 20, "animations/fireball/burst.json")
+
+    animator = projectile.add_behaviour(Animator)
+    animator.animations = {
+        "spawn": spawn,
+        "idle": idle,
+        "burst": burst,
+    }
+    for anim in animator.animations.values():
+        save_animation(anim)
+
+    save_node(projectile, "templates/spells/fireball_projectile.json")

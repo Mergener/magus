@@ -16,6 +16,7 @@ class Animator(Behaviour):
         self._accum_time = 0
         self._sprite_renderer = None
         self._current_animation: Animation | None = None
+        self._queue: list[str] = []
         self.animations = {}
 
     def on_pre_start(self):
@@ -26,7 +27,7 @@ class Animator(Behaviour):
             self.play("idle")
 
     def on_update(self, dt):
-        if self._current_animation is None or self._sprite_renderer is None:
+        if self._sprite_renderer is None or self._current_animation is None:
             return
 
         current_frame = self._current_animation.frames[self._frame_idx]
@@ -36,9 +37,12 @@ class Animator(Behaviour):
 
         if self._accum_time > interval:
             self._accum_time -= interval
-            self._frame_idx = (self._frame_idx + 1) % len(
-                self._current_animation.frames
-            )
+            self._frame_idx += 1
+            if self._frame_idx >= len(self._current_animation.frames):
+                self._frame_idx = 0
+                if len(self._queue) > 0:
+                    self.play(self._queue.pop())
+                    return
             current_frame = self._current_animation.frames[self._frame_idx]
             self._sprite_renderer.texture = current_frame.image.pygame_surface
 
@@ -56,11 +60,15 @@ class Animator(Behaviour):
 
     def play(self, animation_name: str, force_restart: bool = False):
         anim = self.animations.get(animation_name)
-        if anim == None:
+        if anim == None and animation_name != "null":
             print(f"Warn: Calling play() in unregistered animation {animation_name}")
 
         if not force_restart and anim == self._current_animation:
             return
+
         self._current_animation = anim
         self._accum_time = 0
         self._frame_idx = 0
+
+    def enqueue(self, animation_name: str):
+        self._queue.insert(0, animation_name)

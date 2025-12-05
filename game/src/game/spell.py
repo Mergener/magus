@@ -55,6 +55,7 @@ class SpellInfo(Serializable):
         return out_dict
 
     def deserialize(self, in_dict: dict) -> Self:
+        print("Calling deserialize for spell info")
         self.name = in_dict.get("name", str())
         self._raw_tooltip = in_dict.get("tooltip", str())
         self.levels = in_dict.get("levels", 1)
@@ -69,6 +70,7 @@ class SpellInfo(Serializable):
         self.data = in_dict.get("data", {})
 
         behaviour = get_behaviour_type_by_name(in_dict.get("state_behaviour"))
+        print("Got behaviour", behaviour)
         if behaviour is None or not issubclass(behaviour, SpellState):
             raise ValueError("Expected a spell state behaviour.")
         self.state_behaviour = cast(type[SpellState], behaviour)
@@ -135,5 +137,6 @@ class SpellState(NetworkBehaviour):
 
 def get_spell(file_name: str):
     spell_info = load_object_asset(f"spells/{file_name}.json", SpellInfo)
+    print("Loaded spell info here!", spell_info.__dict__)
     spell_info._file_name = file_name
     return spell_info

@@ -113,22 +113,39 @@ class Mage(NetworkBehaviour):
 
     def on_client_update(self, dt: float):
         assert self.game
-        just_pressed = self.game.input.is_mouse_button_just_pressed(pg.BUTTON_RIGHT)
-        pressed = self.game.input.is_mouse_button_pressed(pg.BUTTON_RIGHT)
         camera = Camera.main
-        if camera is not None and (pressed or just_pressed):
-            mouse_pos = self.game.input.mouse_pos
-            target_pos = camera.screen_to_world_space(mouse_pos)
+        if camera is None:
+            return
+
+        mouse_world_pos = camera.screen_to_world_space(self.game.input.mouse_pos)
+
+        just_pressed_right = self.game.input.is_mouse_button_just_pressed(
+            pg.BUTTON_RIGHT
+        )
+        pressed_right = self.game.input.is_mouse_button_pressed(pg.BUTTON_RIGHT)
+
+        if pressed_right or just_pressed_right:
             current_tick = self.game.simulation.tick_id
 
-            if just_pressed or (
-                pressed
+            if just_pressed_right or (
+                pressed_right
                 and current_tick != self._last_sent_move_order_tick
-                and target_pos != self._last_pressed_move_order_target
+                and mouse_world_pos != self._last_pressed_move_order_target
             ):
-                self.game.network.publish(MoveToOrder(self.net_entity.id, target_pos))
-                self._last_pressed_move_order_target = target_pos
+                self.game.network.publish(
+                    MoveToOrder(self.net_entity.id, mouse_world_pos)
+                )
+                self._last_pressed_move_order_target = mouse_world_pos
                 self._last_sent_move_order_tick = current_tick
+
+        if self.game.input.is_mouse_button_just_pressed(pg.BUTTON_LEFT):
+            fireball = self.get_spell_state(get_spell("fireball"))
+            if fireball is not None:
+                self.game.network.publish(
+                    CastPointTargetSpellOrder(
+                        self.net_entity.id, fireball.net_entity.id, mouse_world_pos
+                    )
+                )
 
     def on_server_tick(self, tick_id: int):
         assert self.game
@@ -220,7 +237,8 @@ class Mage(NetworkBehaviour):
         self._do_add_spell(spell_entity, spell)
 
     def _do_add_spell(self, spell_entity: NetworkEntity, spell_info: SpellInfo):
-        print("Added spell!", spell_info.name)
+        print("Added spell!", spell_info.file_name)
+        print(spell_info.__dict__)
         spell_state = spell_entity.node.add_behaviour(spell_info.state_behaviour)
         spell_state._spell = spell_info
         self._spells.append(spell_state)
