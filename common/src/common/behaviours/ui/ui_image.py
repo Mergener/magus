@@ -4,6 +4,7 @@ import pygame as pg
 
 from common.assets import ImageAsset, load_image_asset
 from common.behaviours.ui.ui_surface import UISurface
+from common.primitives import Vector2
 
 
 class UIImage(UISurface):
@@ -89,7 +90,7 @@ class UIImage(UISurface):
 
         surf_scale_dict = in_dict.get("surface_scale")
         if surf_scale_dict:
-            self.surface_scale = pg.Vector2(
+            self.surface_scale = Vector2(
                 surf_scale_dict.get("x", 0), surf_scale_dict.get("y", 0)
             )
 

@@ -13,6 +13,7 @@ from common.assets import Serializable, load_object_asset
 from common.behaviour import get_behaviour_type_by_name, get_behaviour_type_name
 from common.behaviours.network_behaviour import NetworkBehaviour
 from common.network import DeliveryMode
+from common.primitives import Vector2
 from common.utils import get_object_attribute_from_dotted_path, notnull
 
 if TYPE_CHECKING:
@@ -129,13 +130,13 @@ class SpellState(NetworkBehaviour):
     def can_cast_now(self):
         return self.cooldown_timer.value <= 0
 
-    def can_cast_on_point_now(self, point: pg.Vector2):
+    def can_cast_on_point_now(self, point: Vector2):
         if self.spell.target_mode != TargetMode.POINT:
             return False
 
         return self.can_cast_now()
 
-    def on_point_cast(self, target: pg.Vector2):
+    def on_point_cast(self, target: Vector2):
         pass
 
 

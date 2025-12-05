@@ -2,6 +2,8 @@ from time import monotonic
 
 import pygame as pg
 
+from common.primitives import Vector2
+
 
 class Input:
     def __init__(self):
@@ -121,19 +123,19 @@ class Input:
         if button not in self._drag_start_pos:
             return (0, 0)
         sx, sy = self._drag_start_pos[button]
-        return pg.Vector2(self._mouse_pos[0] - sx, self._mouse_pos[1] - sy)
+        return Vector2(self._mouse_pos[0] - sx, self._mouse_pos[1] - sy)
 
     @property
     def mouse_pos(self):
         x, y = self._mouse_pos
-        return pg.Vector2(x, y)
+        return Vector2(x, y)
 
     @property
     def mouse_delta(self):
         x, y = self._mouse_delta
-        return pg.Vector2(x, y)
+        return Vector2(x, y)
 
     @property
     def scroll_delta(self):
         x, y = self._scroll_delta
-        return pg.Vector2(x, y)
+        return Vector2(x, y)

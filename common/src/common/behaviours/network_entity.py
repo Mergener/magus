@@ -13,6 +13,7 @@ from common.network import DeliveryMode, NetPeer, Packet
 
 if TYPE_CHECKING:
     from common.behaviours.network_entity_manager import NetworkEntityManager
+from common.primitives import Vector2
 
 
 class _PacketListenerState:
@@ -21,7 +22,7 @@ class _PacketListenerState:
         self.last_received_tick = 0
 
 
-PlausibleSyncVarType = bool | int | float | str | pg.Vector2
+PlausibleSyncVarType = bool | int | float | str | Vector2
 
 TVar = TypeVar("TVar", bound=PlausibleSyncVarType)
 
@@ -48,9 +49,11 @@ class NetworkEntity(Behaviour):
 
     def on_init(self):
         self._id: int = -1
-        self._last_recv_pos = pg.Vector2(0, 0)
-        self._prev_sent_pos = pg.Vector2(0, 0)
-        self._approx_speed = pg.Vector2(0, 0)
+        self._last_recv_pos = Vector2(0, 0)
+        self._prev_sent_pos = Vector2(0, 0)
+        self._prev_sent_rot = 0
+        self._prev_sent_scale = Vector2(0, 0)
+        self._approx_speed = Vector2(0, 0)
         self._last_updated_tick = 0
         self._packet_listeners: dict[type[EntityPacket], list[_PacketListenerState]] = (
             {}
@@ -119,10 +122,10 @@ class NetworkEntity(Behaviour):
         self._started = True
 
     def _handle_rotation_update(self, packet: RotationUpdate, peer: NetPeer):
-        self.transform.rotation = packet.rotation
+        self.transform.local_rotation = packet.rotation
 
     def _handle_scale_update(self, packet: ScaleUpdate, peer: NetPeer):
-        self.transform.local_scale = pg.Vector2(packet.x, packet.y)
+        self.transform.local_scale = Vector2(packet.x, packet.y)
 
     def _handle_pos_update(self, packet: PositionUpdate, peer: NetPeer):
         assert self.game
@@ -145,7 +148,7 @@ class NetworkEntity(Behaviour):
         # ticks, we can assume it's scenario 1. For this reason, we'll
         # use this rule to decide on one vs the other.
 
-        new_pos = pg.Vector2(packet.x, packet.y)
+        new_pos = Vector2(packet.x, packet.y)
         time_diff = (
             packet.tick_id - self._last_updated_tick
         ) / self.game.simulation.tick_rate
@@ -160,7 +163,7 @@ class NetworkEntity(Behaviour):
             self._reached = False
         else:
             # Scenario 2: teleporting
-            self._approx_speed = pg.Vector2(0, 0)
+            self._approx_speed = Vector2(0, 0)
             self._reached = True
             self.transform.position = new_pos
 
@@ -187,11 +190,23 @@ class NetworkEntity(Behaviour):
         assert self.game
         if self.game.network.is_server():
             pos = self.transform.position
-            if self._prev_sent_pos != pos:
+            if pos != self._prev_sent_pos:
                 self._prev_sent_pos = pos
                 self.game.network.publish(
                     PositionUpdate(tick_id, self.id, pos.x, pos.y)
                 )
+
+            scale = self.transform.scale
+            if scale != self._prev_sent_scale:
+                self._prev_sent_scale = scale
+                self.game.network.publish(
+                    ScaleUpdate(tick_id, self.id, scale.x, scale.y)
+                )
+
+            rotation = self.transform.rotation
+            if rotation != self._prev_sent_rot:
+                self._prev_sent_rot = rotation
+                self.game.network.publish(RotationUpdate(tick_id, self.id, rotation))
 
             for sv in self._sync_vars:
                 if sv._current_value != sv._last_sent_value:
@@ -291,7 +306,7 @@ _sync_var_writers: dict[
     int: lambda x, writer: writer.write_int32(x),
     float: lambda x, writer: writer.write_float32(x),
     str: lambda x, writer: writer.write_str(x),
-    pg.Vector2: lambda x, writer: (
+    Vector2: lambda x, writer: (
         writer.write_float32(x.x),
         writer.write_float32(x.y),
     ),
@@ -303,14 +318,14 @@ _sync_var_readers: dict[type[PlausibleSyncVarType], Callable[[ByteReader], Any]]
     int: lambda reader: reader.read_int32(),
     float: lambda reader: reader.read_float32(),
     str: lambda reader: reader.read_str(),
-    pg.Vector2: lambda reader: pg.Vector2(reader.read_float32(), reader.read_float32()),
+    Vector2: lambda reader: Vector2(reader.read_float32(), reader.read_float32()),
 }
 
 
-_sync_var_type_ids = {bool: 0, int: 1, float: 2, str: 3, pg.Vector2: 4}
+_sync_var_type_ids = {bool: 0, int: 1, float: 2, str: 3, Vector2: 4}
 
 
-_sync_var_id_types = [bool, int, float, str, pg.Vector2]
+_sync_var_id_types = [bool, int, float, str, Vector2]
 
 
 class SyncVarUpdate(EntityPacket):

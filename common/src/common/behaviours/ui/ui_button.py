@@ -5,6 +5,7 @@ import pygame as pg
 from common.behaviours.ui.ui_image import UIImage
 from common.behaviours.ui.ui_label import UILabel
 from common.behaviours.ui.widget import Widget
+from common.primitives import Vector2
 
 
 class UIButton(Widget):
@@ -42,7 +43,7 @@ class UIButton(Widget):
         if canvas is None:
             return False
 
-        mouse_pos = canvas.screen_to_canvas_point(pg.Vector2(self.game.input.mouse_pos))
+        mouse_pos = canvas.screen_to_canvas_point(Vector2(self.game.input.mouse_pos))
 
         if self._ui_image.transformed_surface is not None:
             hovering = self.rect.collidepoint(mouse_pos.x, mouse_pos.y)

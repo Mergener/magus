@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, cast
 import pygame as pg
 
 from common.behaviour import Behaviour
-from common.utils import Rect
+from common.primitives import Rect
 
 if TYPE_CHECKING:
     from common.behaviours.collider import Collider

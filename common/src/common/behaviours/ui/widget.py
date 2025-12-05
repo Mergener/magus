@@ -7,11 +7,12 @@ from common.behaviour import Behaviour
 
 if TYPE_CHECKING:
     from common.behaviours.ui.canvas import Canvas
+from common.primitives import Vector2
 
 
 class Widget(Behaviour, ABC):
     def on_init(self):
-        self._anchor = pg.Vector2(0.5, 0.5)
+        self._anchor = Vector2(0.5, 0.5)
 
     @property
     @abstractmethod
@@ -23,7 +24,7 @@ class Widget(Behaviour, ABC):
         return self._anchor
 
     @anchor.setter
-    def anchor(self, value: pg.Vector2):
+    def anchor(self, value: Vector2):
         self._anchor = value
 
     @property

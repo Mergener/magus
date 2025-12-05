@@ -6,6 +6,7 @@ import pygame as pg
 from common.behaviour import Behaviour
 from common.behaviours.network_behaviour import NetworkBehaviour
 from common.network import NetPeer
+from common.primitives import Vector2
 from common.utils import notnull
 from game.lobby import LobbyInfo
 
@@ -42,7 +43,7 @@ class GameManager(NetworkBehaviour):
                 Mage
             )
             mage.owner_index.value = p.index
-            mage.transform.position = pg.Vector2(
+            mage.transform.position = Vector2(
                 random.randint(-200, 200), random.randint(-200, 200)
             )
             p.mage = mage

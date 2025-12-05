@@ -5,6 +5,7 @@ import pygame as pg
 from common.assets import load_font_asset
 from common.behaviours.ui.ui_surface import UISurface
 from common.behaviours.ui.widget import Widget
+from common.primitives import Vector2
 
 
 class HorizontalAlign(Enum):
@@ -58,9 +59,7 @@ class UILabel(Widget):
             )
             surface = font.render(self._text, self._anti_alias, self._color)
             self._texture_base.set_surface(surface)
-            self._texture_base.surface_scale = pg.Vector2(
-                1 / FONT_FACTOR, 1 / FONT_FACTOR
-            )
+            self._texture_base.surface_scale = Vector2(1 / FONT_FACTOR, 1 / FONT_FACTOR)
             self._update_alignment()
         except Exception as e:
             print(f"Failed to render text: {e}")
@@ -88,7 +87,7 @@ class UILabel(Widget):
         else:
             offset_y = -text_height
 
-        self._texture_base.transform.position = pg.Vector2(offset_x, offset_y)
+        self._texture_base.transform.position = Vector2(offset_x, offset_y)
 
     @property
     def text(self):

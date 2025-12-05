@@ -8,6 +8,7 @@ from game.lobby import (
     StartGameRequest,
 )
 from game.mage import MoveToOrder
+from game.spells.fireball_projectile import FireballBurst
 
 register_packets(
     [
@@ -18,5 +19,6 @@ register_packets(
         PlayerLeft,
         DoneLoadingGameScene,
         MoveToOrder,
+        FireballBurst,
     ]
 )

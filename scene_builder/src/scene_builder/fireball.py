@@ -5,6 +5,7 @@ from common.assets import load_image_asset, load_node_asset
 from common.behaviours.animator import Animator
 from common.behaviours.sprite_renderer import SpriteRenderer
 from common.node import Node
+from common.primitives import Vector2
 from game.spells.fireball_projectile import FireballProjectile
 from scene_builder.base import save_animation, save_node
 
@@ -15,7 +16,7 @@ def build_fireball_projectile():
     projectile.add_behaviour(FireballProjectile)
 
     spritesheet = load_image_asset("img/spells/fireball.png")
-    sprites = slice_image(spritesheet, pg.Vector2(4, 10), SliceMode.RECTS_PER_AXIS)
+    sprites = slice_image(spritesheet, Vector2(4, 10), SliceMode.RECTS_PER_AXIS)
     frames = [AnimationFrame(s) for s in sprites]
 
     # Animations
@@ -33,6 +34,6 @@ def build_fireball_projectile():
         save_animation(anim)
 
     sprite_renderer = projectile.get_or_add_behaviour(SpriteRenderer)
-    sprite_renderer.image_scale = pg.Vector2(0.3, 0.3)
+    sprite_renderer.image_scale = Vector2(0.3, 0.3)
 
     save_node(projectile, "templates/spells/fireball_projectile.json")
