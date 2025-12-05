@@ -16,7 +16,7 @@ class Transform(Behaviour):
         super().__init__(node)
         self._local_position = pg.Vector2(0, 0)
         self._local_scale = pg.Vector2(1, 1)
-        self._rotation = 0.0
+        self._local_rotation = 0.0
 
     @property
     def local_scale(self):
@@ -57,12 +57,24 @@ class Transform(Behaviour):
         self.local_position += delta
 
     @property
-    def rotation(self) -> float:
-        return self._rotation
+    def local_rotation(self) -> float:
+        return self._local_rotation
+
+    @local_rotation.setter
+    def local_rotation(self, rot: float):
+        self._local_rotation = rot
+
+    @property
+    def rotation(self):
+        rotation = self._local_rotation
+        if self.parent is not None:
+            rotation += self.parent.transform.rotation
+        return rotation
 
     @rotation.setter
-    def rotation(self, rot: float):
-        self._rotation = rot
+    def rotation(self, value: float):
+        delta = value - self.rotation
+        self._local_rotation += delta
 
     def on_serialize(self, out_dict: dict):
         out_dict["local_position"] = {
@@ -70,7 +82,7 @@ class Transform(Behaviour):
             "y": self._local_position.y,
         }
         out_dict["local_scale"] = {"x": self._local_scale.x, "y": self._local_scale.y}
-        out_dict["rotation"] = self._rotation
+        out_dict["rotation"] = self._local_rotation
 
     def on_deserialize(self, in_dict: dict):
         self._local_position = pg.Vector2(0, 0)
@@ -90,4 +102,4 @@ class Transform(Behaviour):
             self._local_scale.x = scale_dict["x"]
             self._local_scale.y = scale_dict["y"]
 
-        self._rotation = in_dict.get("rotation", 0)
+        self._local_rotation = in_dict.get("rotation", 0)

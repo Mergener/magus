@@ -38,7 +38,7 @@ class Collider(Behaviour):
         self._last_world_bounding_rect = None
         self._last_position = self.transform.position.copy()
         self._last_scale = self.transform.scale.copy()
-        self._last_rotation = self.transform.rotation
+        self._last_rotation = self.transform.local_rotation
         self._world = None
 
     def on_pre_start(self):

@@ -50,6 +50,8 @@ class NetworkEntity(Behaviour):
         self._id: int = -1
         self._last_recv_pos = pg.Vector2(0, 0)
         self._prev_sent_pos = pg.Vector2(0, 0)
+        self._prev_sent_rot = 0
+        self._prev_sent_scale = pg.Vector2(0, 0)
         self._approx_speed = pg.Vector2(0, 0)
         self._last_updated_tick = 0
         self._packet_listeners: dict[type[EntityPacket], list[_PacketListenerState]] = (
@@ -119,7 +121,7 @@ class NetworkEntity(Behaviour):
         self._started = True
 
     def _handle_rotation_update(self, packet: RotationUpdate, peer: NetPeer):
-        self.transform.rotation = packet.rotation
+        self.transform.local_rotation = packet.rotation
 
     def _handle_scale_update(self, packet: ScaleUpdate, peer: NetPeer):
         self.transform.local_scale = pg.Vector2(packet.x, packet.y)
@@ -187,11 +189,23 @@ class NetworkEntity(Behaviour):
         assert self.game
         if self.game.network.is_server():
             pos = self.transform.position
-            if self._prev_sent_pos != pos:
+            if pos != self._prev_sent_pos:
                 self._prev_sent_pos = pos
                 self.game.network.publish(
                     PositionUpdate(tick_id, self.id, pos.x, pos.y)
                 )
+
+            scale = self.transform.scale
+            if scale != self._prev_sent_scale:
+                self._prev_sent_scale = scale
+                self.game.network.publish(
+                    ScaleUpdate(tick_id, self.id, scale.x, scale.y)
+                )
+
+            rotation = self.transform.rotation
+            if rotation != self._prev_sent_rot:
+                self._prev_sent_rot = rotation
+                self.game.network.publish(RotationUpdate(tick_id, self.id, rotation))
 
             for sv in self._sync_vars:
                 if sv._current_value != sv._last_sent_value:

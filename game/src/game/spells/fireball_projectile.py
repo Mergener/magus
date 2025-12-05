@@ -76,8 +76,11 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
 
     async def on_server_start(self):
         assert self.game
-        if not self._burst:
-            await self._do_burst()
+        direction = self.destination - self.transform.position
+
+        pg_dir = pg.Vector2(direction.x, -direction.y)
+
+        self.transform.rotation = pg.Vector2(1, 0).angle_to(pg_dir)
 
     def on_server_tick(self, tick_id: int):
         assert self.game

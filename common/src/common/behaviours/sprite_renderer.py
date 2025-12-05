@@ -6,51 +6,48 @@ from common.utils import deserialize_vec2, memberwise_multiply, serialize_vec2
 
 
 class SpriteRenderer(Behaviour):
-    _texture: pg.Surface | None
-    _dimensions: pg.Vector2
-    _active_texture: pg.Surface | None
-    _scaled_dimensions: pg.Vector2
-    _cached_scale: pg.Vector2
-    _cached_rot: float
-    _tint: pg.Color
-    _texture_asset: str | None
-    _image_scale: pg.Vector2
-
     def on_init(self):
-        self._texture = None
-        self._texture_asset = None
-        self._active_texture = None
+        self._texture: pg.Surface | None = None
+        self._texture_asset: str | None = None
+        self._active_texture: pg.Surface | None = None
+
         self._dimensions = pg.Vector2(0, 0)
-        self._cached_transform_scale = self.transform.scale
-        self._cached_rot = self.transform.rotation
         self._scaled_dimensions = pg.Vector2(0, 0)
+
+        self._cached_scale = self.transform.scale
+        self._cached_rot = self.transform.rotation
+
         self._tint = pg.Color(255, 255, 255, 255)
         self._image_scale = pg.Vector2(1, 1)
 
     def _refresh_active_texture(self):
-        if self._texture is None:
+        tex = self._texture
+        if tex is None:
             self._active_texture = None
             return
 
-        scale = self.transform.scale
-        self._cached_transform_scale = scale
-        scale = memberwise_multiply(scale, self.image_scale)
-        self._scaled_dimensions = memberwise_multiply(self._dimensions, scale)
-        scaled_texture = pg.transform.scale(self._texture, self._scaled_dimensions)
+        final_scale = memberwise_multiply(self.transform.scale, self.image_scale)
 
-        rotated_texture = pg.transform.rotate(scaled_texture, self.transform.rotation)
+        self._cached_scale = self.transform.scale
+        self._cached_rot = self.transform.rotation  # world rotation cached
 
-        tinted_texture = rotated_texture.copy()
-        tinted_texture.fill(self.tint, special_flags=pg.BLEND_RGBA_MULT)
+        self._scaled_dimensions = memberwise_multiply(self._dimensions, final_scale)
+        scaled_tex = pg.transform.scale(tex, self._scaled_dimensions)
 
-        self._active_texture = tinted_texture
+        rot = self.transform.rotation
+        rotated_tex = pg.transform.rotate(scaled_tex, rot)
+
+        tinted = rotated_tex.copy()
+        tinted.fill(self.tint, special_flags=pg.BLEND_RGBA_MULT)
+
+        self._active_texture = tinted
 
     @property
     def image_scale(self):
         return self._image_scale
 
     @image_scale.setter
-    def image_scale(self, value: pg.Vector2):
+    def image_scale(self, value):
         self._image_scale = value
         self._refresh_active_texture()
 
@@ -59,7 +56,7 @@ class SpriteRenderer(Behaviour):
         return self._tint
 
     @tint.setter
-    def tint(self, value: pg.Color):
+    def tint(self, value):
         self._tint = value
         self._refresh_active_texture()
 
@@ -68,11 +65,11 @@ class SpriteRenderer(Behaviour):
         return self._texture
 
     @texture.setter
-    def texture(self, texture: pg.Surface | None):
-        self._texture = texture
+    def texture(self, tex):
+        self._texture = tex
 
-        if texture is not None:
-            self._dimensions = pg.Vector2(texture.get_width(), texture.get_height())
+        if tex:
+            self._dimensions = pg.Vector2(tex.get_width(), tex.get_height())
         else:
             self._dimensions = pg.Vector2(0, 0)
 
@@ -83,7 +80,7 @@ class SpriteRenderer(Behaviour):
             return
 
         if (
-            self._cached_transform_scale != self.transform.scale
+            self._cached_scale != self.transform.scale
             or self._cached_rot != self.transform.rotation
         ):
             self._refresh_active_texture()
@@ -92,26 +89,22 @@ class SpriteRenderer(Behaviour):
         if camera is None or self.game is None or self.game.display is None:
             return
 
-        offset = memberwise_multiply(self._dimensions, self.transform.scale)
-        offset = memberwise_multiply(offset, self.image_scale)
-        if self.parent:
-            offset.rotate(self.parent.transform.rotation)
+        offset = self._active_texture.get_size()
+        offset = pg.Vector2(offset[0], offset[1])
 
         pos = camera.world_to_screen_space(self.transform.position - offset / 2)
 
-        self.game.display.blit(
-            self._active_texture, pg.Rect(pos, self._scaled_dimensions)
-        )
+        self.game.display.blit(self._active_texture, pos)
 
-    def on_serialize(self, out_dict: dict):
+    def on_serialize(self, out_dict):
         out_dict["texture"] = self._texture_asset
         out_dict["image_scale"] = serialize_vec2(self.image_scale)
 
-    def on_deserialize(self, in_dict: dict):
+    def on_deserialize(self, in_dict):
         self._texture_asset = in_dict["texture"]
         self.image_scale = deserialize_vec2(
             in_dict.get("image_scale"), pg.Vector2(1, 1)
         )
-        if type(self._texture_asset) != str:
+
+        if not isinstance(self._texture_asset, str):
             self._texture_asset = None
-            return
