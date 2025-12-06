@@ -19,7 +19,7 @@ class UISurface(Widget):
         self._active_surface: pg.Surface | None = None
         self._tint = pg.Color(255, 255, 255, 255)
 
-        self._cached_scale: Vector2 = self.transform.scale.copy()
+        self._cached_transform_scale: Vector2 = self.transform.scale.copy()
         self._cached_rotation: float = self.transform.rotation
         self._cached_ref_resolution: Vector2 | None = None
         self._cached_canvas: Canvas | None = self.canvas
@@ -82,7 +82,7 @@ class UISurface(Widget):
         self._active_surface = new_surface
 
         self._cached_rotation = rotation
-        self._cached_scale = transform_scale
+        self._cached_transform_scale = transform_scale
         self._cached_ref_resolution = canvas.reference_resolution
         self._cached_canvas = canvas
 
@@ -100,7 +100,7 @@ class UISurface(Widget):
         ):
             return True
 
-        if self.transform.scale != self._cached_scale:
+        if self.transform.scale != self._cached_transform_scale:
             return True
 
         if self.transform.rotation != self._cached_rotation:
@@ -139,22 +139,10 @@ class UISurface(Widget):
     @property
     def rect(self):
         canvas = self.canvas
-        if (
-            not self.game
-            or not canvas
-            or not self._active_surface
-            or not self.game.display
-        ):
+        if not canvas or not self._active_surface:
             return pg.Rect(0, 0, 0, 0)
 
-        half_surface_size = Vector2(
-            self._active_surface.get_width() / 2, self._active_surface.get_height() / 2
-        )
-        pos = self.transform.position
-
-        w, h = canvas.reference_resolution
-
-        return pg.Rect(
-            pos + self.anchor.elementwise() * Vector2(w, h) - half_surface_size,
-            self._active_surface.get_size(),
-        )
+        size = Vector2(self._active_surface.get_size())
+        size *= canvas.screen_to_canvas_ratio
+        anchor_offset = canvas.reference_resolution.elementwise() * self.anchor
+        return pg.Rect(self.transform.position + anchor_offset - size / 2, size)
