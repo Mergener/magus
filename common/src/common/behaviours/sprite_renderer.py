@@ -16,6 +16,7 @@ class SpriteRenderer(Behaviour):
 
         self._cached_scale = self.transform.scale
         self._cached_rot = self.transform.rotation
+        self._cached_screen_size = (0, 0)
 
         self._tint = pg.Color(255, 255, 255, 255)
         self._image_scale = Vector2(1, 1)
@@ -27,9 +28,15 @@ class SpriteRenderer(Behaviour):
             return
 
         final_scale = self.transform.scale.elementwise() * self.image_scale
+        camera = Camera.main
+        if camera is not None:
+            final_scale *= camera.world_to_screen_scale()
 
         self._cached_scale = self.transform.scale
         self._cached_rot = self.transform.rotation  # world rotation cached
+
+        if self.game and self.game.display:
+            self._cached_screen_size = self.game.display.get_size()
 
         self._scaled_dimensions = self._dimensions.elementwise() * final_scale
         scaled_tex = pg.transform.scale(tex, self._scaled_dimensions)
@@ -79,19 +86,20 @@ class SpriteRenderer(Behaviour):
         if self._active_texture is None:
             return
 
-        if (
-            self._cached_scale != self.transform.scale
-            or self._cached_rot != self.transform.rotation
-        ):
-            self._refresh_active_texture()
-
         camera = Camera.main
         if camera is None or self.game is None or self.game.display is None:
             return
 
+        if (
+            self._cached_scale != self.transform.scale
+            or self._cached_rot != self.transform.rotation
+            or self._cached_screen_size != self.game.display.get_size()
+        ):
+            self._refresh_active_texture()
+
         offset = Vector2(self._active_texture.get_size())
 
-        pos = camera.world_to_screen_space(self.transform.position - offset / 2)
+        pos = camera.world_to_screen_space(self.transform.position) - offset / 2
 
         self.game.display.blit(self._active_texture, pos)
 
