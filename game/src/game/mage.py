@@ -6,6 +6,7 @@ from common.behaviours.animator import Animator
 from common.behaviours.camera import Camera
 from common.behaviours.network_behaviour import (
     NetworkBehaviour,
+    client_method,
     entity_packet_handler,
     server_method,
 )
@@ -122,22 +123,66 @@ class Mage(NetworkBehaviour):
     def spells(self):
         return (s for s in self._spells)
 
-    def on_common_pre_start(self):
+    @property
+    def owner(self) -> Player:
+        return notnull(self._game_manager.get_player_by_index(self.owner_index.value))
+
+    @server_method
+    def add_spell(self, spell: SpellInfo):
         assert self.game
-        self._game_manager = notnull(
-            self.game.scene.get_behaviour_in_children(GameManager, recursive=True)
+
+        entity_mgr = self.entity_manager
+        spell_entity = entity_mgr.spawn_entity(
+            parent=self.net_entity,
+            include_packets=lambda spell_id: [
+                AddSpell(self.net_entity.id, spell_id, spell.file_name)
+            ],
         )
+        self._do_add_spell(spell_entity, spell)
 
-    def on_client_start(self):
-        self._health_bar = self.node.get_behaviour_in_children(
-            StatusBar, include_self=False
-        )
+    @server_method
+    def cast_spell_at_point(self, spell: SpellState | SpellInfo, where: Vector2):
+        if isinstance(spell, SpellInfo):
+            spell_state = self.get_spell_state(spell)
+            if spell_state is None:
+                return
+        else:
+            spell_state = spell
 
-    def on_server_start(self):
-        spell = get_spell("fireball")
-        self.add_spell(spell)
+        if not spell_state.can_cast_on_point_now(where):
+            return
 
-    def on_client_update(self, dt: float):
+        spell_state.on_point_cast(where)
+
+    def get_spell_state(self, spell: SpellInfo):
+        for s in self.spells:
+            if s.spell == spell:
+                return s
+        return None
+
+    #
+    # Private
+    #
+
+    def _get_spell_state_by_entity_id(self, entity_id: int):
+        for s in self.spells:
+            if s.net_entity.id == entity_id:
+                return s
+        return None
+
+    def _do_add_spell(self, spell_entity: NetworkEntity, spell_info: SpellInfo):
+        spell_state = spell_entity.node.add_behaviour(spell_info.state_behaviour)
+        spell_state._spell = spell_info
+        spell_state._mage = self
+        self._spells.append(spell_state)
+
+    def _has_authority(self, peer: NetPeer):
+        order_player = self._game_manager.get_player_by_peer(peer)
+        owner = self.owner
+        return order_player.index == owner.index
+
+    @client_method
+    def _handle_user_input(self):
         assert self.game
         camera = Camera.main
         if camera is None:
@@ -173,20 +218,8 @@ class Mage(NetworkBehaviour):
                     )
                 )
 
-    def on_client_tick(self, tick_id: int):
-        if not self._health_bar:
-            return
-
-        health_ratio = self.health / max(1, self.max_health)
-        if health_ratio != self._health_bar.value:
-            self._health_bar.value = health_ratio
-
-    def on_server_tick(self, tick_id: int):
-        assert self.game
-
-        tick_interval = self.game.simulation.tick_interval
-        self.health -= 5 * tick_interval
-
+    @server_method
+    def _tick_motion(self, tick_interval: float):
         if self._move_destination is None:
             return
 
@@ -201,79 +234,9 @@ class Mage(NetworkBehaviour):
 
         self._physics_object.move_and_collide(motion)
 
-    @property
-    def owner(self) -> Player:
-        return notnull(self._game_manager.get_player_by_index(self.owner_index.value))
-
-    @entity_packet_handler(MoveToOrder)
-    def _handle_move_to_order(self, order: MoveToOrder, peer: NetPeer):
-        if not self._has_authority(peer):
-            return
-
-        self._move_destination = order.where
-
-    def on_serialize(self, out_dict: dict):
-        out_dict["speed"] = self.speed.base.value
-
-    def on_deserialize(self, in_dict: dict):
-        self.speed.base.value = in_dict.get("speed", 500)
-
-    def get_spell_state(self, spell: SpellInfo):
-        for s in self.spells:
-            if s.spell == spell:
-                return s
-        return None
-
-    def _get_spell_state_by_entity_id(self, entity_id: int):
-        for s in self.spells:
-            if s.net_entity.id == entity_id:
-                return s
-        return None
-
-    @server_method
-    def add_spell(self, spell: SpellInfo):
-        assert self.game
-
-        entity_mgr = self.entity_manager
-        spell_entity = entity_mgr.spawn_entity(
-            parent=self.net_entity,
-            include_packets=lambda spell_id: [
-                AddSpell(self.net_entity.id, spell_id, spell.file_name)
-            ],
-        )
-        self._do_add_spell(spell_entity, spell)
-
-    @server_method
-    def cast_spell_at_point(self, spell: SpellState | SpellInfo, where: Vector2):
-        if isinstance(spell, SpellInfo):
-            spell_state = self.get_spell_state(spell)
-            if spell_state is None:
-                return
-        else:
-            spell_state = spell
-
-        if not spell_state.can_cast_on_point_now(where):
-            return
-
-        spell_state.on_point_cast(where)
-
-    @entity_packet_handler(AddSpell)
-    def _handle_add_spell(self, packet: AddSpell, peer: NetPeer):
-        spell_entity = self.entity_manager.get_entity_by_id(packet.spell_entity_id)
-        if spell_entity is None:
-            return
-
-        spell = get_spell(packet.spell_info_name)
-        if spell is None:
-            return
-
-        self._do_add_spell(spell_entity, spell)
-
-    def _do_add_spell(self, spell_entity: NetworkEntity, spell_info: SpellInfo):
-        spell_state = spell_entity.node.add_behaviour(spell_info.state_behaviour)
-        spell_state._spell = spell_info
-        spell_state._mage = self
-        self._spells.append(spell_state)
+    #
+    # Packet handlers
+    #
 
     @entity_packet_handler(CastPointTargetSpellOrder)
     def _handle_cast_point_target_spell_order(
@@ -288,7 +251,67 @@ class Mage(NetworkBehaviour):
 
         self.cast_spell_at_point(spell_state, order.where)
 
-    def _has_authority(self, peer: NetPeer):
-        order_player = self._game_manager.get_player_by_peer(peer)
-        owner = self.owner
-        return order_player.index == owner.index
+    @entity_packet_handler(AddSpell)
+    def _handle_add_spell(self, packet: AddSpell, peer: NetPeer):
+        spell_entity = self.entity_manager.get_entity_by_id(packet.spell_entity_id)
+        if spell_entity is None:
+            return
+
+        spell = get_spell(packet.spell_info_name)
+        if spell is None:
+            return
+
+        self._do_add_spell(spell_entity, spell)
+
+    @entity_packet_handler(MoveToOrder)
+    def _handle_move_to_order(self, order: MoveToOrder, peer: NetPeer):
+        if not self._has_authority(peer):
+            return
+
+        self._move_destination = order.where
+
+    #
+    # Lifecycle
+    #
+
+    def on_common_pre_start(self):
+        assert self.game
+        self._game_manager = notnull(
+            self.game.scene.get_behaviour_in_children(GameManager, recursive=True)
+        )
+
+    def on_client_start(self):
+        self._health_bar = self.node.get_behaviour_in_children(
+            StatusBar, include_self=False
+        )
+
+    def on_server_start(self):
+        spell = get_spell("fireball")
+        self.add_spell(spell)
+
+    def on_client_tick(self, tick_id: int):
+        if not self._health_bar:
+            return
+
+        health_ratio = self.health / max(1, self.max_health)
+        if health_ratio != self._health_bar.value:
+            self._health_bar.value = health_ratio
+
+    def on_server_tick(self, tick_id: int):
+        assert self.game
+
+        tick_interval = self.game.simulation.tick_interval
+        self.health -= 5 * tick_interval
+
+        self._tick_motion(tick_interval)
+
+    def on_client_update(self, dt: float):
+        self._handle_user_input()
+
+    def on_serialize(self, out_dict: dict):
+        out_dict["speed"] = self.speed.base.value
+        out_dict["max_health"] = self.max_health
+
+    def on_deserialize(self, in_dict: dict):
+        self.speed.base.value = in_dict.get("speed", 500)
+        self.max_health = in_dict.get("max_health", 100)
