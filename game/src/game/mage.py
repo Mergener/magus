@@ -259,7 +259,6 @@ class Mage(NetworkBehaviour):
 
     @entity_packet_handler(AddSpell)
     def _handle_add_spell(self, packet: AddSpell, peer: NetPeer):
-        print("_handle_add_spell")
         spell_entity = self.entity_manager.get_entity_by_id(packet.spell_entity_id)
         if spell_entity is None:
             return
@@ -271,8 +270,6 @@ class Mage(NetworkBehaviour):
         self._do_add_spell(spell_entity, spell)
 
     def _do_add_spell(self, spell_entity: NetworkEntity, spell_info: SpellInfo):
-        print("Added spell!", spell_info.file_name)
-        print(spell_info.__dict__)
         spell_state = spell_entity.node.add_behaviour(spell_info.state_behaviour)
         spell_state._spell = spell_info
         spell_state._mage = self

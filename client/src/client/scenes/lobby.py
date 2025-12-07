@@ -44,7 +44,7 @@ class Lobby(Behaviour):
         self.game.network.unlisten(GameStarting, self._game_starting_handler)
 
     def _on_player_joined(self, packet: PlayerJoined):
-        print("A new player joined!")
+        pass
 
     async def _on_game_starting(self, packet: GameStarting):
         assert self.game
