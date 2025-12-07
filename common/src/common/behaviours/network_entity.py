@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import random
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar, cast
 
 import pygame as pg
@@ -13,6 +14,7 @@ from common.network import DeliveryMode, NetPeer, Packet
 
 if TYPE_CHECKING:
     from common.behaviours.network_entity_manager import NetworkEntityManager
+
 from common.primitives import Vector2
 
 
@@ -34,6 +36,7 @@ class SyncVar(Generic[TVar]):
     _last_sent_value: TVar | None
     _last_recv_tick: int
     _delivery_mode: DeliveryMode
+    _next_auto_tick: int = field(default=0)
 
     @property
     def value(self):
@@ -209,17 +212,25 @@ class NetworkEntity(Behaviour):
                 self.game.network.publish(RotationUpdate(tick_id, self.id, rotation))
 
             for sv in self._sync_vars:
-                if sv._current_value != sv._last_sent_value:
-                    sv._last_sent_value = sv._current_value
-                    self.game.network.publish(
-                        SyncVarUpdate(
-                            self.id,
-                            tick_id,
-                            sv._id,
-                            sv._current_value,
-                            sv._delivery_mode,
-                        )
+                current_tick = self.game.simulation.tick_id
+                delivery_mode = sv._delivery_mode
+                if sv._current_value == sv._last_sent_value:
+                    # If the value is the same, we might still want to send periodic updates.
+                    if sv._next_auto_tick > current_tick:
+                        continue
+
+                    delivery_mode = DeliveryMode.UNRELIABLE
+
+                sv._last_sent_value = sv._current_value
+                self.game.network.publish(
+                    SyncVarUpdate(
+                        self.id, tick_id, sv._id, sv._current_value, delivery_mode
                     )
+                )
+
+                # We add a random value so that we don't get a single tick with a huge batch
+                # of auto sync var updates.
+                sv._next_auto_tick = current_tick + random.randint(256, 512)
 
     def on_update(self, dt: float):
         assert self.game

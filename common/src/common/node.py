@@ -93,7 +93,7 @@ class Node(Serializable):
         return None
 
     def get_behaviour_in_children[T](
-        self, t: type[T], recursive: bool = True, include_self: bool = True
+        self, t: type[T], recursive: bool = False, include_self: bool = True
     ) -> T | None:
         if include_self:
             b = self.get_behaviour(t)
@@ -116,7 +116,7 @@ class Node(Serializable):
     def get_behaviours_in_children[T](
         self,
         t: type[T],
-        recursive: bool = True,
+        recursive: bool = False,
         include_self: bool = True,
         behaviour_list: list[T] | None = None,
     ) -> list[T]:

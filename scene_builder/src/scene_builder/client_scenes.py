@@ -12,14 +12,18 @@ from common.behaviours.collider import (
     Collider,
     RectCollisionShape,
 )
+from common.behaviours.network_entity import NetworkEntity
 from common.behaviours.physics_object import PhysicsObject
+from common.behaviours.sprite_renderer import SpriteRenderer
 from common.behaviours.ui.canvas import Canvas
 from common.behaviours.ui.ui_button import UIButton
 from common.behaviours.ui.ui_label import UILabel
 from common.node import Node
 from common.primitives import Vector2
+from common.utils import notnull
 from game.mage import Mage
-from scene_builder.base import save_node
+from game.ui.status_bar import StatusBar
+from scene_builder.base import save_animation, save_node
 
 
 def build_client_scenes():
@@ -85,22 +89,43 @@ def build_lobby_menu():
 def build_mage_template():
     mage_node = Node()
 
-    # Make mage animation
-    slices = slice_image(
-        load_image_asset("img/mage.png"), Vector2(32, 32), SliceMode.SIZE_PER_RECT
-    )
-    frames = [AnimationFrame(s) for s in slices]
-    animation = Animation(frames, path="animations/mage-animation.json")
-    with open(resource_path(animation.path), "w") as f:
-        json.dump(animation.serialize(), f)
+    # Make mage animations
+    animation_names = ["idle", "move", "die", "cast"]
+    animation_dict = {}
+    for anim in animation_names:
+        slices = slice_image(
+            load_image_asset(f"img/mage/mage-{anim}.png"),
+            Vector2(64, 64),
+            SliceMode.SIZE_PER_RECT,
+        )
+        frames = [AnimationFrame(s) for s in slices]
+        animation = Animation(
+            frames, path=f"animations/mage-animation-{anim}.json", fps=20
+        )
+        animation_dict[anim] = animation
+
+        if anim == "idle":
+            animation.frames = frames[0:2]
+            animation.fps = 1
+        elif anim == "die":
+            animation.frames[-1].speed = 0.08
+
+        save_animation(animation)
 
     mage = mage_node.add_behaviour(Mage)
-    mage.transform.local_scale = Vector2(1.7, 1.7)
-    animator = mage_node.get_or_add_behaviour(Animator)
-    animator.animations = {"idle": animation}
-    collider = mage_node.add_behaviour(Collider)
-    collider.base_shape = RectCollisionShape(Vector2(slices[0].rect.size) / 2)
-    # collider.base_shape = CircleCollisionShape(slices[0].rect.size[0])
-    mage_node.add_behaviour(PhysicsObject)
+    mage.transform.local_scale = Vector2(1.1, 1.1)
+    animator = mage_node.add_child().get_or_add_behaviour(Animator)
+    animator.node.add_behaviour(NetworkEntity)
+    animator.animations = animation_dict
+
+    collider = mage_node.get_or_add_behaviour(Collider)
+    collider.base_shape = RectCollisionShape(Vector2(32, 32))
+    mage_node.get_or_add_behaviour(PhysicsObject)
+
+    health_bar_node = mage_node.add_child()
+    health_bar_node.transform.local_position += Vector2(0, 70)
+    health_bar = health_bar_node.add_behaviour(StatusBar)
+    health_bar.render_layer = 100
+    health_bar.image_scale = Vector2(4, 1)
 
     save_node(mage_node, "templates/mage.json")

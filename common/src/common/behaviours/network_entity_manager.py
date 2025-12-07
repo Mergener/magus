@@ -122,9 +122,9 @@ class NetworkEntityManager(Behaviour):
         if entity is not None:
             entity._id = entity_id
             self._entities[entity_id] = entity
-            entity_id += 1
 
         for c in node.children:
+            entity_id += 1
             entity_id = self._fill_node_ids(entity_id, c)
         return entity_id
 

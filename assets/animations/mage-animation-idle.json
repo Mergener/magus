@@ -1,0 +1,1 @@
+{"frames": [{"image": {"path": "img/mage/mage-idle.png", "rect": {"x": 0, "y": 0, "w": 64, "h": 64}}, "speed": 1.0}, {"image": {"path": "img/mage/mage-idle.png", "rect": {"x": 64, "y": 0, "w": 64, "h": 64}}, "speed": 1.0}], "fps": 1}

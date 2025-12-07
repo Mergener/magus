@@ -31,7 +31,6 @@ class MainMenu(Behaviour):
 
         self.game.network.publish(JoinGameRequest())
         response = await self.game.network.expect(JoinGameResponse)
-        print("Got a response!")
 
         if response is None:
             print(
@@ -44,7 +43,6 @@ class MainMenu(Behaviour):
             print("Join lobby request refused.")
             return
 
-        print("Got join lobby response", response)
         await self.game.load_scene_async(load_node_asset("scenes/client/lobby.json"))
 
     def _on_join_game(self, msg: JoinGameResponse):

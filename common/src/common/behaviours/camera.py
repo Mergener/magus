@@ -29,7 +29,7 @@ class Camera(Behaviour):
         screen_y = (
             point.y - self.transform.position.y
         ) * self.world_to_screen_scale() + sh / 2
-        return Vector2(screen_x, screen_y)
+        return Vector2(screen_x, sh - screen_y)
 
     def screen_to_world_space(self, point: Vector2):
         if self.game is None or self.game.display is None:
@@ -40,7 +40,7 @@ class Camera(Behaviour):
             point.x - sw / 2
         ) * self.screen_to_world_scale() + self.transform.position.x
         world_y = (
-            point.y - sh / 2
+            (sh - point.y) - sh / 2
         ) * self.screen_to_world_scale() + self.transform.position.y
         return Vector2(world_x, world_y)
 

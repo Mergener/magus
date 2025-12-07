@@ -41,7 +41,7 @@ class Animator(Behaviour):
             if self._frame_idx >= len(self._current_animation.frames):
                 self._frame_idx = 0
                 if len(self._queue) > 0:
-                    self.play(self._queue.pop())
+                    self.play(self._queue.pop(), clear_queue=False)
                     return
             current_frame = self._current_animation.frames[self._frame_idx]
             self._sprite_renderer.texture = current_frame.image.pygame_surface
@@ -58,12 +58,18 @@ class Animator(Behaviour):
             if a is not None and a != "":
                 self.animations[k] = load_animation_asset(a)
 
-    def play(self, animation_name: str, force_restart: bool = False):
+    def play(
+        self, animation_name: str, force_restart: bool = False, clear_queue: bool = True
+    ):
         anim = self.animations.get(animation_name)
+
         if anim is None and animation_name != "null":
             print(f"Warn: Calling play() in unregistered animation {animation_name}")
         elif animation_name == "null" and self._sprite_renderer is not None:
             self._sprite_renderer.texture = None
+
+        if clear_queue:
+            self._queue.clear()
 
         if not force_restart and anim == self._current_animation:
             return
