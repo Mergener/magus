@@ -90,7 +90,7 @@ class Mage(NetworkBehaviour):
     _health_bar: StatusBar | None
 
     def on_init(self):
-        self._animator = self.node.get_or_add_behaviour(Animator)
+        self._animator = self.node.get_behaviour_in_children(Animator)
         self._physics_object = self.node.get_or_add_behaviour(PhysicsObject)
         self._move_destination = None
         self._spells: list[SpellState] = []
@@ -102,6 +102,7 @@ class Mage(NetworkBehaviour):
         self._health = self.use_sync_var(float, self.max_health)
         self._last_pressed_move_order_target = Vector2(0, 0)
         self._last_sent_move_order_tick = 0
+        self._alive = self.use_sync_var(bool, True)
 
     @property
     def health(self):
@@ -181,6 +182,15 @@ class Mage(NetworkBehaviour):
         owner = self.owner
         return order_player.index == owner.index
 
+    def _do_death(self):
+        if not self._alive.value:
+            return
+
+        self._alive.value = False
+        if self._animator:
+            self._animator.play("die")
+            self._animator.enqueue("null")
+
     @client_method
     def _handle_user_input(self):
         assert self.game
@@ -223,11 +233,17 @@ class Mage(NetworkBehaviour):
         if self._move_destination is None:
             return
 
-        delta = self._move_destination - self.transform.position
+        curr_pos = self.transform.position
+
+        delta = self._move_destination - curr_pos
         if delta.x == 0 and delta.y == 0:
             return
 
-        motion = delta.normalize() * self.speed.current * tick_interval
+        delta_normalized = delta.normalize()
+        if self._animator:
+            self._animator.transform.rotation = Vector2(0, 1).angle_to(delta_normalized)
+
+        motion = delta_normalized * self.speed.current * tick_interval
         if motion.length_squared() > delta.length_squared():
             motion = delta
             self._move_destination = None
@@ -286,6 +302,11 @@ class Mage(NetworkBehaviour):
         )
 
     def on_server_start(self):
+        assert self.game
+        assert self._animator
+        if not self.game.network.is_client():
+            self._animator.receive_updates = False
+
         spell = get_spell("fireball")
         self.add_spell(spell)
 
@@ -297,11 +318,14 @@ class Mage(NetworkBehaviour):
         if health_ratio != self._health_bar.value:
             self._health_bar.value = health_ratio
 
+        if health_ratio == 0:
+            self._do_death()
+
     def on_server_tick(self, tick_id: int):
         assert self.game
 
         tick_interval = self.game.simulation.tick_interval
-        self.health -= 5 * tick_interval
+        self.health -= 1 * tick_interval
 
         self._tick_motion(tick_interval)
 
