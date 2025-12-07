@@ -54,6 +54,9 @@ class NetworkEntity(Behaviour):
         self._id: int = -1
         self._last_recv_pos = Vector2(0, 0)
         self._prev_sent_pos = Vector2(0, 0)
+        self._next_rotation_tick = 0
+        self._next_position_tick = 0
+        self._next_scale_tick = 0
         self._prev_sent_rot = 0
         self._prev_sent_scale = Vector2(0, 0)
         self._approx_speed = Vector2(0, 0)
@@ -192,27 +195,33 @@ class NetworkEntity(Behaviour):
     def on_tick(self, tick_id: int) -> Any:
         assert self.game
         if self.game.network.is_server():
+            current_tick = self.game.simulation.tick_id
             pos = self.transform.position
-            if pos != self._prev_sent_pos:
+            if pos != self._prev_sent_pos or current_tick >= self._next_position_tick:
                 self._prev_sent_pos = pos
+                self._next_position_tick = current_tick + random.randint(256, 512)
                 self.game.network.publish(
                     PositionUpdate(tick_id, self.id, pos.x, pos.y)
                 )
 
             scale = self.transform.scale
-            if scale != self._prev_sent_scale:
+            if scale != self._prev_sent_scale or current_tick >= self._next_scale_tick:
                 self._prev_sent_scale = scale
+                self._next_scale_tick = current_tick + random.randint(256, 512)
                 self.game.network.publish(
                     ScaleUpdate(tick_id, self.id, scale.x, scale.y)
                 )
 
             rotation = self.transform.rotation
-            if rotation != self._prev_sent_rot:
+            if (
+                rotation != self._prev_sent_rot
+                or current_tick >= self._next_rotation_tick
+            ):
                 self._prev_sent_rot = rotation
+                self._next_rotation_tick = current_tick + random.randint(256, 512)
                 self.game.network.publish(RotationUpdate(tick_id, self.id, rotation))
 
             for sv in self._sync_vars:
-                current_tick = self.game.simulation.tick_id
                 delivery_mode = sv._delivery_mode
                 if sv._current_value == sv._last_sent_value:
                     # If the value is the same, we might still want to send periodic updates.
@@ -426,7 +435,7 @@ class ScaleUpdate(EntityPacket):
 
     @property
     def delivery_mode(self) -> DeliveryMode:
-        return DeliveryMode.RELIABLE
+        return DeliveryMode.UNRELIABLE
 
 
 class RotationUpdate(EntityPacket):
@@ -449,4 +458,4 @@ class RotationUpdate(EntityPacket):
 
     @property
     def delivery_mode(self) -> DeliveryMode:
-        return DeliveryMode.RELIABLE
+        return DeliveryMode.UNRELIABLE
