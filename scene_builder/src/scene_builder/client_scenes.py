@@ -13,12 +13,15 @@ from common.behaviours.collider import (
     RectCollisionShape,
 )
 from common.behaviours.physics_object import PhysicsObject
+from common.behaviours.sprite_renderer import SpriteRenderer
 from common.behaviours.ui.canvas import Canvas
 from common.behaviours.ui.ui_button import UIButton
 from common.behaviours.ui.ui_label import UILabel
 from common.node import Node
 from common.primitives import Vector2
+from common.utils import notnull
 from game.mage import Mage
+from game.ui.status_bar import StatusBar
 from scene_builder.base import save_node
 
 
@@ -102,5 +105,13 @@ def build_mage_template():
     collider.base_shape = RectCollisionShape(Vector2(slices[0].rect.size) / 2)
     # collider.base_shape = CircleCollisionShape(slices[0].rect.size[0])
     mage_node.add_behaviour(PhysicsObject)
+
+    health_bar_node = mage_node.add_child()
+    health_bar_node.transform.local_position += Vector2(
+        0, frames[0].image.pygame_surface.get_height() + 10
+    )
+    health_bar = health_bar_node.add_behaviour(StatusBar)
+    health_bar.render_layer = 100
+    health_bar.image_scale = Vector2(4, 1)
 
     save_node(mage_node, "templates/mage.json")

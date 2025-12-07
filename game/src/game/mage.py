@@ -14,11 +14,12 @@ from common.behaviours.physics_object import PhysicsObject
 from common.binary import ByteReader, ByteWriter
 from common.network import DeliveryMode, NetPeer
 from common.primitives import Vector2
-from common.utils import notnull
+from common.utils import clamp, notnull
 from game.composite_value import CompositeValue
 from game.game_manager import GameManager
 from game.player import Player
 from game.spell import SpellInfo, SpellState, get_spell
+from game.ui.status_bar import StatusBar
 
 
 class MoveToOrder(EntityPacket):
@@ -85,6 +86,7 @@ class AddSpell(EntityPacket):
 
 class Mage(NetworkBehaviour):
     _move_destination: Vector2 | None
+    _health_bar: StatusBar | None
 
     def on_init(self):
         self._animator = self.node.get_or_add_behaviour(Animator)
@@ -95,8 +97,26 @@ class Mage(NetworkBehaviour):
             self, base=500, delivery_mode=DeliveryMode.UNRELIABLE
         )
         self.owner_index = self.use_sync_var(int)
+        self._max_health = self.use_sync_var(float, 500)
+        self._health = self.use_sync_var(float, self.max_health)
         self._last_pressed_move_order_target = Vector2(0, 0)
         self._last_sent_move_order_tick = 0
+
+    @property
+    def health(self):
+        return self._health.value
+
+    @health.setter
+    def health(self, value: float):
+        self._health.value = clamp(value, 0, self.max_health)
+
+    @property
+    def max_health(self):
+        return self._max_health.value
+
+    @max_health.setter
+    def max_health(self, value: float):
+        self._max_health.value = value
 
     @property
     def spells(self):
@@ -105,7 +125,12 @@ class Mage(NetworkBehaviour):
     def on_common_pre_start(self):
         assert self.game
         self._game_manager = notnull(
-            self.game.scene.get_behaviour_in_children(GameManager)
+            self.game.scene.get_behaviour_in_children(GameManager, recursive=True)
+        )
+
+    def on_client_start(self):
+        self._health_bar = self.node.get_behaviour_in_children(
+            StatusBar, include_self=False
         )
 
     def on_server_start(self):
@@ -148,11 +173,19 @@ class Mage(NetworkBehaviour):
                     )
                 )
 
+    def on_client_tick(self, tick_id: int):
+        if not self._health_bar:
+            return
+
+        health_ratio = self.health / max(1, self.max_health)
+        if health_ratio != self._health_bar.value:
+            self._health_bar.value = health_ratio
+
     def on_server_tick(self, tick_id: int):
         assert self.game
 
         tick_interval = self.game.simulation.tick_interval
-        self.speed.increment.value -= 5 * tick_interval
+        self.health -= 5 * tick_interval
 
         if self._move_destination is None:
             return

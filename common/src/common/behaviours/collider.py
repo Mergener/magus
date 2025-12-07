@@ -109,7 +109,7 @@ class Collider(Behaviour):
     def _resolve_world(self):
         assert self.game
         if self._world is None:
-            w = self.game.scene.get_behaviour_in_children(PhysicsWorld)
+            w = self.game.scene.get_behaviour_in_children(PhysicsWorld, recursive=True)
             if not w:
                 w = self.game.scene.add_child().add_behaviour(PhysicsWorld)
             self._world = w

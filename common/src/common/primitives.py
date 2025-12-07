@@ -7,6 +7,30 @@ import pygame as pg
 from common.assets import Serializable
 
 
+class Color(pg.Color, Serializable):
+    def serialize(self, out_dict: dict | None = None) -> dict:
+        if out_dict is None:
+            out_dict = {}
+
+        out_dict["r"] = self.r
+        out_dict["g"] = self.g
+        out_dict["b"] = self.b
+        out_dict["a"] = self.a
+
+        return out_dict
+
+    def deserialize(self, in_dict: dict | None) -> Color:
+        if in_dict is None:
+            in_dict = {}
+
+        self.r = in_dict.get("r", 0)
+        self.g = in_dict.get("g", 0)
+        self.b = in_dict.get("b", 0)
+        self.a = in_dict.get("a", 255)
+
+        return self
+
+
 class Vector2(pg.Vector2, Serializable):
     def serialize(self, out_dict: dict | None = None) -> dict:
         if out_dict is None:

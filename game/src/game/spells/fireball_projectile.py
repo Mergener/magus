@@ -79,7 +79,7 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
         assert self.game
         direction = self.destination - self.transform.position
 
-        pg_dir = Vector2(direction.x, -direction.y)
+        pg_dir = Vector2(direction.x, direction.y)
 
         self.transform.rotation = Vector2(1, 0).angle_to(pg_dir)
 
