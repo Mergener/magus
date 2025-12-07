@@ -25,6 +25,7 @@ class StatusBar(Behaviour):
         self._filling_sprite = self.node.add_child().add_behaviour(SpriteRenderer)
         self._filling_sprite.texture = fill_texture
         self._filling_sprite.image_scale = self.image_scale
+        self._filling_sprite.render_layer = self.render_layer + 1
 
         empty_texture = self._empty_texture or _generate_simple_rect_texture(
             self.empty_color, Vector2(5, 5)
@@ -32,6 +33,7 @@ class StatusBar(Behaviour):
         self._empty_sprite = self.node.add_child().add_behaviour(SpriteRenderer)
         self._empty_sprite.texture = empty_texture
         self._empty_sprite.image_scale = self.image_scale
+        self._empty_sprite.render_layer = self.render_layer
 
     @property
     def value(self):
@@ -39,11 +41,18 @@ class StatusBar(Behaviour):
 
     @value.setter
     def value(self, value):
+        if value == self._value:
+            return
         self._value = value
         if self._filling_sprite:
-            self._filling_sprite.image_scale = Vector2(
-                max(0, self.image_scale.x * value), self.image_scale.y
-            )
+            scale = Vector2(max(0, self.image_scale.x * value), self.image_scale.y)
+            self._filling_sprite.image_scale = scale
+
+            # If we just resize the filling bar, it will stay centered.
+            if self._filling_sprite.texture:
+                self._filling_sprite.transform.local_position = Vector2(
+                    self._filling_sprite.texture.get_size()
+                ).elementwise() * Vector2(scale.x / 2, 0)
 
     def on_serialize(self, out_dict: dict):
         out_dict["value"] = self.value

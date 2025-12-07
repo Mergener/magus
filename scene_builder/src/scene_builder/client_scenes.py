@@ -101,10 +101,10 @@ def build_mage_template():
     mage.transform.local_scale = Vector2(1.7, 1.7)
     animator = mage_node.get_or_add_behaviour(Animator)
     animator.animations = {"idle": animation}
-    collider = mage_node.add_behaviour(Collider)
+    collider = mage_node.get_or_add_behaviour(Collider)
     collider.base_shape = RectCollisionShape(Vector2(slices[0].rect.size) / 2)
     # collider.base_shape = CircleCollisionShape(slices[0].rect.size[0])
-    mage_node.add_behaviour(PhysicsObject)
+    mage_node.get_or_add_behaviour(PhysicsObject)
 
     health_bar_node = mage_node.add_child()
     health_bar_node.transform.local_position += Vector2(
