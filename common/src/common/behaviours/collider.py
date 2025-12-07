@@ -160,7 +160,9 @@ class Collider(Behaviour):
     def on_debug_render(self):
         from common.behaviours.camera import Camera
 
-        camera = Camera.main
+        assert self.game
+
+        camera = self.game.container.get(Camera)
         if camera is None or self.game is None or self.game.display is None:
             return
 

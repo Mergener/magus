@@ -28,9 +28,10 @@ class SpriteRenderer(Behaviour):
             return
 
         final_scale = self.transform.scale.elementwise() * self.image_scale
-        camera = Camera.main
-        if camera is not None:
-            final_scale *= camera.world_to_screen_scale()
+        if self.game:
+            camera = self.game.container.get(Camera)
+            if camera is not None:
+                final_scale *= camera.world_to_screen_scale()
 
         self._cached_scale = self.transform.scale
         self._cached_rot = self.transform.rotation  # world rotation cached
@@ -83,10 +84,11 @@ class SpriteRenderer(Behaviour):
         self._refresh_active_texture()
 
     def on_render(self):
+        assert self.game
         if self._active_texture is None:
             return
 
-        camera = Camera.main
+        camera = self.game.container.get(Camera)
         if camera is None or self.game is None or self.game.display is None:
             return
 

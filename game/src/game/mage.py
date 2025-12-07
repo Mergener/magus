@@ -194,7 +194,7 @@ class Mage(NetworkBehaviour):
     @client_method
     def _handle_user_input(self):
         assert self.game
-        camera = Camera.main
+        camera = self.game.container.get(Camera)
         if camera is None:
             return
 
