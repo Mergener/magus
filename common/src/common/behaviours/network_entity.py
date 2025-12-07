@@ -213,19 +213,18 @@ class NetworkEntity(Behaviour):
 
             for sv in self._sync_vars:
                 current_tick = self.game.simulation.tick_id
+                delivery_mode = sv._delivery_mode
                 if sv._current_value == sv._last_sent_value:
                     # If the value is the same, we might still want to send periodic updates.
                     if sv._next_auto_tick > current_tick:
                         continue
 
+                    delivery_mode = DeliveryMode.UNRELIABLE
+
                 sv._last_sent_value = sv._current_value
                 self.game.network.publish(
                     SyncVarUpdate(
-                        self.id,
-                        tick_id,
-                        sv._id,
-                        sv._current_value,
-                        sv._delivery_mode,
+                        self.id, tick_id, sv._id, sv._current_value, delivery_mode
                     )
                 )
 
