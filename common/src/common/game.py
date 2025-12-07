@@ -4,6 +4,8 @@ import asyncio
 from sys import stderr
 from typing import TYPE_CHECKING
 
+from common.container import Container
+
 if TYPE_CHECKING:
     from common.network import Network, NullNetwork
     from common.node import Node
@@ -39,6 +41,11 @@ class Game:
         self._stopped = False
         self._input = Input()
         self._scene_loaded_futures: list[asyncio.Future] = []
+        self._container = Container()
+
+    @property
+    def container(self):
+        return self._container
 
     @property
     def stopped(self):
