@@ -23,23 +23,12 @@ from game.player import Player
 
 
 class LobbyManager(Behaviour):
-    _entity_mgr: NetworkEntityManager | None
-
     @property
     def net_entity_manager(self):
         if self.game is None:
             return None
 
-        if not hasattr("self", "_entity_mgr") or self._entity_mgr is None:
-            self._entity_mgr = self.game.global_object.find_behaviour_in_children(
-                NetworkEntityManager, recursive=True
-            )
-            if not self._entity_mgr:
-                self._entity_mgr = self.game.scene.find_behaviour_in_children(
-                    NetworkEntityManager, recursive=True
-                )
-
-        return self._entity_mgr
+        return self.game.container.get(NetworkEntityManager)
 
     def _handle_join_request(self, packet: JoinGameRequest, peer: NetPeer):
         assert self.game

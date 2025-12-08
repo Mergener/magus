@@ -5,6 +5,7 @@ from common.behaviour import Behaviour
 from common.behaviours.network_entity_manager import NetworkEntityManager
 from common.behaviours.ui.ui_button import UIButton
 from common.game import Game
+from common.utils import notnull
 from game.lobby import (
     DoneLoadingGameScene,
     GameStarting,
@@ -34,10 +35,6 @@ class Lobby(Behaviour):
             GameStarting, lambda p, _: self._on_game_starting(p)
         )
 
-        entity_mgr = self.game.scene.find_behaviour_in_children(NetworkEntityManager)
-        if entity_mgr is None:
-            self.game.scene.add_child(load_node_asset("templates/entity_manager.json"))
-
     def on_destroy(self):
         assert self.game
         self.game.network.unlisten(PlayerJoined, self._player_joined_handler)
@@ -54,8 +51,7 @@ class Lobby(Behaviour):
             p.node
             for p in self.game.scene.find_behaviours_in_children(Player, recursive=True)
         ]
-        entity_mgr = self.game.scene.find_behaviour_in_children(NetworkEntityManager)
-        assert entity_mgr
+        entity_mgr = notnull(self.game.container.get(NetworkEntityManager))
 
         await self.game.load_scene_async(
             load_node_asset("scenes/client/game.json"), players + [entity_mgr.node]

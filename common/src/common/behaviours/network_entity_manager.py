@@ -8,12 +8,13 @@ from typing import Callable, cast
 from common.assets import load_node_asset
 from common.behaviour import Behaviour
 from common.behaviours.network_entity import EntityPacket, NetworkEntity, PositionUpdate
+from common.behaviours.singleton_behaviour import SingletonBehaviour
 from common.binary import ByteReader, ByteWriter
 from common.network import DeliveryMode, MultiPacket, NetPeer, Packet
 from common.node import Node
 
 
-class NetworkEntityManager(Behaviour):
+class NetworkEntityManager(SingletonBehaviour):
     _templates: dict[str, str]
     _entities: dict[int, NetworkEntity]
 
@@ -23,6 +24,8 @@ class NetworkEntityManager(Behaviour):
         self._next_entity_id = 1
 
     def on_pre_start(self):
+        super().on_pre_start()
+
         assert self.game
 
         self._entity_packet_listener = getattr(
