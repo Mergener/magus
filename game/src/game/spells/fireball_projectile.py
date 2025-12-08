@@ -43,6 +43,10 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
         if self.caster.node is collision.other_collider.node:
             return
 
+        hit_mage = collision.other_collider.node.get_behaviour(Mage)
+        if not hit_mage:
+            return
+
         assert self.game
         self.game.network.publish(FireballBurst(self.net_entity.id))
         await self._do_burst()
@@ -62,6 +66,7 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
         if self._animator is not None:
             self._animator.play("burst")
             self._animator.enqueue("null")
+        self._phys_obj.collider.disabled = True
 
         await self.game.simulation.wait_seconds(2)
         self.node.destroy()
@@ -86,6 +91,9 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
 
     def on_server_tick(self, tick_id: int):
         assert self.game
+
+        if self._burst:
+            return
 
         tick_interval = self.game.simulation.tick_interval
         self._phys_obj.move_and_collide(self._motion * tick_interval)

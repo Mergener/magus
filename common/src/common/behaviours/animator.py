@@ -68,6 +68,11 @@ class Animator(Behaviour):
         elif animation_name == "null" and self._sprite_renderer is not None:
             self._sprite_renderer.texture = None
 
+        if self._sprite_renderer is not None and anim is not None:
+            self._sprite_renderer.texture_cache_size = max(
+                len(anim.frames), self._sprite_renderer.texture_cache_size
+            )
+
         if clear_queue:
             self._queue.clear()
 

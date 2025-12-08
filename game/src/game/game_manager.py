@@ -14,6 +14,14 @@ if TYPE_CHECKING:
     from game.player import Player
 
 
+SUPER_KEYS = [
+    pg.K_LSUPER,
+    pg.K_RSUPER,
+    pg.K_LMETA,
+    pg.K_RMETA,
+]
+
+
 class GameManager(NetworkBehaviour):
     def on_init(self) -> Any:
         self._players: list[Player] = []
@@ -51,3 +59,10 @@ class GameManager(NetworkBehaviour):
 
     def on_client_start(self):
         pg.event.set_grab(True)
+
+    def on_client_update(self, dt: float):
+        assert self.game
+
+        for k in SUPER_KEYS:
+            if self.game.input.is_key_just_pressed(k):
+                pg.event.set_grab(False)

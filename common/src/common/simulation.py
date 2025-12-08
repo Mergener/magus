@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from collections import defaultdict
 
 import pygame as pg
 
 from common.behaviour import Behaviour
+from common.game import Profiler
 from common.utils import overrides_method
 
 
 class Simulation:
-    def __init__(self, tick_rate: float = 24):
+    def __init__(self, profiler: Profiler | None, tick_rate: float = 24):
         self.tick_rate = tick_rate
         self._last_tick: float = 0
         self._tick_accum_time: float = 0
@@ -32,6 +34,7 @@ class Simulation:
         self._frame_futures: list[asyncio.Future] = []
         self._tick_futures: list[asyncio.Future] = []
         self._pending_tasks: set[asyncio.Task] = set()
+        self._profiler = profiler or Profiler()
 
         self.render_debug = False
 
@@ -95,6 +98,7 @@ class Simulation:
     def iterate(self):
         curr_tick = pg.time.get_ticks()
         dt = (curr_tick - self._last_tick) / 1000.0
+        self.last_frame_time = dt
         self._last_tick = curr_tick
         self._tick_accum_time += dt
 
@@ -120,19 +124,21 @@ class Simulation:
 
         self._resolve_frame_futures()
 
-        if self._tick_accum_time > self.tick_interval:
-            self._tick_accum_time -= self.tick_interval
-            self._resolve_tick_futures()
-            for t in self._tickables:
-                if t.node.destroyed:
-                    continue
-                self.run_task(t.on_tick(self._tick_id))
-            self._tick_id += 1
+        with self._profiler.profile("tick"):
+            if self._tick_accum_time > self.tick_interval:
+                self._tick_accum_time -= self.tick_interval
+                self._resolve_tick_futures()
+                for t in self._tickables:
+                    if t.node.destroyed:
+                        continue
+                    self.run_task(t.on_tick(self._tick_id))
+                self._tick_id += 1
 
-        for u in self._updatables:
-            if u.node.destroyed:
-                continue
-            self.run_task(u.on_update(dt))
+        with self._profiler.profile("update"):
+            for u in self._updatables:
+                if u.node.destroyed:
+                    continue
+                self.run_task(u.on_update(dt))
 
     def render(self):
         for bl in self._will_render:

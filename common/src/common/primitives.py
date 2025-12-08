@@ -53,6 +53,11 @@ class Vector2(pg.Vector2, Serializable):
 
         return self
 
+    def roughly_equals(self, other: pg.Vector2, sq_tol=0.1 * 0.1):
+        dx = self.x - other.x
+        dy = self.y - other.y
+        return dx * dx + dy * dy <= sq_tol
+
 
 class Rect:
     def __init__(self, center: Vector2, size: Vector2):

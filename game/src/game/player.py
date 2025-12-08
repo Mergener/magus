@@ -18,6 +18,8 @@ class Player(NetworkBehaviour):
         self._game_manager: GameManager | None = None
         self.mage: Mage | None = None
         self.coins = self.use_sync_var(int, 0)
+        self.kills = self.use_sync_var(int, 0)
+        self.deaths = self.use_sync_var(int, 0)
 
     @property
     def net_peer(self):

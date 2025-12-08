@@ -184,8 +184,6 @@ class NetPeer:
         self._enet_peer.send(channel, packet)
 
     def send(self, packet: Packet, override_mode: DeliveryMode | None = None):
-        if packet.delivery_mode != DeliveryMode.UNRELIABLE:
-            print(f"Sending {packet} to {self.address}")
         writer = ByteWriter()
         packet.encode(writer)
         mode = override_mode or packet.delivery_mode
