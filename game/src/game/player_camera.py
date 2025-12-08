@@ -1,3 +1,5 @@
+import pygame as pg
+
 from common.behaviour import Behaviour
 from common.behaviours.camera import Camera
 from common.primitives import Vector2
@@ -16,7 +18,19 @@ class PlayerCamera(Behaviour):
         if not self._camera:
             return
 
-        if self.game.display:
+        if not self.game.display:
+            return
+
+        if self.game.input.is_mouse_button_pressed(pg.BUTTON_MIDDLE):
+            # Mouse drag
+            motion = (
+                Vector2(1, -1).elementwise()
+                * self.game.input.mouse_delta
+                * self._camera.screen_to_world_scale()
+            )
+            self._camera.transform.local_position -= motion
+        else:
+            # Edge pan
             mouse_pos = self.game.input.mouse_pos
             screen_size = self.game.display.get_size()
             rel_pos = _relative_position(mouse_pos, screen_size)
@@ -48,3 +62,7 @@ class PlayerCamera(Behaviour):
 
 def _relative_position(pos: Vector2, size: tuple[int, int]):
     return Vector2(pos.x / size[0], (size[1] - pos.y) / size[1])
+
+
+def _relative_delta(delta: Vector2, size: tuple[int, int]):
+    return Vector2(delta.x / size[0], -delta.y / size[1])
