@@ -103,6 +103,7 @@ class Mage(NetworkBehaviour):
         self._last_pressed_move_order_target = Vector2(0, 0)
         self._last_sent_move_order_tick = 0
         self._alive = self.use_sync_var(bool, True)
+        self._moving = self.use_sync_var(bool, False)
 
     @property
     def health(self):
@@ -231,12 +232,15 @@ class Mage(NetworkBehaviour):
     @server_method
     def _tick_motion(self, tick_interval: float):
         if self._move_destination is None:
+            self._moving.value = False
             return
 
         curr_pos = self.transform.position
 
         delta = self._move_destination - curr_pos
         if delta.x == 0 and delta.y == 0:
+            self._move_destination = None
+            self._moving.value = False
             return
 
         delta_normalized = delta.normalize()
@@ -247,8 +251,19 @@ class Mage(NetworkBehaviour):
         if motion.length_squared() > delta.length_squared():
             motion = delta
             self._move_destination = None
+            self._moving.value = False
 
         self._physics_object.move_and_collide(motion)
+
+    @client_method
+    def _handle_animations(self):
+        if not self._alive or self._animator is None:
+            return
+
+        if self._moving.value:
+            self._animator.play("move")
+        else:
+            self._animator.play("idle")
 
     #
     # Packet handlers
@@ -285,6 +300,7 @@ class Mage(NetworkBehaviour):
             return
 
         self._move_destination = order.where
+        self._moving.value = True
 
     #
     # Lifecycle
@@ -311,15 +327,13 @@ class Mage(NetworkBehaviour):
         self.add_spell(spell)
 
     def on_client_tick(self, tick_id: int):
-        if not self._health_bar:
-            return
-
         health_ratio = self.health / max(1, self.max_health)
-        if health_ratio != self._health_bar.value:
-            self._health_bar.value = health_ratio
-
+        if self._health_bar:
+            if health_ratio != self._health_bar.value:
+                self._health_bar.value = health_ratio
         if health_ratio == 0:
             self._do_death()
+        self._handle_animations()
 
     def on_server_tick(self, tick_id: int):
         assert self.game
