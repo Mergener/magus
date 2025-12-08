@@ -32,6 +32,7 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
 
     def on_server_pre_start(self):
         self._phys_obj = self.node.get_or_add_behaviour(PhysicsObject)
+        self._phys_obj.trigger = True
         self._motion = (
             self.destination - self.transform.position
         ).normalize() * self.speed

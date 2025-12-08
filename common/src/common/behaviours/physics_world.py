@@ -22,7 +22,7 @@ class PhysicsWorld(Behaviour):
         self.cell_h = 200
 
     def get_potential_contacts(self, rect: Rect):
-        result = set()
+        result: set[Collider] = set()
         for cell in self._get_rect_grid_cells(rect):
             result.update(self._collision_grid[cell])
         return list(result)

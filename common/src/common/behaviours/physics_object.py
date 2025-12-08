@@ -41,6 +41,7 @@ class CollisionHandler:
 class PhysicsObject(Behaviour):
     def on_init(self) -> Any:
         self.mass: float = 1
+        self.trigger: bool = False
         self._pending_motion = Vector2()
         self._contacts: set[Collider] = set()
 
@@ -96,23 +97,25 @@ class PhysicsObject(Behaviour):
             lb, ub = 0.0, 1.0
             mid = 0.5
 
-            while sq_error > SQ_TOL:
-                if collides:
-                    ub = mid
-                else:
-                    lb = mid
-
-                sq_error /= 4
-                new_pos = old_rect.center + motion * mid
-
-                collides = shape_collides(
-                    (new_pos, self.collider.scaled_shape),
-                    (other_pos, other.scaled_shape),
-                )
-
-                mid = (lb + ub) * 0.5
-
             other_po = other.node.get_behaviour(PhysicsObject)
+
+            if not self.trigger and other_po is not None and not other_po.trigger:
+                while sq_error > SQ_TOL:
+                    if collides:
+                        ub = mid
+                    else:
+                        lb = mid
+
+                    sq_error /= 4
+                    new_pos = old_rect.center + motion * mid
+
+                    collides = shape_collides(
+                        (new_pos, self.collider.scaled_shape),
+                        (other_pos, other.scaled_shape),
+                    )
+
+                    mid = (lb + ub) * 0.5
+
             collision = Collision(
                 this_physics_object=self,
                 this_collider=self.collider,
@@ -122,10 +125,10 @@ class PhysicsObject(Behaviour):
 
             if other not in self._contacts:
                 self._fire_collision_enter(collision)
-                if other_po:
+                if other_po is not None:
                     other_po._fire_collision_enter(collision.inverted())
 
-            if other_po is not None:
+            if other_po is not None and not other_po.trigger and not self.trigger:
                 remaining_motion = motion - motion * mid
                 push = remaining_motion * (self.mass / other_po.mass)
                 other_po.move_and_collide(push)
@@ -156,3 +159,11 @@ class PhysicsObject(Behaviour):
                 self.game.simulation.run_task(
                     b.on_collision_exit(collider, physics_object)
                 )
+
+    def on_serialize(self, out_dict: dict):
+        out_dict["trigger"] = self.trigger
+        out_dict["mass"] = self.mass
+
+    def on_deserialize(self, in_dict: dict):
+        self.trigger = in_dict.get("trigger", False)
+        self.mass = in_dict.get("mass", 1)
