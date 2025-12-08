@@ -48,3 +48,6 @@ class GameManager(NetworkBehaviour):
             )
             p.mage = mage
             p._game_manager = self
+
+    def on_client_start(self):
+        pg.event.set_grab(True)

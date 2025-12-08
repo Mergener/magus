@@ -4,7 +4,9 @@
     {
       "children": [],
       "behaviours": [
-        { "__type": "common.behaviours.camera.Camera" }
+        { "__type": "common.behaviours.camera.Camera" },
+        { "__type": "game.player_camera.PlayerCamera",
+      "edge_pan_speed": 1000 }
       ]
     }
   ],
