@@ -1,3 +1,4 @@
 {
-  "behaviours": [{ "__type": "common.behaviours.debug_console.DebugConsole", "visible": false }]
+  "behaviours": [{ "__type": "common.behaviours.debug_console.DebugConsole", "visible": false }],
+  "children": ["templates/entity_manager.json"]
 }
