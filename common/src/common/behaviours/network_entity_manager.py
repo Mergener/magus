@@ -132,9 +132,14 @@ class NetworkEntityManager(SingletonBehaviour):
         return entity_id
 
     def _do_destroy_entity(self, entity: NetworkEntity):
+        assert self.game
+
         entity.node.destroy()
         if entity.id in self._entities:
             del self._entities[entity.id]
+
+            if self.game.network.is_server():
+                self.game.network.publish(DestroyEntity(entity.id))
 
     def _handle_entity_packet(self, p: EntityPacket, peer: NetPeer):
         entity = self._entities.get(p.entity_id)

@@ -175,10 +175,11 @@ class Node(Serializable):
         self._destroy_helper()
 
     def _destroy_helper(self):
+        assert self.game
         for b in self._behaviours:
             b.visible = False
             b.receive_updates = False
-            b.on_destroy()
+            self.game.simulation.run_task(b.on_destroy())
 
         self._behaviours.clear()
 

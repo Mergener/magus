@@ -19,6 +19,7 @@ from common.binary import ByteReader, ByteWriter
 from common.network import DeliveryMode, NetPeer
 from common.primitives import Vector2
 from common.utils import clamp, notnull
+from game.animator_synchronizer import AnimatorSynchronizer
 from game.composite_value import CompositeValue
 from game.game_manager import GameManager
 from game.orders import Order, OrderMessage, OrderTransition
@@ -98,6 +99,9 @@ class Mage(NetworkBehaviour):
 
     def on_init(self):
         self._animator = self.node.get_behaviour_in_children(Animator)
+        if self._animator:
+            self._animator.node.get_or_add_behaviour(AnimatorSynchronizer)
+
         self._physics_object = self.node.get_or_add_behaviour(PhysicsObject)
         self._spells: list[SpellState] = []
         self.speed = CompositeValue(
@@ -114,9 +118,6 @@ class Mage(NetworkBehaviour):
         self._stop_order_requested: bool = False
         self._order_queue: list[Order] = []
         self._stunners = self.use_sync_var(int, 0)
-        self._animation = self.use_sync_var(
-            str, "idle", delivery_mode=DeliveryMode.UNRELIABLE
-        )
 
         self._health.add_hook(self._handle_health_changed)
 
@@ -347,8 +348,6 @@ class Mage(NetworkBehaviour):
         if not self._animator:
             return
 
-        self._animation.value = self._animator.current_animation_name or "idle"
-
         if not self._alive.value:
             return
 
@@ -370,12 +369,6 @@ class Mage(NetworkBehaviour):
                 next(self._active_order)
         except StopIteration:
             self._active_order = None
-
-    @client_method
-    def _handle_animations(self):
-        if not self._animator:
-            return
-        self._animator.play(self._animation.value)
 
     #
     # Packet handlers
@@ -444,7 +437,6 @@ class Mage(NetworkBehaviour):
         if self._health_bar:
             if health_ratio != self._health_bar.value:
                 self._health_bar.value = health_ratio
-        self._handle_animations()
 
     def on_server_tick(self, tick_id: int):
         assert self.game

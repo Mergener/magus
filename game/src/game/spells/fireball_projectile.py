@@ -11,14 +11,9 @@ from common.behaviours.network_entity import EntityPacket
 from common.behaviours.physics_object import Collision, CollisionHandler, PhysicsObject
 from common.network import DeliveryMode, NetPeer
 from common.primitives import Vector2
+from game.animator_synchronizer import AnimatorSynchronizer
 from game.mage import Mage
 from game.player import Player
-
-
-class FireballBurst(EntityPacket):
-    @property
-    def delivery_mode(self) -> DeliveryMode:
-        return DeliveryMode.RELIABLE
 
 
 class FireballProjectile(NetworkBehaviour, CollisionHandler):
@@ -27,12 +22,15 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
     damage: float
     destination = Vector2()
     owner: Player | None
+    duration: float
 
     def on_init(self):
         self._burst = False
         self._animator = None
         self._phys_obj = None
         self.owner = None
+        self._animator = self.node.get_behaviour(Animator)
+        self.node.get_or_add_behaviour(AnimatorSynchronizer)
 
     def on_server_pre_start(self):
         self._phys_obj = self.node.get_or_add_behaviour(PhysicsObject)
@@ -52,13 +50,7 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
             return
 
         assert self.game
-        self.game.network.publish(FireballBurst(self.net_entity.id))
         hit_mage.take_damage(self.damage, self.owner)
-        await self._do_burst()
-
-    @entity_packet_handler(FireballBurst)
-    @client_method
-    async def _handle_burst(self, fireball_burst: FireballBurst, peer: NetPeer):
         await self._do_burst()
 
     async def _do_burst(self):
@@ -78,9 +70,6 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
         await self.game.simulation.wait_seconds(2)
         self.node.destroy()
 
-    def on_client_pre_start(self):
-        self._animator = self.node.get_behaviour(Animator)
-
     async def on_client_start(self):
         if not self._animator:
             return
@@ -95,6 +84,10 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
         pg_dir = Vector2(direction.x, direction.y)
 
         self.transform.rotation = Vector2(1, 0).angle_to(pg_dir)
+
+        await self.game.simulation.wait_seconds(self.duration)
+
+        await self._do_burst()
 
     def on_server_tick(self, tick_id: int):
         assert self.game
