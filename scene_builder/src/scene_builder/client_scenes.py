@@ -22,7 +22,6 @@ from common.node import Node
 from common.primitives import Vector2
 from common.utils import notnull
 from game.mage import Mage
-from game.network_animator import NetworkAnimator
 from game.ui.status_bar import StatusBar
 from scene_builder.base import save_animation, save_node
 
