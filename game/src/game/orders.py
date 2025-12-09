@@ -10,8 +10,8 @@ class OrderMessage(Enum):
 
 
 class OrderTransition(Enum):
-    CONTINUE = 1
-    DONE = 2
+    CONTINUE = 0
+    DONE = 1
 
 
 OrderGenerator = Generator[OrderTransition, OrderMessage, None]
