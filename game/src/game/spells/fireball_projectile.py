@@ -12,6 +12,7 @@ from common.behaviours.physics_object import Collision, CollisionHandler, Physic
 from common.network import DeliveryMode, NetPeer
 from common.primitives import Vector2
 from game.mage import Mage
+from game.player import Player
 
 
 class FireballBurst(EntityPacket):
@@ -23,8 +24,9 @@ class FireballBurst(EntityPacket):
 class FireballProjectile(NetworkBehaviour, CollisionHandler):
     caster: Mage
     speed: float
+    damage: float
     destination = Vector2()
-    _owner_index: int
+    owner: Player
 
     def on_init(self):
         self._burst = False
@@ -49,6 +51,7 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
 
         assert self.game
         self.game.network.publish(FireballBurst(self.net_entity.id))
+        hit_mage.take_damage(self.damage, self.owner)
         await self._do_burst()
 
     @entity_packet_handler(FireballBurst)

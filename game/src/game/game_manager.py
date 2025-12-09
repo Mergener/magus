@@ -23,7 +23,7 @@ SUPER_KEYS = [
 ]
 
 
-class GameManager(NetworkBehaviour, SingletonBehaviour):
+class GameManager(NetworkBehaviour):
     def on_init(self) -> Any:
         self._players: list[Player] = []
         self._players_by_peer: dict[NetPeer, Player] = {}
@@ -41,10 +41,8 @@ class GameManager(NetworkBehaviour, SingletonBehaviour):
         return self._players_by_peer[peer]
 
     def on_common_pre_start(self):
-        # Due to the Python MRO, NetworkBehaviour.on_pre_start() gets called, but we still
-        # need to explicitly call SingletonBehaviour.on_pre_start() here.
-        SingletonBehaviour.on_pre_start(self)
-
+        assert self.game
+        self.game.container.register_singleton(type(self), self)
         for p in self.players:
             self._players_by_peer[notnull(p.net_peer)] = p
 
@@ -71,3 +69,7 @@ class GameManager(NetworkBehaviour, SingletonBehaviour):
         for k in SUPER_KEYS:
             if self.game.input.is_key_just_pressed(k):
                 pg.event.set_grab(False)
+
+    def on_destroy(self):
+        assert self.game
+        self.game.container.unregister(type(self))

@@ -158,6 +158,9 @@ class Mage(NetworkBehaviour):
 
         spell_state.on_point_cast(where)
 
+    def take_damage(self, amount: float, damage_source: Player | None):
+        self.health -= amount
+
     def get_spell_state(self, spell: SpellInfo):
         for s in self.spells:
             if s.spell == spell:
@@ -350,8 +353,6 @@ class Mage(NetworkBehaviour):
         assert self.game
 
         tick_interval = self.game.simulation.tick_interval
-        self.health -= 1 * tick_interval
-
         self._tick_motion(tick_interval)
 
     def on_client_update(self, dt: float):

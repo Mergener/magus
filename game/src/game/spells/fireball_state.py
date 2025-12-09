@@ -10,6 +10,8 @@ class FireballState(SpellState):
         entity = self.entity_manager.spawn_entity("fireball_projectile")
         entity.transform.position = self.transform.position
         projectile = entity.node.get_or_add_behaviour(FireballProjectile)
-        projectile.speed = self.spell.data.get("projectile_speed", 800)
+        projectile.speed = self.get_current_level_data("projectile_speed", 800)
         projectile.caster = self._mage
         projectile.destination = target
+        projectile.damage = self.get_current_level_data("damage", 0.0)
+        print(f"Will deal {projectile.damage} damage")

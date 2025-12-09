@@ -158,6 +158,8 @@ class Node(Serializable):
     def transform(self) -> Transform:
         from common.behaviours.transform import Transform
 
+        self._ensure_transform_is_first_behaviour()
+
         return cast(Transform, self._behaviours[0])
 
     @property
@@ -238,23 +240,18 @@ class Node(Serializable):
                 node = load_node_asset(dc)
                 node.parent = self
 
+        self._ensure_transform_is_first_behaviour()
+
         for db in dict_behaviours:
             behaviour_type = get_behaviour_type_by_name(db.get("__type"))
             if behaviour_type is None:
                 continue
 
-            if behaviour_type is not Transform:
-                b = self.add_behaviour(behaviour_type)
-            else:
-                b = self.get_behaviour(Transform)
-                if b is None:
-                    b = self.add_behaviour(Transform)
+            b = self.get_or_add_behaviour(behaviour_type)
 
             b.on_deserialize(db)
             b.receive_updates = db.get("receive_updates", True)
             b.visible = db.get("visible", True)
-
-        self._ensure_transform_is_first_behaviour()
 
         return self
 

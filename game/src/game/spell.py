@@ -13,7 +13,7 @@ from common.assets import Serializable, load_object_asset
 from common.behaviour import get_behaviour_type_by_name, get_behaviour_type_name
 from common.behaviours.network_behaviour import NetworkBehaviour
 from common.network import DeliveryMode
-from common.primitives import Vector2
+from common.primitives import Color, Vector2
 from common.utils import get_object_attribute_from_dotted_path, notnull
 
 if TYPE_CHECKING:
@@ -59,7 +59,6 @@ class SpellInfo(Serializable):
         return out_dict
 
     def deserialize(self, in_dict: dict) -> Self:
-        print("Calling deserialize for spell info")
         self.name = in_dict.get("name", str())
         self._raw_tooltip = in_dict.get("tooltip", str())
         self.levels = in_dict.get("levels", 1)
@@ -74,7 +73,6 @@ class SpellInfo(Serializable):
         self.data = in_dict.get("data", {})
 
         behaviour = get_behaviour_type_by_name(in_dict.get("state_behaviour"))
-        print("Got behaviour", behaviour)
         if behaviour is None or not issubclass(behaviour, SpellState):
             raise ValueError("Expected a spell state behaviour.")
         self.state_behaviour = cast(type[SpellState], behaviour)
@@ -102,6 +100,20 @@ class SpellInfo(Serializable):
         tooltip = self._generate_formatted_tooltip(level)
         self._formatted_tooltip_cache[level] = tooltip
         return tooltip
+
+    def get_level_data[T](self, entry: str, level: int, fallback: T) -> T:
+        print("spell dict", self)
+        self.data.get(entry)
+
+        data = self.data.get(entry)
+
+        if isinstance(data, list):
+            data = data[min(len(data) - 1, level - 1)]
+
+        if data is None:
+            return fallback
+
+        return data
 
 
 class SpellState(NetworkBehaviour):
@@ -138,6 +150,9 @@ class SpellState(NetworkBehaviour):
 
     def on_point_cast(self, target: Vector2):
         pass
+
+    def get_current_level_data[T](self, entry: str, fallback: T) -> T:
+        return self.spell.get_level_data(entry, self.level.value, fallback)
 
 
 def get_spell(file_name: str):
