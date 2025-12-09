@@ -107,6 +107,8 @@ class Mage(NetworkBehaviour):
         self._moving = self.use_sync_var(bool, False)
         self._active_order: OrderGenerator | None = None
 
+        self._health.add_hook(self._handle_health_changed)
+
     @property
     def health(self):
         return self._health.value
@@ -158,6 +160,7 @@ class Mage(NetworkBehaviour):
 
         spell_state.on_point_cast(where)
 
+    @server_method
     def take_damage(self, amount: float, damage_source: Player | None):
         self.health -= amount
 
@@ -188,14 +191,16 @@ class Mage(NetworkBehaviour):
         owner = self.owner
         return order_player.index == owner.index
 
-    def _do_death(self):
-        if not self._alive.value:
+    def _handle_health_changed(self, new: float, prev: float):
+        if new == prev:
             return
 
-        self._alive.value = False
-        if self._animator:
-            self._animator.play("die")
-            self._animator.enqueue("null")
+        if new <= 0:
+            self.health = 0
+            self._alive.value = False
+            if self._animator:
+                self._animator.play("die")
+                self._animator.enqueue("null")
 
     @client_method
     def _handle_user_input(self):
@@ -262,7 +267,7 @@ class Mage(NetworkBehaviour):
 
     @client_method
     def _handle_animations(self):
-        if not self._alive or self._animator is None:
+        if not self._alive.value or self._animator is None:
             return
 
         if self._moving.value:
@@ -345,8 +350,6 @@ class Mage(NetworkBehaviour):
         if self._health_bar:
             if health_ratio != self._health_bar.value:
                 self._health_bar.value = health_ratio
-        if health_ratio == 0:
-            self._do_death()
         self._handle_animations()
 
     def on_server_tick(self, tick_id: int):

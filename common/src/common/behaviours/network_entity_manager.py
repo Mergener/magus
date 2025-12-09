@@ -160,7 +160,6 @@ class NetworkEntityManager(SingletonBehaviour):
 
     def on_deserialize(self, in_dict: dict):
         self._templates = in_dict.get("templates", {})
-        print(f"Loaded net entity templates: {self._templates}")
 
     def get_entity_by_id(self, entity_id: int):
         return self._entities.get(entity_id)

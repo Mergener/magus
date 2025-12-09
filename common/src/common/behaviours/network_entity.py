@@ -37,6 +37,7 @@ class SyncVar(Generic[TVar]):
     _last_recv_tick: int
     _delivery_mode: DeliveryMode
     _next_auto_tick: int = field(default=0)
+    _hooks: list[Callable[[TVar, TVar], Any]] = field(default_factory=list)
 
     @property
     def value(self):
@@ -44,7 +45,28 @@ class SyncVar(Generic[TVar]):
 
     @value.setter
     def value(self, v):
+        if v == self._current_value:
+            return
+
+        old = self._current_value
         self._current_value = v
+
+        for h in self._hooks:
+            h(v, old)
+
+    def add_hook(self, hook: Callable[[TVar, TVar], Any]):
+        """
+        Adds a hook of format hook(new_value, prev_value)
+        to be notified whenever this variable changes.
+        """
+        self._hooks.append(hook)
+        return hook
+
+    def remove_hook(self, hook: Callable[[TVar, TVar], Any]):
+        self._hooks.remove(hook)
+
+    def __bool__(self):
+        return bool(self._current_value)
 
 
 class NetworkEntity(Behaviour):
@@ -184,7 +206,7 @@ class NetworkEntity(Behaviour):
             ):
                 continue
 
-            p._current_value = update.value
+            p.value = update.value
 
             if self.game:
                 p._last_recv_tick = self.game.simulation.tick_id

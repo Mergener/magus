@@ -102,7 +102,6 @@ class SpellInfo(Serializable):
         return tooltip
 
     def get_level_data[T](self, entry: str, level: int, fallback: T) -> T:
-        print("spell dict", self)
         self.data.get(entry)
 
         data = self.data.get(entry)
@@ -157,6 +156,5 @@ class SpellState(NetworkBehaviour):
 
 def get_spell(file_name: str):
     spell_info = load_object_asset(f"spells/{file_name}.json", SpellInfo)
-    print("Loaded spell info here!", spell_info.__dict__)
     spell_info._file_name = file_name
     return spell_info

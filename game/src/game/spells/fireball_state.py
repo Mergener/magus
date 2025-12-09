@@ -14,4 +14,3 @@ class FireballState(SpellState):
         projectile.caster = self._mage
         projectile.destination = target
         projectile.damage = self.get_current_level_data("damage", 0.0)
-        print(f"Will deal {projectile.damage} damage")

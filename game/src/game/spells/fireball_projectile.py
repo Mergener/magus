@@ -26,11 +26,13 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
     speed: float
     damage: float
     destination = Vector2()
-    owner: Player
+    owner: Player | None
 
     def on_init(self):
         self._burst = False
         self._animator = None
+        self._phys_obj = None
+        self.owner = None
 
     def on_server_pre_start(self):
         self._phys_obj = self.node.get_or_add_behaviour(PhysicsObject)
@@ -69,7 +71,9 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
         if self._animator is not None:
             self._animator.play("burst")
             self._animator.enqueue("null")
-        self._phys_obj.collider.disabled = True
+
+        if self._phys_obj:
+            self._phys_obj.collider.disabled = True
 
         await self.game.simulation.wait_seconds(2)
         self.node.destroy()
@@ -94,6 +98,7 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
 
     def on_server_tick(self, tick_id: int):
         assert self.game
+        assert self._phys_obj
 
         if self._burst:
             return

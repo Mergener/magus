@@ -311,9 +311,6 @@ class Network(ABC):
         if packet_type == Packet:
             return
 
-        if packet.delivery_mode != DeliveryMode.UNRELIABLE:
-            print(f"Received {packet}")
-
         if packet_type == MultiPacket:
             for sub_packet in cast(MultiPacket, packet).packets:
                 self.notify(sub_packet, source_peer)
