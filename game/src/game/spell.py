@@ -15,6 +15,7 @@ from common.behaviours.network_behaviour import NetworkBehaviour
 from common.network import DeliveryMode
 from common.primitives import Color, Vector2
 from common.utils import get_object_attribute_from_dotted_path, notnull
+from game.orders import Order, OrderMessage, OrderTransition
 
 if TYPE_CHECKING:
     from game.mage import Mage
@@ -133,6 +134,14 @@ class SpellState(NetworkBehaviour):
     def on_client_update(self, dt: float):
         # Update cooldown in client for smooth updates.
         self.cooldown_timer.value = max(0, self.cooldown_timer.value - dt)
+
+    def get_point_cast_order(self, mage: Mage, where: Vector2):
+        def point_cast_order():
+            mage.face(where)
+            self.on_point_cast(where)
+            yield OrderTransition.CONTINUE
+
+        return point_cast_order()
 
     @property
     def spell(self):

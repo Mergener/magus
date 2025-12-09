@@ -4,14 +4,13 @@ from typing import Generator
 
 
 class OrderMessage(Enum):
-    CONTINUE = 0
+    STEP = 0
     STOP_REQUESTED = 1
     INTERRUPTED = 2
 
 
 class OrderTransition(Enum):
     CONTINUE = 0
-    DONE = 1
 
 
-OrderGenerator = Generator[OrderTransition, OrderMessage, None]
+Order = Generator[OrderTransition, OrderMessage, None]
