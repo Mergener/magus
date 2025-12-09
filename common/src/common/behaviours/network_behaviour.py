@@ -30,7 +30,7 @@ def entity_packet_handler[T: EntityPacket](t: type[T]):
         print(f"Added entity packet listener for {t.__name__}: {fn.__name__}")
 
         @functools.wraps(fn)
-        def wrapper(self, packet, peer):
+        def wrapper(self: NetworkBehaviour, packet: T, peer: NetPeer):
             return fn(self, packet, peer)
 
         return wrapper

@@ -22,6 +22,7 @@ from common.node import Node
 from common.primitives import Vector2
 from common.utils import notnull
 from game.mage import Mage
+from game.network_animator import NetworkAnimator
 from game.ui.status_bar import StatusBar
 from scene_builder.base import save_animation, save_node
 
@@ -114,7 +115,7 @@ def build_mage_template():
 
     mage = mage_node.add_behaviour(Mage)
     mage.transform.local_scale = Vector2(1.1, 1.1)
-    animator = mage_node.add_child().get_or_add_behaviour(Animator)
+    animator = mage_node.add_child().get_or_add_behaviour(NetworkAnimator)
     animator.node.add_behaviour(NetworkEntity)
     animator.animations = animation_dict
 

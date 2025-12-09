@@ -5,6 +5,7 @@ import pygame as pg
 
 from common.behaviour import Behaviour
 from common.behaviours.network_behaviour import NetworkBehaviour
+from common.behaviours.singleton_behaviour import SingletonBehaviour
 from common.network import NetPeer
 from common.primitives import Vector2
 from common.utils import notnull
@@ -22,7 +23,7 @@ SUPER_KEYS = [
 ]
 
 
-class GameManager(NetworkBehaviour):
+class GameManager(NetworkBehaviour, SingletonBehaviour):
     def on_init(self) -> Any:
         self._players: list[Player] = []
         self._players_by_peer: dict[NetPeer, Player] = {}
@@ -40,6 +41,10 @@ class GameManager(NetworkBehaviour):
         return self._players_by_peer[peer]
 
     def on_common_pre_start(self):
+        # Due to the Python MRO, NetworkBehaviour.on_pre_start() gets called, but we still
+        # need to explicitly call SingletonBehaviour.on_pre_start() here.
+        SingletonBehaviour.on_pre_start(self)
+
         for p in self.players:
             self._players_by_peer[notnull(p.net_peer)] = p
 

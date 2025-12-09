@@ -18,6 +18,7 @@ from common.primitives import Vector2
 from common.utils import clamp, notnull
 from game.composite_value import CompositeValue
 from game.game_manager import GameManager
+from game.orders import OrderGenerator, OrderMessage, OrderTransition
 from game.player import Player
 from game.spell import SpellInfo, SpellState, get_spell
 from game.ui.status_bar import StatusBar
@@ -104,6 +105,7 @@ class Mage(NetworkBehaviour):
         self._last_sent_move_order_tick = 0
         self._alive = self.use_sync_var(bool, True)
         self._moving = self.use_sync_var(bool, False)
+        self._active_order: OrderGenerator | None = None
 
     @property
     def health(self):
@@ -264,6 +266,15 @@ class Mage(NetworkBehaviour):
             self._animator.play("move")
         else:
             self._animator.play("idle")
+
+    def _handle_active_order(self):
+        if self._active_order is None:
+            return
+
+        transition = self._active_order.send(OrderMessage.CONTINUE)
+        if transition == OrderTransition.DONE:
+            self._active_order.close()
+            self._active_order = None
 
     #
     # Packet handlers

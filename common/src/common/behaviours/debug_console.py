@@ -4,6 +4,8 @@ import math
 import pygame as pg
 
 from common.behaviour import Behaviour
+from common.behaviours.camera import Camera
+from game.game_manager import GameManager
 
 
 class DebugConsole(Behaviour):
@@ -37,6 +39,10 @@ class DebugConsole(Behaviour):
             f"{topic}: {self.game.profiler.get_last(topic) * 1000:.3f}ms"
             for topic in self.game.profiler.topics
         ]
+
+        camera = self.game.container.get(Camera)
+        if camera is not None:
+            self._texts.append(f"camera_pos: {camera.transform.position}")
 
     def on_render(self):
         assert self.game
