@@ -115,7 +115,7 @@ def build_mage_template():
 
     mage = mage_node.add_behaviour(Mage)
     mage.transform.local_scale = Vector2(1.1, 1.1)
-    animator = mage_node.add_child().get_or_add_behaviour(NetworkAnimator)
+    animator = mage_node.add_child().get_or_add_behaviour(Animator)
     animator.node.add_behaviour(NetworkEntity)
     animator.animations = animation_dict
 
