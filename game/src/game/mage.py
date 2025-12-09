@@ -121,6 +121,10 @@ class Mage(NetworkBehaviour):
         self._health.add_hook(self._handle_health_changed)
 
     @property
+    def animator(self):
+        return self._animator
+
+    @property
     def stunned(self):
         return self._stunners.value > 0
 

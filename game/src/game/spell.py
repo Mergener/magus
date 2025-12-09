@@ -138,6 +138,8 @@ class SpellState(NetworkBehaviour):
     def get_point_cast_order(self, mage: Mage, where: Vector2):
         def point_cast_order():
             mage.face(where)
+            if mage.animator:
+                mage.animator.play("cast")
             self.on_point_cast(where)
             yield OrderTransition.CONTINUE
 
