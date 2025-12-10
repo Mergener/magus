@@ -7,17 +7,17 @@ from common.behaviour import Behaviour
 from common.behaviours.network_entity_manager import NetworkEntityManager
 from common.network import NetPeer
 from game.game_manager import GameManager
-from game.lobby import (
+from game.lobby_base import (
     DoneLoadingGameScene,
     GameStarting,
     JoinGameRequest,
     JoinGameResponse,
     LobbyInfo,
+    LobbyInfoPacket,
     PlayerJoined,
     PlayerLeft,
     QuitLobby,
     StartGameRequest,
-    UpdateLobbyInfo,
 )
 from game.player import Player
 
@@ -98,8 +98,8 @@ class LobbyManager(Behaviour):
         player_left = PlayerLeft(player.net_entity.id, player.index)
         self.game.network.publish(player_left)
 
-    def _handle_update_lobby_info(self, packet: UpdateLobbyInfo, peer: NetPeer):
-        self.lobby_info.update_from_packet(packet)
+    def _handle_update_lobby_info(self, packet: LobbyInfoPacket, peer: NetPeer):
+        self.lobby_info.from_packet(packet)
 
     def on_init(self):
         self._players: list[Player] = []
@@ -116,7 +116,7 @@ class LobbyManager(Behaviour):
             StartGameRequest, lambda m, p: self._handle_start_game(m, p)
         )
         self._update_lobby_info_handler = self.game.network.listen(
-            UpdateLobbyInfo, lambda m, p: self._handle_update_lobby_info(m, p)
+            LobbyInfoPacket, lambda m, p: self._handle_update_lobby_info(m, p)
         )
         self._quit_lobby_handler = self.game.network.listen(
             QuitLobby, lambda _, p: self._handle_disconnection(p)

@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from struct import pack
-
 import pygame as pg
 
-import server
 from common.behaviours.animator import Animator
 from common.behaviours.camera import Camera
 from common.behaviours.network_behaviour import (
@@ -190,7 +187,13 @@ class Mage(NetworkBehaviour):
 
     @server_method
     def take_damage(self, amount: float, damage_source: Player | None):
+        assert self.game
+
         self.health -= amount
+
+        if self.health <= 0:
+            game_mgr = notnull(self.game.container.get(GameManager))
+            game_mgr.on_player_death(self.owner, damage_source)
 
     def get_spell_state(self, spell: SpellInfo):
         for s in self.spells:

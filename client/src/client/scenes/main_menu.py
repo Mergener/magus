@@ -6,7 +6,7 @@ from common.behaviour import Behaviour
 from common.behaviours.network_entity_manager import NetworkEntityManager
 from common.behaviours.ui.ui_button import UIButton
 from common.game import Game
-from game.lobby import (
+from game.lobby_base import (
     GameStarting,
     JoinGameRequest,
     JoinGameResponse,
