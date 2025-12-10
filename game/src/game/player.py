@@ -19,7 +19,7 @@ class Player(NetworkBehaviour):
         self._game_manager: GameManager | None = None
         self.mage: Mage | None = None
         self._index = self.use_sync_var(int, 0)
-        self.name = self.use_sync_var(str, "Unnamed Player")
+        self.player_name = self.use_sync_var(str, "Unnamed Player")
         self.coins = self.use_sync_var(int, 0)
         self.kills = self.use_sync_var(int, 0)
         self.deaths = self.use_sync_var(int, 0)
@@ -42,7 +42,7 @@ class Player(NetworkBehaviour):
         """
         return self._net_peer
 
-    def local_player(self):
+    def is_local_player(self):
         return self._local_player
 
     @entity_packet_handler(PlayerJoined)

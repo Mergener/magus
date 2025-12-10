@@ -107,10 +107,10 @@ class LobbyManager(Behaviour):
         for i, p in enumerate(self._players):
             p.index = i
             p.team.value = i
-            p.name.value = f"Player {p.index + 1}"
+            p.player_name.value = f"Player {p.index + 1}"
 
         self.lobby_info.players = [
-            (p.name.value, p.index, p.team.value) for p in self._players
+            (p.player_name.value, p.index, p.team.value) for p in self._players
         ]
 
         if self.game:

@@ -24,8 +24,17 @@ class UISurface(Widget):
         self._cached_ref_resolution: Vector2 | None = None
         self._cached_canvas: Canvas | None = self.canvas
         self._cached_display_size: tuple[int, int] | None = None
-        self.surface_scale = Vector2(1, 1)
+        self._surface_scale = Vector2(1, 1)
         self.repeat_flags: int = 0
+
+    @property
+    def surface_scale(self):
+        return self._surface_scale
+
+    @surface_scale.setter
+    def surface_scale(self, value: Vector2):
+        self._surface_scale = value
+        self._refresh_active_surface()
 
     @property
     def tint(self):
@@ -81,6 +90,9 @@ class UISurface(Widget):
 
         self._active_surface = new_surface
 
+        self._cached_position = self.transform.position
+        self._cached_anchor = self.anchor
+        self._cached_tint = self.tint
         self._cached_rotation = rotation
         self._cached_transform_scale = transform_scale
         self._cached_ref_resolution = canvas.reference_resolution
@@ -104,6 +116,15 @@ class UISurface(Widget):
             return True
 
         if self.transform.rotation != self._cached_rotation:
+            return True
+
+        if self.transform.position != self._cached_position:
+            return True
+
+        if self.anchor != self._cached_anchor:
+            return True
+
+        if self.tint != self._cached_tint:
             return True
 
         if self.game and self.game.display:

@@ -17,7 +17,7 @@ from common.behaviours.physics_object import PhysicsObject
 from common.behaviours.sprite_renderer import SpriteRenderer
 from common.behaviours.ui.canvas import Canvas
 from common.behaviours.ui.ui_button import UIButton
-from common.behaviours.ui.ui_label import UILabel
+from common.behaviours.ui.ui_label import HorizontalAlign, UILabel
 from common.node import Node
 from common.primitives import Vector2
 from common.utils import notnull
@@ -80,6 +80,14 @@ def build_lobby_menu():
     exit_button.image.image_path = "img/ui/button.png"
     exit_button.node.transform.position = Vector2(0, -100)
     exit_button.image.surface_scale = Vector2(3, 1)
+
+    lobby_info_label = lobby_menu.add_child().add_behaviour(UILabel)
+    lobby_info_label.text = ""
+    lobby_info_label.bold = False
+    lobby_info_label.font_size = 24
+    lobby_info_label.anchor = Vector2(0.1, 0.95)
+    lobby_info_label.horizontal_align = HorizontalAlign.LEFT
+    # lobby_info_label.transform.position = Vector2(-1500, 500)
 
     lobby_menu.add_behaviour(Lobby)
 

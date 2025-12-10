@@ -40,10 +40,7 @@ class Widget(Behaviour, ABC):
         return None
 
     def on_serialize(self, out_dict: dict):
-        out_dict["anchor"] = {"x": self.anchor.x, "y": self.anchor.y}
+        out_dict["anchor"] = self.anchor.serialize()
 
     def on_deserialize(self, in_dict: dict):
-        anchor_dict = in_dict.get("anchor")
-        if anchor_dict is not None:
-            self._anchor.x = anchor_dict.get("x", 0.5)
-            self._anchor.y = anchor_dict.get("y", 0.5)
+        self.anchor = Vector2().deserialize(in_dict.get("anchor"))

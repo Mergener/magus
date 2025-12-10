@@ -1,4 +1,5 @@
 from enum import Enum
+from sys import stderr
 
 import pygame as pg
 
@@ -25,7 +26,7 @@ class UILabel(Widget):
         super().on_init()
 
         self._texture_node = self.node.add_child()
-        self._texture_base: UISurface = self._texture_node.add_behaviour(UISurface)
+        self._ui_texture: UISurface = self._texture_node.add_behaviour(UISurface)
 
         self._text: str = ""
         self._font_name: str | None = None
@@ -34,19 +35,20 @@ class UILabel(Widget):
         self._italic: bool = False
         self._color: pg.Color = pg.Color(255, 255, 255, 255)
         self._anti_alias: bool = True
-        self._horizontal_align: HorizontalAlign = HorizontalAlign.LEFT
+        self._horizontal_align: HorizontalAlign = HorizontalAlign.CENTER
         self._vertical_align: VerticalAlign = VerticalAlign.MIDDLE
 
+    def on_start(self):
         self._refresh_text_surface()
 
     def _refresh_text_surface(self):
         if not self._text:
-            self._texture_base.set_surface(None)
+            self._ui_texture.set_surface(None)
             return
 
         lines = self._text.split("\n")
         if len(lines) == 0:
-            self._texture_base.set_surface(None)
+            self._ui_texture.set_surface(None)
             return
 
         try:
@@ -67,8 +69,6 @@ class UILabel(Widget):
             )
 
             surfaces: list[pg.Surface] = []
-
-            print(lines)
 
             width = 0
             for line in lines:
@@ -92,16 +92,16 @@ class UILabel(Widget):
 
                 surface.blit(s, pg.Rect((x, y), (width, height)))
 
-            self._texture_base.set_surface(surface)
-            self._texture_base.surface_scale = Vector2(1 / FONT_FACTOR, 1 / FONT_FACTOR)
             self._update_alignment()
+            self._ui_texture.surface_scale = Vector2(1 / FONT_FACTOR, 1 / FONT_FACTOR)
+            self._ui_texture.set_surface(surface)
 
         except Exception as e:
             print(f"Failed to render text: {e}")
-            self._texture_base.set_surface(None)
+            self._ui_texture.set_surface(None)
 
     def _update_alignment(self):
-        transformed_surface = self._texture_base.transformed_surface
+        transformed_surface = self._ui_texture.transformed_surface
         if transformed_surface is None:
             return
 
@@ -122,7 +122,15 @@ class UILabel(Widget):
         else:
             offset_y = -text_height
 
-        self._texture_base.transform.position = Vector2(offset_x, offset_y)
+        self._ui_texture.transform.position = Vector2(offset_x, offset_y)
+
+    @property
+    def anchor(self):
+        return self._ui_texture.anchor
+
+    @anchor.setter
+    def anchor(self, value: Vector2):
+        self._ui_texture.anchor = value
 
     @property
     def text(self):
@@ -211,12 +219,12 @@ class UILabel(Widget):
     @property
     def tint(self):
         """Expose tint property from underlying texture base"""
-        return self._texture_base.tint
+        return self._ui_texture.tint
 
     @tint.setter
     def tint(self, value: pg.Color | tuple):
         """Set tint on underlying texture base"""
-        self._texture_base.tint = value
+        self._ui_texture.tint = value
 
     def on_serialize(self, out_dict: dict):
         super().on_serialize(out_dict)
@@ -260,16 +268,18 @@ class UILabel(Widget):
         try:
             self._horizontal_align = HorizontalAlign[h_align_name]
         except KeyError:
+            print(f"Invalid horizontal align {h_align_name}", file=stderr)
             self._horizontal_align = HorizontalAlign.LEFT
 
         v_align_name = in_dict.get("vertical_align", "top").upper()
         try:
             self._vertical_align = VerticalAlign[v_align_name]
         except KeyError:
+            print(f"Invalid vertical align {v_align_name}", file=stderr)
             self._vertical_align = VerticalAlign.TOP
 
         self._refresh_text_surface()
 
     @property
     def rect(self):
-        return self._texture_base.rect
+        return self._ui_texture.rect

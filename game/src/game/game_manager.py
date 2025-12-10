@@ -100,7 +100,7 @@ class GameManager(NetworkBehaviour):
     @client_method
     def get_local_player(self):
         for p in self.players:
-            if p.local_player():
+            if p.is_local_player():
                 return p
         raise Exception("Expected a local player")
 
