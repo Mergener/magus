@@ -31,7 +31,7 @@ def build_client_scenes():
     build_main_menu()
     build_lobby_menu()
     build_mage_template()
-    build_world()
+    # build_world()
 
 
 def build_main_menu():
@@ -141,24 +141,24 @@ def build_mage_template():
     save_node(mage_node, "templates/mage.json")
 
 
-def build_world():
-    world_node = Node()
+# def build_world():
+#     world_node = Node()
 
-    tileset_asset = load_image_asset("img/tileset.png")
-    upper = tileset_asset
-    # for i in range(2):
-    #     upper = slice_image(upper, Vector2(1, 2), SliceMode.RECTS_PER_AXIS)[0]
+#     tileset_asset = load_image_asset("img/tileset.png")
+#     upper = tileset_asset
+#     # for i in range(2):
+#     #     upper = slice_image(upper, Vector2(1, 2), SliceMode.RECTS_PER_AXIS)[0]
 
-    tiles = slice_image(upper, Vector2(32, 32), SliceMode.SIZE_PER_RECT)
-    tilemap = world_node.add_behaviour(Tilemap)
+#     tiles = slice_image(upper, Vector2(32, 32), SliceMode.SIZE_PER_RECT)
+#     tilemap = world_node.add_behaviour(Tilemap)
 
-    with tilemap.edit():
-        tilemap.tileset = tiles
-        tilemap.dimensions = (20, 20)
-        x = 0
-        for i in range(20):
-            for j in range(20):
-                tilemap.set_tile_at((i, j), x + 1)
-                x = (x + 1) % 2
+#     with tilemap.edit():
+#         tilemap.tileset = tiles
+#         tilemap.dimensions = (20, 20)
+#         x = 0
+#         for i in range(20):
+#             for j in range(20):
+#                 tilemap.set_tile_at((i, j), x + 1)
+#                 x = (x + 1) % 2
 
-    save_node(world_node, "templates/world.json")
+#     save_node(world_node, "templates/world.json")

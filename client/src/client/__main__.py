@@ -18,6 +18,7 @@ from common.behaviours.ui.ui_button import UIButton
 from common.behaviours.ui.ui_label import UILabel
 from common.game import Game
 from common.node import Node
+from common.primitives import Color
 
 
 async def main():

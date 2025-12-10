@@ -152,8 +152,6 @@ class GameManager(NetworkBehaviour):
     def on_client_start(self):
         pg.event.set_grab(True)
 
-        self.node.add_child(load_node_asset("templates/world.json"))
-
     def on_client_update(self, dt: float):
         assert self.game
 

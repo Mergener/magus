@@ -4,6 +4,7 @@ import asyncio
 from sys import stderr
 from typing import TYPE_CHECKING
 
+from common import primitives
 from common.container import Container
 
 if TYPE_CHECKING:
@@ -12,6 +13,7 @@ if TYPE_CHECKING:
     from common.simulation import Simulation
     from common.behaviour import Behaviour
     from common.input import Input
+    from common.primitives import Color
 
 import pygame as pg
 
@@ -26,10 +28,12 @@ class Game:
         network: Network | None = None,
         scene: Node | None = None,
         global_object: Node | None = None,
+        bg_color: Color | None = None,
     ):
         from common.input import Input
         from common.network import NullNetwork
         from common.node import Node
+        from common.primitives import Color
         from common.simulation import Simulation
 
         self._profiler = Profiler()
@@ -45,6 +49,7 @@ class Game:
         self._scene_loaded_futures: list[asyncio.Future] = []
         self._container = Container()
         self._input = Input()
+        self._bg_color = bg_color or Color(0, 0, 0)
 
     @property
     def profiler(self):
@@ -123,7 +128,7 @@ class Game:
             with self.profiler.profile("render"):
                 assert self._display
                 with self.profiler.profile("render_reset"):
-                    self._display.fill("black")
+                    self._display.fill(self._bg_color)
 
                 with self.profiler.profile("inner_render"):
                     self.simulation.render()
