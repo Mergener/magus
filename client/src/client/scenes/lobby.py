@@ -44,6 +44,8 @@ class Lobby(Behaviour):
 
         self._lobby_info: LobbyInfo = LobbyInfo()
 
+    def on_start(self):
+        assert self.game
         self.game.network.publish(RequestLobbyInfo())
 
     def on_destroy(self):

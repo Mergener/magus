@@ -16,8 +16,9 @@ class LobbyInfo:
     def from_packet(self, packet: LobbyInfoPacket):
         self.name = packet.name
         self.capacity = max(1, min(255, packet.capacity))
+        self.players = packet.players
 
-    def to_packet(self, packet: LobbyInfoPacket):
+    def to_packet(self):
         return LobbyInfoPacket(self.name, self.capacity, self.players)
 
     def from_update_packet(self, packet: UpdateLobbyRequest):
@@ -165,7 +166,7 @@ class LobbyInfoPacket(Packet):
         self.capacity = reader.read_uint8()
         n_players = reader.read_uint8()
         self.players = []
-        for i in range(n_players):
+        for _ in range(n_players):
             self.players.append(
                 (reader.read_str(), reader.read_uint8(), reader.read_uint8())
             )

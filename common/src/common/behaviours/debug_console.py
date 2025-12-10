@@ -14,7 +14,7 @@ class DebugConsole(Behaviour):
             ["consolas", "monospace", "Courier" "Courier New", "Arial"], 36
         )
         self._fps = 0
-        self._texts = ""
+        self._texts: list[str] = []
 
     def set_active(self, active: bool):
         assert self.game

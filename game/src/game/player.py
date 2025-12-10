@@ -14,16 +14,25 @@ if TYPE_CHECKING:
 
 class Player(NetworkBehaviour):
     def on_init(self):
-        self.index: int = 0
         self._local_player: bool = False
         self._net_peer: NetPeer | None = None
         self._game_manager: GameManager | None = None
         self.mage: Mage | None = None
+        self._index = self.use_sync_var(int, 0)
+        self.name = self.use_sync_var(str, "Unnamed Player")
         self.coins = self.use_sync_var(int, 0)
         self.kills = self.use_sync_var(int, 0)
         self.deaths = self.use_sync_var(int, 0)
         self.team = self.use_sync_var(int, 0)
         self.wins = self.use_sync_var(int, 0)
+
+    @property
+    def index(self):
+        return self._index.value
+
+    @index.setter
+    def index(self, value):
+        self._index.value = value
 
     @property
     def net_peer(self):

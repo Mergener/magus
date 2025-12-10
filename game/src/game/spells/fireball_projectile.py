@@ -49,6 +49,9 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
         if not hit_mage:
             return
 
+        if hit_mage.owner.is_ally_of(self.caster.owner):
+            return
+
         assert self.game
         hit_mage.take_damage(self.damage, self.owner)
         await self._do_burst()
