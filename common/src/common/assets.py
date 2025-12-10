@@ -13,7 +13,7 @@ import pygame as pg
 class ImageAsset:
     def __init__(
         self,
-        pygame_surface: pg.Surface,
+        pygame_surface: pg.Surface | None,
         path: str | None = None,
         rect: pg.Rect | None = None,
     ):

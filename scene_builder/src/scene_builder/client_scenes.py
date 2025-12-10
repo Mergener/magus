@@ -15,6 +15,7 @@ from common.behaviours.collider import (
 from common.behaviours.network_entity import NetworkEntity
 from common.behaviours.physics_object import PhysicsObject
 from common.behaviours.sprite_renderer import SpriteRenderer
+from common.behaviours.tilemap import Tilemap
 from common.behaviours.ui.canvas import Canvas
 from common.behaviours.ui.ui_button import UIButton
 from common.behaviours.ui.ui_label import HorizontalAlign, UILabel
@@ -30,6 +31,7 @@ def build_client_scenes():
     build_main_menu()
     build_lobby_menu()
     build_mage_template()
+    build_world()
 
 
 def build_main_menu():
@@ -137,3 +139,26 @@ def build_mage_template():
     health_bar.image_scale = Vector2(4, 1)
 
     save_node(mage_node, "templates/mage.json")
+
+
+def build_world():
+    world_node = Node()
+
+    tileset_asset = load_image_asset("img/tileset.png")
+    upper = tileset_asset
+    # for i in range(2):
+    #     upper = slice_image(upper, Vector2(1, 2), SliceMode.RECTS_PER_AXIS)[0]
+
+    tiles = slice_image(upper, Vector2(32, 32), SliceMode.SIZE_PER_RECT)
+    tilemap = world_node.add_behaviour(Tilemap)
+
+    with tilemap.edit():
+        tilemap.tileset = tiles
+        tilemap.dimensions = (20, 20)
+        x = 0
+        for i in range(20):
+            for j in range(20):
+                tilemap.set_tile_at((i, j), x + 1)
+                x = (x + 1) % 2
+
+    save_node(world_node, "templates/world.json")

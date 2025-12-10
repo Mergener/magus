@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 import pygame as pg
 
+from common.assets import load_node_asset
 from common.behaviour import Behaviour
 from common.behaviours.network_behaviour import (
     NetworkBehaviour,
@@ -150,6 +151,8 @@ class GameManager(NetworkBehaviour):
 
     def on_client_start(self):
         pg.event.set_grab(True)
+
+        self.node.add_child(load_node_asset("templates/world.json"))
 
     def on_client_update(self, dt: float):
         assert self.game

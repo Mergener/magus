@@ -26,7 +26,7 @@ class Tilemap(Behaviour):
         self._update_texture()
 
     @contextmanager
-    def editing(self, topic: str):
+    def edit(self):
         self._editing = True
         try:
             yield
@@ -54,7 +54,41 @@ class Tilemap(Behaviour):
         if not self._editing:
             self._update_texture()
 
+    @property
+    def tile_size(self):
+        return self._tile_size
+
+    @tile_size.setter
+    def tile_size(self, value: pg.Vector2):
+        self._tile_size = value
+        self._update_texture()
+
+    @property
+    def dimensions(self) -> tuple[int, int]:
+        h, w = self._tiles.shape
+        return (w, h)
+
+    @dimensions.setter
+    def dimensions(self, value: tuple[int, int]):
+        new_w, new_h = value
+        old_h, old_w = self._tiles.shape
+
+        new_tiles = np.zeros((new_h, new_w), dtype=int)
+
+        copy_w = min(old_w, new_w)
+        copy_h = min(old_h, new_h)
+
+        new_tiles[0:copy_h, 0:copy_w] = self._tiles[0:copy_h, 0:copy_w]
+
+        self._tiles = new_tiles
+
+        if not self._editing:
+            self._update_texture()
+
     def _update_texture(self):
+        if self._editing:
+            return
+
         tile_w = int(self._tile_size.x)
         tile_h = int(self._tile_size.y)
 
@@ -78,22 +112,25 @@ class Tilemap(Behaviour):
         self._sprite_renderer.texture = texture
 
     def on_serialize(self, out_dict: dict):
-        out_dict["tiles"] = [*self._tiles.flatten()]
+        out_dict["dimensions"] = list(self.dimensions)
+        out_dict["tiles"] = [int(v) for v in self._tiles.flatten()]
         out_dict["tileset"] = [img.serialize() for img in self._tileset]
 
     def on_deserialize(self, in_dict: dict):
-        tileset_data = in_dict.get("tileset")
-        if tileset_data is not None:
-            self._tileset = [load_image_asset(data) for data in tileset_data]
+        with self.edit():
+            self.dimensions = tuple(in_dict.get("dimensions", (200, 200)))
+            tileset_data = in_dict.get("tileset")
+            if tileset_data is not None and len(tileset_data) > 0:
+                self._tileset = [
+                    ImageAsset(None).deserialize(data) for data in tileset_data
+                ]
 
-        tiles_flat = in_dict.get("tiles")
-        if tiles_flat is not None:
-            expected_size = self._tiles.size
-            if len(tiles_flat) != expected_size:
-                raise ValueError(
-                    f"Invalid tile count: expected {expected_size}, got {len(tiles_flat)}"
-                )
+            tiles_flat = in_dict.get("tiles")
+            if tiles_flat is not None:
+                expected_size = self._tiles.size
+                if len(tiles_flat) != expected_size:
+                    raise ValueError(
+                        f"Invalid tile count: expected {expected_size}, got {len(tiles_flat)}"
+                    )
 
-            self._tiles = np.array(tiles_flat, dtype=int).reshape(self._tiles.shape)
-
-        self._update_texture()
+                self._tiles = np.array(tiles_flat, dtype=int).reshape(self._tiles.shape)
