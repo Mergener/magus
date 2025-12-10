@@ -138,7 +138,8 @@ class NetworkEntity(Behaviour):
                 SyncVarUpdate, lambda msg, peer: self._handle_sync_var_update(msg, peer)
             )
 
-    def on_start(self) -> Any:
+    async def on_start(self) -> Any:
+        assert self.game
         self._require_sync_var_creation_sync = True
 
         assert self._pre_start_packet_queue is not None
@@ -148,6 +149,31 @@ class NetworkEntity(Behaviour):
 
         self._pre_start_packet_queue = None
         self._started = True
+
+        # The following is a filthy hack to a problem that made entities transforms
+        # only get synchronized after moving at least once.
+        if self.game.network.is_server():
+            await self.game.simulation.wait_seconds(1)
+            if self.node.destroyed:
+                return
+
+            tick = self.game.simulation.tick_id
+            self.game.network.publish(
+                PositionUpdate(
+                    tick, self.id, self.transform.position.x, self.transform.position.y
+                ),
+                override_delivery_mode=DeliveryMode.RELIABLE,
+            )
+            self.game.network.publish(
+                ScaleUpdate(
+                    tick, self.id, self.transform.scale.x, self.transform.scale.y
+                ),
+                override_delivery_mode=DeliveryMode.RELIABLE,
+            )
+            self.game.network.publish(
+                RotationUpdate(tick, self.id, self.transform.rotation),
+                override_delivery_mode=DeliveryMode.RELIABLE,
+            )
 
     def _handle_rotation_update(self, packet: RotationUpdate, peer: NetPeer):
         self.transform.local_rotation = packet.rotation
