@@ -34,7 +34,7 @@ class UILabel(Widget):
         self._italic: bool = False
         self._color: pg.Color = pg.Color(255, 255, 255, 255)
         self._anti_alias: bool = True
-        self._horizontal_align: HorizontalAlign = HorizontalAlign.CENTER
+        self._horizontal_align: HorizontalAlign = HorizontalAlign.LEFT
         self._vertical_align: VerticalAlign = VerticalAlign.MIDDLE
 
         self._refresh_text_surface()
@@ -44,12 +44,20 @@ class UILabel(Widget):
             self._texture_base.set_surface(None)
             return
 
+        lines = self._text.split("\n")
+        if len(lines) == 0:
+            self._texture_base.set_surface(None)
+            return
+
         try:
+
             # Quick hack:
             # Since our text will scale with screen size, a little trick to maintain quality
             # is to render the texture in a larger font size and scale that down, instead
             # of upscaling smaller texts and losing quality.
             FONT_FACTOR = 10
+
+            line_padding = self._font_size // 10
 
             font = load_font_asset(
                 self._font_name or "Arial",
@@ -57,10 +65,37 @@ class UILabel(Widget):
                 self._bold,
                 self._italic,
             )
-            surface = font.render(self._text, self._anti_alias, self._color)
+
+            surfaces: list[pg.Surface] = []
+
+            print(lines)
+
+            width = 0
+            for line in lines:
+                s = font.render(line, self._anti_alias, self._color)
+                surfaces.append(s)
+                width = max(width, s.get_width())
+
+            height = (surfaces[0].get_height() + line_padding) * len(surfaces)
+            surface = pg.Surface((width, height), pg.SRCALPHA).convert_alpha()
+            for i, s in enumerate(surfaces):
+                y = i * (height // len(surfaces))
+
+                w_diff = width - s.get_width()
+
+                if self.horizontal_align == HorizontalAlign.CENTER:
+                    x = w_diff / 2
+                elif self.horizontal_align == HorizontalAlign.LEFT:
+                    x = 0
+                else:  # Right
+                    x = w_diff
+
+                surface.blit(s, pg.Rect((x, y), (width, height)))
+
             self._texture_base.set_surface(surface)
             self._texture_base.surface_scale = Vector2(1 / FONT_FACTOR, 1 / FONT_FACTOR)
             self._update_alignment()
+
         except Exception as e:
             print(f"Failed to render text: {e}")
             self._texture_base.set_surface(None)
@@ -95,7 +130,7 @@ class UILabel(Widget):
 
     @text.setter
     def text(self, value: str):
-        self._text = value
+        self._text = value.replace("\\n", "\n")
         self._refresh_text_surface()
 
     @property
