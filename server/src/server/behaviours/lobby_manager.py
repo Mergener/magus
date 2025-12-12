@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 
 from common.assets import load_node_asset
 from common.behaviour import Behaviour
@@ -39,12 +40,12 @@ class LobbyManager(Behaviour):
             return
 
         if len(self._players) >= self.lobby_info.capacity:
-            peer.send(JoinGameResponse(False))
+            peer.send(JoinGameResponse(False, 0))
             return
 
         player_entity = entity_manager.spawn_entity("player")
 
-        peer.send(JoinGameResponse(True))
+        peer.send(JoinGameResponse(True, len(self._players)))
         peer.send(PlayerJoined(player_entity.id, len(self._players), True))
         for i, p in enumerate(self._players):
             # Notify the player about every other present player.
@@ -108,6 +109,8 @@ class LobbyManager(Behaviour):
             p.index = i
             p.team.value = i
             p.player_name.value = f"Player {p.index + 1}"
+
+        print(json.dumps(self._players, indent=2))
 
         self.lobby_info.players = [
             (p.player_name.value, p.index, p.team.value) for p in self._players

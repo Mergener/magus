@@ -124,10 +124,18 @@ class GameManager(NetworkBehaviour):
     #
 
     def on_common_pre_start(self):
+        from game.player import Player
+
         assert self.game
         self.game.container.register_singleton(type(self), self)
-        for p in self.players:
-            self._players_by_peer[notnull(p.net_peer)] = p
+
+        self._players = self.game.scene.get_behaviours_in_children(
+            Player, recursive=True
+        )
+
+        if self.game.network.is_server():
+            for p in self.players:
+                self._players_by_peer[notnull(p.net_peer)] = p
 
     def on_server_start(self):
         from game.mage import Mage
@@ -140,7 +148,8 @@ class GameManager(NetworkBehaviour):
             mage.transform.position = Vector2(
                 random.randint(-200, 200), random.randint(-200, 200)
             )
-            p.mage = mage
+            p.mage_entity_id.value = mage.net_entity.id
+            p._mage = mage
             p._game_manager = self
 
     def on_client_pre_start(self) -> Any:

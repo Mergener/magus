@@ -55,15 +55,19 @@ class JoinGameRequest(Packet):
 
 class JoinGameResponse(Packet):
     accepted: bool
+    index: int
 
-    def __init__(self, accepted: bool):
+    def __init__(self, accepted: bool, index: int):
         self.accepted = accepted
+        self.index = index
 
     def on_write(self, writer: ByteWriter):
         writer.write_bool(self.accepted)
+        writer.write_uint8(self.index)
 
     def on_read(self, reader: ByteReader):
         self.accepted = reader.read_bool()
+        self.index = reader.read_uint8()
 
     @property
     def delivery_mode(self):

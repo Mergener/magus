@@ -1,6 +1,7 @@
 from sys import stderr
 from typing import cast
 
+from client.scenes.lobby import Lobby
 from common.assets import load_node_asset
 from common.behaviour import Behaviour
 from common.behaviours.network_entity_manager import NetworkEntityManager
@@ -43,7 +44,11 @@ class MainMenu(Behaviour):
             print("Join lobby request refused.")
             return
 
-        await self.game.load_scene_async(load_node_asset("scenes/client/lobby.json"))
+        lobby_node = load_node_asset("scenes/client/lobby.json")
+
+        await self.game.load_scene_async(lobby_node)
+
+        lobby_node.get_or_add_behaviour(Lobby)._local_player_index = response.index
 
     def _on_join_game(self, msg: JoinGameResponse):
         assert self.game

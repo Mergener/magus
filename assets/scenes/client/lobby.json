@@ -1,1 +1,401 @@
-{"name": "lobby", "children": [{"children": [{"children": [], "behaviours": [{"__type": "common.behaviours.transform.Transform", "receive_updates": true, "visible": true, "local_position": {"x": -33.5, "y": -13.5}, "local_scale": {"x": 1.0, "y": 1.0}, "rotation": 0.0}, {"__type": "common.behaviours.ui.ui_surface.UISurface", "receive_updates": true, "visible": true, "anchor": {"x": 0.5, "y": 0.5}}]}], "behaviours": [{"__type": "common.behaviours.transform.Transform", "receive_updates": true, "visible": true, "local_position": {"x": 0.0, "y": 100.0}, "local_scale": {"x": 1.0, "y": 1.0}, "rotation": 0.0}, {"__type": "common.behaviours.ui.ui_label.UILabel", "receive_updates": true, "visible": true, "anchor": {"x": 0.5, "y": 0.5}, "text": "Lobby", "font_name": null, "font_size": 36, "bold": true, "italic": false, "color": {"r": 255, "g": 255, "b": 255, "a": 255}, "anti_alias": true, "horizontal_align": "center", "vertical_align": "middle"}]}, {"children": [{"children": [], "behaviours": [{"__type": "common.behaviours.transform.Transform", "receive_updates": true, "visible": true, "local_position": {"x": 0.0, "y": 0.0}, "local_scale": {"x": 1.0, "y": 1.0}, "rotation": 0.0}, {"__type": "common.behaviours.ui.ui_surface.UISurface", "receive_updates": true, "visible": true, "anchor": {"x": 0.5, "y": 0.5}}]}], "behaviours": [{"__type": "common.behaviours.transform.Transform", "receive_updates": true, "visible": true, "local_position": {"x": 0.0, "y": 0.0}, "local_scale": {"x": 1.0, "y": 1.0}, "rotation": 0.0}, {"__type": "common.behaviours.ui.ui_image.UIImage", "receive_updates": true, "visible": true, "anchor": {"x": 0.5, "y": 0.5}, "image": "img/ui/button.png", "tint": {"r": 255, "g": 255, "b": 255, "a": 255}, "surface_scale": {"x": 3.0, "y": 1.0}}, {"__type": "common.behaviours.ui.ui_label.UILabel", "receive_updates": true, "visible": true, "anchor": {"x": 0.5, "y": 0.5}, "text": "Start", "font_name": null, "font_size": 24, "bold": false, "italic": false, "color": {"r": 255, "g": 255, "b": 255, "a": 255}, "anti_alias": true, "horizontal_align": "center", "vertical_align": "middle"}, {"__type": "common.behaviours.ui.ui_button.UIButton", "receive_updates": true, "visible": true, "normal_color": {"r": 255, "g": 255, "b": 255, "a": 255}, "hovered_color": {"r": 220, "g": 220, "b": 220, "a": 255}, "pressed_color": {"r": 180, "g": 180, "b": 180, "a": 255}}]}, {"children": [{"children": [], "behaviours": [{"__type": "common.behaviours.transform.Transform", "receive_updates": true, "visible": true, "local_position": {"x": 0.0, "y": 0.0}, "local_scale": {"x": 1.0, "y": 1.0}, "rotation": 0.0}, {"__type": "common.behaviours.ui.ui_surface.UISurface", "receive_updates": true, "visible": true, "anchor": {"x": 0.5, "y": 0.5}}]}], "behaviours": [{"__type": "common.behaviours.transform.Transform", "receive_updates": true, "visible": true, "local_position": {"x": 0.0, "y": -100.0}, "local_scale": {"x": 1.0, "y": 1.0}, "rotation": 0.0}, {"__type": "common.behaviours.ui.ui_image.UIImage", "receive_updates": true, "visible": true, "anchor": {"x": 0.5, "y": 0.5}, "image": "img/ui/button.png", "tint": {"r": 255, "g": 255, "b": 255, "a": 255}, "surface_scale": {"x": 3.0, "y": 1.0}}, {"__type": "common.behaviours.ui.ui_label.UILabel", "receive_updates": true, "visible": true, "anchor": {"x": 0.5, "y": 0.5}, "text": "Back", "font_name": null, "font_size": 24, "bold": false, "italic": false, "color": {"r": 255, "g": 255, "b": 255, "a": 255}, "anti_alias": true, "horizontal_align": "center", "vertical_align": "middle"}, {"__type": "common.behaviours.ui.ui_button.UIButton", "receive_updates": true, "visible": true, "normal_color": {"r": 255, "g": 255, "b": 255, "a": 255}, "hovered_color": {"r": 220, "g": 220, "b": 220, "a": 255}, "pressed_color": {"r": 180, "g": 180, "b": 180, "a": 255}}]}, {"children": [{"children": [], "behaviours": [{"__type": "common.behaviours.transform.Transform", "receive_updates": true, "visible": true, "local_position": {"x": 0.0, "y": 0.0}, "local_scale": {"x": 1.0, "y": 1.0}, "rotation": 0.0}, {"__type": "common.behaviours.ui.ui_surface.UISurface", "receive_updates": true, "visible": true, "anchor": {"x": 0.1, "y": 0.95}}]}], "behaviours": [{"__type": "common.behaviours.transform.Transform", "receive_updates": true, "visible": true, "local_position": {"x": 0.0, "y": 0.0}, "local_scale": {"x": 1.0, "y": 1.0}, "rotation": 0.0}, {"__type": "common.behaviours.ui.ui_label.UILabel", "receive_updates": true, "visible": true, "anchor": {"x": 0.1, "y": 0.95}, "text": "", "font_name": null, "font_size": 24, "bold": false, "italic": false, "color": {"r": 255, "g": 255, "b": 255, "a": 255}, "anti_alias": true, "horizontal_align": "left", "vertical_align": "middle"}]}], "behaviours": [{"__type": "common.behaviours.transform.Transform", "receive_updates": true, "visible": true, "local_position": {"x": 0.0, "y": 0.0}, "local_scale": {"x": 1.0, "y": 1.0}, "rotation": 0.0}, {"__type": "common.behaviours.ui.canvas.Canvas", "receive_updates": true, "visible": true}, {"__type": "client.scenes.lobby.Lobby", "receive_updates": true, "visible": true}]}
+{
+    "name": "lobby",
+    "children": [
+        {
+            "children": [
+                {
+                    "children": [],
+                    "behaviours": [
+                        {
+                            "__type": "common.behaviours.transform.Transform",
+                            "receive_updates": true,
+                            "visible": true,
+                            "local_position": {
+                                "x": -33.5,
+                                "y": -13.5
+                            },
+                            "local_scale": {
+                                "x": 1.0,
+                                "y": 1.0
+                            },
+                            "rotation": 0.0
+                        },
+                        {
+                            "__type": "common.behaviours.ui.ui_surface.UISurface",
+                            "receive_updates": true,
+                            "visible": true,
+                            "anchor": {
+                                "x": 0.5,
+                                "y": 0.5
+                            }
+                        }
+                    ]
+                }
+            ],
+            "behaviours": [
+                {
+                    "__type": "common.behaviours.transform.Transform",
+                    "receive_updates": true,
+                    "visible": true,
+                    "local_position": {
+                        "x": 0.0,
+                        "y": 100.0
+                    },
+                    "local_scale": {
+                        "x": 1.0,
+                        "y": 1.0
+                    },
+                    "rotation": 0.0
+                },
+                {
+                    "__type": "common.behaviours.ui.ui_label.UILabel",
+                    "receive_updates": true,
+                    "visible": true,
+                    "anchor": {
+                        "x": 0.5,
+                        "y": 0.5
+                    },
+                    "text": "Lobby",
+                    "font_name": null,
+                    "font_size": 36,
+                    "bold": true,
+                    "italic": false,
+                    "color": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255,
+                        "a": 255
+                    },
+                    "anti_alias": true,
+                    "horizontal_align": "center",
+                    "vertical_align": "middle"
+                }
+            ]
+        },
+        {
+            "children": [
+                {
+                    "children": [],
+                    "behaviours": [
+                        {
+                            "__type": "common.behaviours.transform.Transform",
+                            "receive_updates": true,
+                            "visible": true,
+                            "local_position": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "local_scale": {
+                                "x": 1.0,
+                                "y": 1.0
+                            },
+                            "rotation": 0.0
+                        },
+                        {
+                            "__type": "common.behaviours.ui.ui_surface.UISurface",
+                            "receive_updates": true,
+                            "visible": true,
+                            "anchor": {
+                                "x": 0.5,
+                                "y": 0.5
+                            }
+                        }
+                    ]
+                }
+            ],
+            "behaviours": [
+                {
+                    "__type": "common.behaviours.transform.Transform",
+                    "receive_updates": true,
+                    "visible": true,
+                    "local_position": {
+                        "x": 0.0,
+                        "y": 0.0
+                    },
+                    "local_scale": {
+                        "x": 1.0,
+                        "y": 1.0
+                    },
+                    "rotation": 0.0
+                },
+                {
+                    "__type": "common.behaviours.ui.ui_image.UIImage",
+                    "receive_updates": true,
+                    "visible": true,
+                    "anchor": {
+                        "x": 0.5,
+                        "y": 0.5
+                    },
+                    "image": "img/ui/button.png",
+                    "tint": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255,
+                        "a": 255
+                    },
+                    "surface_scale": {
+                        "x": 3.0,
+                        "y": 1.0
+                    }
+                },
+                {
+                    "__type": "common.behaviours.ui.ui_label.UILabel",
+                    "receive_updates": true,
+                    "visible": true,
+                    "anchor": {
+                        "x": 0.5,
+                        "y": 0.5
+                    },
+                    "text": "Start",
+                    "font_name": null,
+                    "font_size": 24,
+                    "bold": false,
+                    "italic": false,
+                    "color": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255,
+                        "a": 255
+                    },
+                    "anti_alias": true,
+                    "horizontal_align": "center",
+                    "vertical_align": "middle"
+                },
+                {
+                    "__type": "common.behaviours.ui.ui_button.UIButton",
+                    "receive_updates": true,
+                    "visible": true,
+                    "normal_color": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255,
+                        "a": 255
+                    },
+                    "hovered_color": {
+                        "r": 220,
+                        "g": 220,
+                        "b": 220,
+                        "a": 255
+                    },
+                    "pressed_color": {
+                        "r": 180,
+                        "g": 180,
+                        "b": 180,
+                        "a": 255
+                    }
+                }
+            ]
+        },
+        {
+            "children": [
+                {
+                    "children": [],
+                    "behaviours": [
+                        {
+                            "__type": "common.behaviours.transform.Transform",
+                            "receive_updates": true,
+                            "visible": true,
+                            "local_position": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "local_scale": {
+                                "x": 1.0,
+                                "y": 1.0
+                            },
+                            "rotation": 0.0
+                        },
+                        {
+                            "__type": "common.behaviours.ui.ui_surface.UISurface",
+                            "receive_updates": true,
+                            "visible": true,
+                            "anchor": {
+                                "x": 0.5,
+                                "y": 0.5
+                            }
+                        }
+                    ]
+                }
+            ],
+            "behaviours": [
+                {
+                    "__type": "common.behaviours.transform.Transform",
+                    "receive_updates": true,
+                    "visible": true,
+                    "local_position": {
+                        "x": 0.0,
+                        "y": -100.0
+                    },
+                    "local_scale": {
+                        "x": 1.0,
+                        "y": 1.0
+                    },
+                    "rotation": 0.0
+                },
+                {
+                    "__type": "common.behaviours.ui.ui_image.UIImage",
+                    "receive_updates": true,
+                    "visible": true,
+                    "anchor": {
+                        "x": 0.5,
+                        "y": 0.5
+                    },
+                    "image": "img/ui/button.png",
+                    "tint": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255,
+                        "a": 255
+                    },
+                    "surface_scale": {
+                        "x": 3.0,
+                        "y": 1.0
+                    }
+                },
+                {
+                    "__type": "common.behaviours.ui.ui_label.UILabel",
+                    "receive_updates": true,
+                    "visible": true,
+                    "anchor": {
+                        "x": 0.5,
+                        "y": 0.5
+                    },
+                    "text": "Back",
+                    "font_name": null,
+                    "font_size": 24,
+                    "bold": false,
+                    "italic": false,
+                    "color": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255,
+                        "a": 255
+                    },
+                    "anti_alias": true,
+                    "horizontal_align": "center",
+                    "vertical_align": "middle"
+                },
+                {
+                    "__type": "common.behaviours.ui.ui_button.UIButton",
+                    "receive_updates": true,
+                    "visible": true,
+                    "normal_color": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255,
+                        "a": 255
+                    },
+                    "hovered_color": {
+                        "r": 220,
+                        "g": 220,
+                        "b": 220,
+                        "a": 255
+                    },
+                    "pressed_color": {
+                        "r": 180,
+                        "g": 180,
+                        "b": 180,
+                        "a": 255
+                    }
+                }
+            ]
+        },
+        {
+            "children": [
+                {
+                    "children": [],
+                    "behaviours": [
+                        {
+                            "__type": "common.behaviours.transform.Transform",
+                            "receive_updates": true,
+                            "visible": true,
+                            "local_position": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "local_scale": {
+                                "x": 1.0,
+                                "y": 1.0
+                            },
+                            "rotation": 0.0
+                        },
+                        {
+                            "__type": "common.behaviours.ui.ui_surface.UISurface",
+                            "receive_updates": true,
+                            "visible": true,
+                            "anchor": {
+                                "x": 0.1,
+                                "y": 0.95
+                            }
+                        }
+                    ]
+                }
+            ],
+            "behaviours": [
+                {
+                    "__type": "common.behaviours.transform.Transform",
+                    "receive_updates": true,
+                    "visible": true,
+                    "local_position": {
+                        "x": 0.0,
+                        "y": 0.0
+                    },
+                    "local_scale": {
+                        "x": 1.0,
+                        "y": 1.0
+                    },
+                    "rotation": 0.0
+                },
+                {
+                    "__type": "common.behaviours.ui.ui_label.UILabel",
+                    "receive_updates": true,
+                    "visible": true,
+                    "anchor": {
+                        "x": 0.1,
+                        "y": 0.95
+                    },
+                    "text": "",
+                    "font_name": null,
+                    "font_size": 24,
+                    "bold": false,
+                    "italic": false,
+                    "color": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255,
+                        "a": 255
+                    },
+                    "anti_alias": true,
+                    "horizontal_align": "left",
+                    "vertical_align": "middle"
+                }
+            ]
+        }
+    ],
+    "behaviours": [
+        {
+            "__type": "common.behaviours.transform.Transform",
+            "receive_updates": true,
+            "visible": true,
+            "local_position": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "local_scale": {
+                "x": 1.0,
+                "y": 1.0
+            },
+            "rotation": 0.0
+        },
+        {
+            "__type": "common.behaviours.ui.canvas.Canvas",
+            "receive_updates": true,
+            "visible": true
+        },
+        {
+            "__type": "client.scenes.lobby.Lobby",
+            "receive_updates": true,
+            "visible": true
+        }
+    ]
+}

@@ -26,6 +26,8 @@ class NetworkEntityManager(SingletonBehaviour):
     def on_pre_start(self):
         super().on_pre_start()
 
+        print("Initialized entity manager.")
+
         assert self.game
 
         self._entity_packet_listener = getattr(

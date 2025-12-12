@@ -115,6 +115,7 @@ class Mage(NetworkBehaviour):
         self._stop_order_requested: bool = False
         self._order_queue: list[Order] = []
         self._stunners = self.use_sync_var(int, 0)
+        self._health_bar = None
 
         self._health.add_hook(self._handle_health_changed)
 
@@ -140,6 +141,9 @@ class Mage(NetworkBehaviour):
 
     @health.setter
     def health(self, value: float):
+        if not self._alive:
+            return
+
         self._health.value = clamp(value, 0, self.max_health)
 
     @property
@@ -200,6 +204,13 @@ class Mage(NetworkBehaviour):
             if s.spell == spell:
                 return s
         return None
+
+    @server_method
+    def revive(self):
+        self._alive.value = True
+        self.health = self.max_health
+        if self.animator:
+            self.animator.play("idle")
 
     @server_method
     def stop(self):

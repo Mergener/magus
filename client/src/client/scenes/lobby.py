@@ -1,3 +1,4 @@
+import json
 from typing import cast
 
 from common.assets import load_node_asset
@@ -24,6 +25,8 @@ from game.player import Player
 
 
 class Lobby(Behaviour):
+    _local_player_index: int
+
     def on_pre_start(self):
         assert self.game
 
@@ -60,12 +63,12 @@ class Lobby(Behaviour):
         self.game.network.unlisten(LobbyInfoPacket, self._lobby_info_handler)
 
     def _on_player_joined(self, packet: PlayerJoined):
-        if packet.you:
-            for p in self._get_players():
-                if p.net_entity.id == packet.entity_id:
-                    p._index.value = packet.index
-                    p._local_player = True
-                    return
+        for p in self._get_players():
+            if (
+                p.net_entity.id == packet.entity_id
+                and packet.index == self._local_player_index
+            ):
+                p._local_player = True
 
         if self.game:
             self.game.network.publish(RequestLobbyInfo())
@@ -74,11 +77,18 @@ class Lobby(Behaviour):
         assert self.game
         game = self.game
 
-        players = [p.node for p in self._get_players()]
+        players = self._get_players()
+
+        for p in players:
+            if p.index == self._local_player_index:
+                p._local_player = True
+
+        player_nodes = [p.node for p in players]
+
         entity_mgr = notnull(self.game.container.get(NetworkEntityManager))
 
         await self.game.load_scene_async(
-            load_node_asset("scenes/client/game.json"), players + [entity_mgr.node]
+            load_node_asset("scenes/client/game.json"), player_nodes + [entity_mgr.node]
         )
 
         game.network.publish(DoneLoadingGameScene())
@@ -91,6 +101,7 @@ class Lobby(Behaviour):
     def _get_players(self):
         assert self.game
         players = self.game.scene.find_behaviours_in_children(Player, recursive=True)
+        print(json.dumps(self.game.scene.serialize()))
         return players
 
     def _handle_lobby_info_packet(self, packet: LobbyInfoPacket, peer: NetPeer):

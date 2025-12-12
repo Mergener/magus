@@ -3,6 +3,7 @@ import pygame as pg
 from common.behaviour import Behaviour
 from common.behaviours.camera import Camera
 from common.primitives import Vector2
+from game.game_manager import GameManager
 
 
 class PlayerCamera(Behaviour):
@@ -52,6 +53,14 @@ class PlayerCamera(Behaviour):
                 self._camera.transform.local_position += (
                     Vector2(x_motion, y_motion).normalize() * self.edge_pan_speed * dt
                 )
+
+        if self.game.input.is_key_just_pressed(pg.K_SPACE):
+            game_mgr = self.game.container.get(GameManager)
+            if game_mgr is not None:
+                local_player = game_mgr.get_local_player()
+                mage = local_player.mage
+                if mage is not None:
+                    self._camera.transform.position = mage.transform.position
 
     def on_serialize(self, out_dict: dict):
         out_dict["edge_pan_speed"] = self.edge_pan_speed
