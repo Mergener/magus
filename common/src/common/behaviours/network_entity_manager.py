@@ -92,15 +92,7 @@ class NetworkEntityManager(SingletonBehaviour):
         entity = self._do_spawn_entity(spawn_entity_packet)
 
         full_packet = MultiPacket(
-            [
-                spawn_entity_packet,
-                PositionUpdate(
-                    self.game.simulation.tick_id,
-                    entity.id,
-                    entity.transform.position.x,
-                    entity.transform.position.y,
-                ),
-            ],
+            [spawn_entity_packet, *entity.generate_sync_packets()],
             DeliveryMode.RELIABLE_ORDERED,
         )
 
@@ -198,7 +190,6 @@ class NetworkEntityManager(SingletonBehaviour):
 
     def _handle_connection(self, peer: NetPeer):
         assert self.game
-        tick_id = self.game.simulation.tick_id
         packets = []
         for eid, e in self._entities.items():
             parent_id = None
@@ -208,15 +199,7 @@ class NetworkEntityManager(SingletonBehaviour):
                     parent_id = parent_entity.id
 
             packets.append(SpawnEntity(eid, e._type, parent_id))
-            packets.append(
-                PositionUpdate(
-                    tick_id, eid, e.transform.position.x, e.transform.position.y
-                )
-            )
-            packets.append(
-                ScaleUpdate(tick_id, eid, e.transform.scale.x, e.transform.scale.y)
-            )
-            packets.append(RotationUpdate(tick_id, eid, e.transform.rotation))
+            packets.extend(e.generate_sync_packets())
 
         peer.send(MultiPacket(packets, DeliveryMode.RELIABLE_ORDERED))
 

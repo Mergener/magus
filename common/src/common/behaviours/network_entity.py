@@ -241,6 +241,30 @@ class NetworkEntity(Behaviour):
                 p._last_recv_tick = 0
             break
 
+    def generate_sync_packets(self):
+        assert self.game
+
+        tick_id = self.game.simulation.tick_id
+
+        pos = self.transform.position
+        scale = self.transform.scale
+
+        packets = [
+            PositionUpdate(tick_id, self.id, pos.x, pos.y),
+            ScaleUpdate(tick_id, self.id, scale.x, scale.y),
+            RotationUpdate(tick_id, self.id, self.transform.rotation),
+        ]
+
+        for p in self._sync_vars:
+            p._last_sent_value = p._current_value
+            packets.append(
+                SyncVarUpdate(
+                    self.id, tick_id, p._id, p._current_value, p._delivery_mode
+                )
+            )
+
+        return packets
+
     def on_tick(self, tick_id: int) -> Any:
         assert self.game
         if self.game.network.is_server():
