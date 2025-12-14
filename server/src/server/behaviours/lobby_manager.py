@@ -110,8 +110,6 @@ class LobbyManager(Behaviour):
             p.team.value = i
             p.player_name.value = f"Player {p.index + 1}"
 
-        print(json.dumps(self._players, indent=2))
-
         self.lobby_info.players = [
             (p.player_name.value, p.index, p.team.value) for p in self._players
         ]
