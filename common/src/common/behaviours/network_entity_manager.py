@@ -7,7 +7,13 @@ from typing import Callable, cast
 
 from common.assets import load_node_asset
 from common.behaviour import Behaviour
-from common.behaviours.network_entity import EntityPacket, NetworkEntity, PositionUpdate
+from common.behaviours.network_entity import (
+    EntityPacket,
+    NetworkEntity,
+    PositionUpdate,
+    RotationUpdate,
+    ScaleUpdate,
+)
 from common.behaviours.singleton_behaviour import SingletonBehaviour
 from common.binary import ByteReader, ByteWriter
 from common.network import DeliveryMode, MultiPacket, NetPeer, Packet
@@ -52,6 +58,21 @@ class NetworkEntityManager(SingletonBehaviour):
                     DestroyEntity, lambda msg, _: self._handle_destroy_entity(msg)
                 ),
             )
+        if self.game.network.is_server():
+            self._handle_connection_listener = self.game.network.listen_connected(
+                self._handle_connection
+            )
+
+    def on_destroy(self):
+        assert self.game
+        if hasattr(self, "_entity_packet_listener"):
+            self.game.network.unlisten(EntityPacket, self._entity_packet_listener)
+        if hasattr(self, "_spawn_entity_listener"):
+            self.game.network.unlisten(SpawnEntity, self._spawn_entity_listener)
+        if hasattr(self, "_destroy_entity_listener"):
+            self.game.network.unlisten(DestroyEntity, self._destroy_entity_listener)
+        if hasattr(self, "_handle_connection_listener"):
+            self.game.network.unlisten_connected(self._handle_connection)
 
     def spawn_entity(
         self,
@@ -117,6 +138,7 @@ class NetworkEntityManager(SingletonBehaviour):
         node.parent = parent
         entity = node.get_or_add_behaviour(NetworkEntity)
         entity._entity_manager = self
+        entity._type = p.template
 
         self._next_entity_id = self._fill_node_ids(p.id, entity.node)
 
@@ -173,6 +195,30 @@ class NetworkEntityManager(SingletonBehaviour):
 
     def query_entities(self, predicate: Callable[[NetworkEntity], bool]):
         return (e for e in self._entities.values() if predicate(e))
+
+    def _handle_connection(self, peer: NetPeer):
+        assert self.game
+        tick_id = self.game.simulation.tick_id
+        packets = []
+        for eid, e in self._entities.items():
+            parent_id = None
+            if e.parent is not None:
+                parent_entity = e.parent.get_behaviour(NetworkEntity)
+                if parent_entity is not None:
+                    parent_id = parent_entity.id
+
+            packets.append(SpawnEntity(eid, e._type, parent_id))
+            packets.append(
+                PositionUpdate(
+                    tick_id, eid, e.transform.position.x, e.transform.position.y
+                )
+            )
+            packets.append(
+                ScaleUpdate(tick_id, eid, e.transform.scale.x, e.transform.scale.y)
+            )
+            packets.append(RotationUpdate(tick_id, eid, e.transform.rotation))
+
+        peer.send(MultiPacket(packets, DeliveryMode.RELIABLE_ORDERED))
 
 
 class SpawnEntity(Packet):

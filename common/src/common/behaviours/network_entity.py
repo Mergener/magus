@@ -74,6 +74,7 @@ class NetworkEntity(Behaviour):
 
     def on_init(self):
         self._id: int = -1
+        self._type: str | None = None
         self._last_recv_pos = Vector2(0, 0)
         self._prev_sent_pos = Vector2(0, 0)
         self._next_rotation_tick = 0
