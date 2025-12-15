@@ -362,7 +362,11 @@ class Mage(NetworkBehaviour):
                 and mouse_world_pos != self._last_pressed_move_order_target
             ):
                 self.game.network.publish(
-                    MoveToOrder(self.net_entity.id, mouse_world_pos)
+                    MoveToOrder(
+                        self.net_entity.id,
+                        mouse_world_pos,
+                        self.game.input.is_key_pressed(pg.K_LSHIFT),
+                    )
                 )
                 self._last_pressed_move_order_target = mouse_world_pos
                 self._last_sent_move_order_tick = current_tick
