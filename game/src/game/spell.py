@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Self, cast, final
 
-from common.assets import ImageAsset, Serializable, load_object_asset
+from common.assets import ImageAsset, Serializable, load_image_asset, load_object_asset
 from common.behaviour import get_behaviour_type_by_name, get_behaviour_type_name
 from common.behaviours.camera import Camera
 from common.behaviours.network_behaviour import NetworkBehaviour
@@ -32,7 +32,7 @@ class SpellInfo(Serializable):
     levels: int
     target_mode: TargetMode
     state_behaviour: type[SpellState]
-    base_icon: ImageAsset = ImageAsset(None, "null")
+    base_icon: ImageAsset = field(default=ImageAsset(None, "null"))
     cooldown: list[float] = field(default_factory=lambda: [0])
     data: dict = field(default_factory=dict)
     _raw_tooltip: str = field(default_factory=str)
@@ -141,6 +141,9 @@ class SpellState(NetworkBehaviour):
             yield OrderTransition.CONTINUE
 
         return point_cast_order()
+
+    def get_formatted_tooltip(self):
+        return self.spell.get_formatted_tooltip(self.level.value)
 
     @property
     def spell(self):

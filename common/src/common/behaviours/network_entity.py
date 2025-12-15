@@ -135,9 +135,6 @@ class NetworkEntity(Behaviour):
             self.listen(
                 SyncVarUpdate, lambda msg, peer: self._handle_sync_var_update(msg, peer)
             )
-            self.listen(
-                SyncVarUpdate, lambda msg, peer: self._handle_sync_var_update(msg, peer)
-            )
 
     async def on_start(self) -> Any:
         assert self.game

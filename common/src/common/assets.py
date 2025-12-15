@@ -33,6 +33,7 @@ class ImageAsset:
     def deserialize(self, in_dict: dict):
         path = in_dict.get("path")
         self.pygame_surface = load_image_asset(path or "").pygame_surface
+        self.path = path
 
         rect = in_dict.get("rect")
         if rect is not None:

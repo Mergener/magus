@@ -403,6 +403,9 @@ class Network(ABC):
             for task in pending:
                 task.cancel()
 
+            if pending:
+                await asyncio.gather(*pending, return_exceptions=True)
+
             if done:
                 first_task = done.pop()
                 try:
@@ -436,34 +439,19 @@ class Network(ABC):
             if exclude_peers is None or peer not in exclude_peers
         ]
 
-        expect_tasks = [
-            asyncio.create_task(peer.expect(expected_response_type))
-            for peer in target_peers
-        ]
+        async def expect_with_timeout(peer: NetPeer) -> tuple[NetPeer, T | None]:
+            try:
+                response = await asyncio.wait_for(
+                    peer.expect(expected_response_type), timeout=timeout_ms / 1000.0
+                )
+                return (peer, response)
+            except asyncio.TimeoutError:
+                return (peer, None)
+            except Exception as e:
+                print(f"Error getting response from {peer.address}: {e}", file=stderr)
+                return (peer, None)
 
-        timeout_seconds = timeout_ms / 1000.0
-        results: list[tuple[NetPeer, T | None]] = []
-
-        done, _ = await asyncio.wait(
-            expect_tasks, timeout=timeout_seconds, return_when=asyncio.ALL_COMPLETED
-        )
-
-        for i, task in enumerate(expect_tasks):
-            peer = target_peers[i]
-            if task in done:
-                try:
-                    response = task.result()
-                    results.append((peer, response))
-                except Exception as e:
-                    print(
-                        f"Error getting response from {peer.address}: {e}", file=stderr
-                    )
-                    results.append((peer, None))
-            else:
-                task.cancel()
-                results.append((peer, None))
-
-        return results
+        return await asyncio.gather(*[expect_with_timeout(p) for p in target_peers])
 
 
 class NullNetwork(Network):

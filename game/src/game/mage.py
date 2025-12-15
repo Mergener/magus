@@ -192,7 +192,7 @@ class Mage(NetworkBehaviour):
 
     @property
     def spells(self):
-        return (s for s in self._spells)
+        return self._spells
 
     @property
     def owner(self) -> Player:

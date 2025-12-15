@@ -37,6 +37,29 @@ class UISurface(Widget):
         self._refresh_active_surface()
 
     @property
+    def dimensions(self):
+        """Canvas space image dimensions."""
+        if self._base_surface is None:
+            return Vector2(0, 0)
+
+        return (
+            Vector2(self._base_surface.get_size()).elementwise() * self._surface_scale
+        )
+
+    @dimensions.setter
+    def dimensions(self, value: Vector2):
+        if self._base_surface is None:
+            return
+
+        self._surface_scale = self._surface_scale.elementwise() * (
+            value.elementwise()
+            / (
+                Vector2(self._base_surface.get_size()).elementwise()
+                * self._surface_scale
+            )
+        )
+
+    @property
     def tint(self):
         return self._tint
 

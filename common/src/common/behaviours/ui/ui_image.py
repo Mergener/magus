@@ -59,6 +59,10 @@ class UIImage(UISurface):
     def image_asset(self):
         return self._image_asset
 
+    @image_asset.setter
+    def image_asset(self, value: ImageAsset):
+        self.image_path = value.path
+
     def on_serialize(self, out_dict: dict):
         super().on_serialize(out_dict)
         out_dict["image"] = self._image_path

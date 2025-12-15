@@ -81,11 +81,12 @@ class LobbyManager(Behaviour):
         )
 
         game_scene = load_node_asset("scenes/server/game.json")
-        load_promise = self.game.load_scene_async(
+
+        await response_promise
+
+        await self.game.load_scene_async(
             game_scene, [entity_mgr.node] + [p.node for p in self._players]
         )
-
-        await asyncio.gather(response_promise, load_promise)
 
         game_mgr_node = entity_mgr.spawn_entity("game_manager").node
         game_mgr_node.get_or_add_behaviour(GameManager)
