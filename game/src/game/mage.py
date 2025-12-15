@@ -115,8 +115,13 @@ class Mage(NetworkBehaviour):
         self._stunners = self.use_sync_var(int, 0)
         self._health_bar = None
 
-        self.mass = self.use_sync_var(float, 100)
-        self.mass.add_hook(lambda new, _: setattr(self._physics_object, "mass", new))
+        self.mass = CompositeValue(self, float, self._physics_object.mass)
+        self.mass.multiplier.add_hook(
+            lambda _, __: setattr(self._physics_object, "mass", self.mass.current)
+        )
+        self.mass.increment.add_hook(
+            lambda _, __: setattr(self._physics_object, "mass", self.mass.current)
+        )
 
         self._max_health = self.use_sync_var(float, 500)
         self._health = self.use_sync_var(float, self.max_health)
