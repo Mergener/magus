@@ -85,6 +85,9 @@ class GameManager(NetworkBehaviour):
         self._round = self.use_sync_var(int, 1)
         self._team_wins: defaultdict[int, int] = defaultdict(int)
 
+    def get_team_wins(self, team: int):
+        return self._team_wins.get(team, 0)
+
     @property
     def round(self):
         return self._round

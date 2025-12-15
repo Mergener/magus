@@ -137,7 +137,6 @@ def build_mage_template():
     health_bar_node = mage_node.add_child()
     health_bar_node.transform.local_position += Vector2(0, 70)
     health_bar = health_bar_node.add_behaviour(StatusBar)
-    health_bar.render_layer = 100
     health_bar.image_scale = Vector2(4, 1)
 
     save_node(mage_node, "templates/mage.json")
@@ -147,6 +146,11 @@ def build_hud():
     hud_node = Node()
 
     hud = hud_node.get_or_add_behaviour(Hud)
+    scoreboard = hud_node.add_child().add_behaviour(UILabel)
+    scoreboard.text = "Scoreboard"
+    scoreboard.horizontal_align = HorizontalAlign.LEFT
+    scoreboard.font_size = 12
+    scoreboard.anchor = Vector2(0.9, 0.9)
 
     save_node(hud_node, "templates/hud.json")
 

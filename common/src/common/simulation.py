@@ -80,6 +80,11 @@ class Simulation:
             self._will_stop_ticking.discard(b)
 
     def add_renderable(self, b: Behaviour, layer: int):
+        from common.behaviours.ui.widget import Widget
+
+        if isinstance(b, Widget):
+            layer += 10000
+
         if overrides_method(Behaviour, b, "on_render") or overrides_method(
             Behaviour, b, "on_debug_render"
         ):
@@ -90,6 +95,11 @@ class Simulation:
         self._will_update.discard(b)
 
     def remove_renderable(self, b: Behaviour, layer: int):
+        from common.behaviours.ui.widget import Widget
+
+        if isinstance(b, Widget):
+            layer += 10000
+
         self._will_stop_rendering.add((b, layer))
         self._will_render.discard((b, layer))
 

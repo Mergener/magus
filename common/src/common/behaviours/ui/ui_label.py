@@ -138,7 +138,7 @@ class UILabel(Widget):
 
     @text.setter
     def text(self, value: str):
-        self._text = value.replace("\\n", "\n")
+        self._text = value.replace("\\n", "\n").replace("\t", "    ")
         self._refresh_text_surface()
 
     @property

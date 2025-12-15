@@ -24,7 +24,6 @@ class Player(NetworkBehaviour):
         self.kills = self.use_sync_var(int, 0)
         self.deaths = self.use_sync_var(int, 0)
         self.team = self.use_sync_var(int, 0)
-        self.wins = self.use_sync_var(int, 0)
         self.mage_entity_id = self.use_sync_var(int, -1)
 
     def is_local_player(self):
