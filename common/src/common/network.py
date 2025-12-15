@@ -192,6 +192,11 @@ class NetPeer:
     def disconnect(self):
         self._enet_peer.disconnect()
 
+        for l in self._packet_futures.values():
+            for f in l:
+                f.cancel()
+        self._packet_futures.clear()
+
     @property
     def address(self) -> tuple[str, int]:
         return (self._host, self._port)
@@ -239,7 +244,17 @@ class NetPeer:
 
 class Network(ABC):
     def __init__(self):
-        self._listener_id = 0
+        self._packet_listeners: defaultdict[
+            type, list[Callable[[Packet, NetPeer], Any]]
+        ] = defaultdict(list)
+        self._connect_listeners: list[Callable[[NetPeer], Any]] = []
+        self._disconnect_listeners: list[Callable[[NetPeer], Any]] = []
+
+    def purge(self):
+        connected_peers = [p for p in self.connected_peers]
+        for p in connected_peers:
+            p.disconnect()
+
         self._packet_listeners: defaultdict[
             type, list[Callable[[Packet, NetPeer], Any]]
         ] = defaultdict(list)

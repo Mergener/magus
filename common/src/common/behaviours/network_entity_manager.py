@@ -32,8 +32,6 @@ class NetworkEntityManager(SingletonBehaviour):
     def on_pre_start(self):
         super().on_pre_start()
 
-        print("Initialized entity manager.")
-
         assert self.game
 
         self._entity_packet_listener = getattr(
@@ -73,6 +71,13 @@ class NetworkEntityManager(SingletonBehaviour):
             self.game.network.unlisten(DestroyEntity, self._destroy_entity_listener)
         if hasattr(self, "_handle_connection_listener"):
             self.game.network.unlisten_connected(self._handle_connection)
+
+    def reset(self):
+        entities = [e for e in self._entities.values()]
+        for e in entities:
+            e.node.destroy()
+        self._entities.clear()
+        self._next_entity_id = 1
 
     def spawn_entity(
         self,

@@ -18,7 +18,7 @@ from common.behaviours.network_behaviour import (
 )
 from common.behaviours.singleton_behaviour import SingletonBehaviour
 from common.binary import ByteReader, ByteWriter
-from common.network import DeliveryMode, NetPeer, Packet, MultiPacket
+from common.network import DeliveryMode, MultiPacket, NetPeer, Packet
 from common.primitives import Vector2
 from common.utils import notnull
 from game.lobby_base import LobbyInfo
@@ -51,14 +51,34 @@ class RoundFinished(Packet):
 
 
 class GameFinished(Packet):
-    def __init__(self, winner_team: int):
+    def __init__(self, winner_team: int, leaderboard: list[tuple[str, int, int, int]]):
+        """Leader board is a list of (name, team, kills, deaths) tuples"""
         self.winner_team = winner_team
+        self.leaderboard = sorted(leaderboard, key=lambda t: t[2], reverse=True)
 
     def on_write(self, writer: ByteWriter):
         writer.write_uint16(self.winner_team)
+        writer.write_uint8(len(self.leaderboard))
+        for t in self.leaderboard:
+            name, team, kills, deaths = t
+            writer.write_str(name)
+            writer.write_uint8(team)
+            writer.write_uint16(kills)
+            writer.write_uint16(deaths)
 
     def on_read(self, reader: ByteReader):
         self.winner_team = reader.read_uint16()
+        self.leaderboard = []
+        leaderboard_len = reader.read_uint8()
+        for _ in range(leaderboard_len):
+            self.leaderboard.append(
+                (
+                    reader.read_str(),
+                    reader.read_uint8(),
+                    reader.read_uint16(),
+                    reader.read_uint16(),
+                )
+            )
 
     @property
     def delivery_mode(self):
@@ -85,7 +105,7 @@ class GameManager(NetworkBehaviour):
         self._round = self.use_sync_var(int, 1)
         self._team_wins: defaultdict[int, int] = defaultdict(int)
         self._max_rounds = self.use_sync_var(int, 10)
-        
+
     @property
     def max_rounds(self):
         return self._max_rounds.value
@@ -167,6 +187,36 @@ class GameManager(NetworkBehaviour):
     #
 
     @server_method
+    async def _finish_game(self):
+        assert self.game
+        game_winner_team = 0
+        wins = self.get_team_wins(game_winner_team)
+        for t, w in self._team_wins.items():
+            if w > wins:
+                wins = w
+                game_winner_team = t
+
+        self.game.network.publish(
+            GameFinished(
+                game_winner_team,
+                [
+                    (
+                        p.player_name.value,
+                        p.team.value,
+                        p.kills.value,
+                        p.deaths.value,
+                    )
+                    for p in self.players
+                ],
+            )
+        )
+
+        game = self.game
+        await self.game.load_scene_async(load_node_asset("scenes/server/lobby.json"))
+        game.simulation.purge_futures()
+        game.network.purge()
+
+    @server_method
     async def _finish_round(self, winner_team: int):
         assert self.game
 
@@ -178,6 +228,12 @@ class GameManager(NetworkBehaviour):
                 ]
             )
         )
+        if self._round.value >= self._max_rounds.value:
+            await self._finish_game()
+            return
+
+        self._round.value += 1
+
         for p in self.players:
             mage = p.mage
             if not mage:

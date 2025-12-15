@@ -39,6 +39,18 @@ class Simulation:
 
         self.render_debug = False
 
+    def purge_futures(self):
+        for f in self._frame_futures:
+            f.cancel()
+        for f in self._tick_futures:
+            f.cancel()
+        for t in self._pending_tasks:
+            t.cancel()
+
+        self._frame_futures.clear()
+        self._tick_futures.clear()
+        self._pending_tasks.clear()
+
     def _spawn_task(self, coro):
         task = asyncio.create_task(coro)
         self._pending_tasks.add(task)

@@ -97,7 +97,7 @@ class NetworkEntity(Behaviour):
     @property
     def id(self):
         return self._id
-    
+
     def _on_id_assigned(self):
         assert self.game
         if self.game.network.is_client():

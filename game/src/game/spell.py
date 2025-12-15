@@ -123,6 +123,7 @@ class SpellInfo(Serializable):
     def get_level_cooldown(self, level: int):
         return self.cooldown[min(len(self.cooldown) - 1, level - 1)]
 
+
 class SpellState(NetworkBehaviour):
     _mage: Mage
     _spell: SpellInfo

@@ -1,14 +1,13 @@
 import pygame as pg
-
-from client.cooldown_mask import CooldownMask
-from common.node import Node
 from pygame.draw import line
 
+from client.cooldown_mask import CooldownMask
 from common.behaviour import Behaviour
 from common.behaviours.network_entity_manager import SpawnEntity
 from common.behaviours.ui.ui_button import UIButton
 from common.behaviours.ui.ui_image import UIImage
-from common.behaviours.ui.ui_label import UILabel, HorizontalAlign
+from common.behaviours.ui.ui_label import HorizontalAlign, UILabel
+from common.node import Node
 from common.primitives import Color, Vector2
 from game.game_manager import GameManager, RoundFinished
 from game.mage import AddSpell, Mage
@@ -59,7 +58,7 @@ class Hud(Behaviour):
         self._refresh_scoreboard()
 
         self.mage = mage
-        
+
         self._round_finished_handler = self.game.network.listen(
             RoundFinished, lambda _, __: self._refresh_scoreboard()
         )
@@ -67,7 +66,7 @@ class Hud(Behaviour):
     def on_destroy(self):
         assert self.game
         self.game.network.unlisten(AddSpell, self._add_spell_handler)
-        
+
         if hasattr(self, "_round_finished_handler"):
             self.game.network.unlisten(RoundFinished, self._round_finished_handler)
 
@@ -83,10 +82,10 @@ class Hud(Behaviour):
     def _refresh_buttons(self):
         if self.mage is None:
             return
-        
+
         for sb in self._spell_buttons:
             sb.destroy()
-            
+
         self._spell_buttons.clear()
 
         start_x = (
@@ -109,16 +108,16 @@ class Hud(Behaviour):
             )
             icon.dimensions = self._spell_icon_dimensions
             self._spell_buttons.append(node)
-            
+
             cd_mask = node.add_child().add_behaviour(CooldownMask)
             cd_mask.spell_state = spell_state
             cd_mask.surface.render_layer = icon.render_layer + 1
             cd_mask.surface.anchor = icon.anchor
-            
+
             surf = pg.Surface(self._spell_icon_dimensions, pg.SRCALPHA).convert_alpha()
             surf.fill(Color(0, 0, 0, 160))
             cd_mask.surface.set_surface(surf)
-            
+
             cd_mask.label.horizontal_align = HorizontalAlign.LEFT
             cd_mask.label.anchor = icon.anchor
             cd_mask.label.render_layer = icon.render_layer + 2
@@ -132,7 +131,9 @@ class Hud(Behaviour):
         lines = ["Scoreboard"]
         teams = sorted(list(set(p.team.value for p in game_mgr.players)))
         for t in teams:
-            lines.append(f"Team {t + 1} ({game_mgr.get_team_wins(t)} of {game_mgr.max_rounds} round wins)")
+            lines.append(
+                f"Team {t + 1} ({game_mgr.get_team_wins(t)} of {game_mgr.max_rounds} round wins)"
+            )
             for p in game_mgr.players:
                 if p.team.value != t:
                     continue
