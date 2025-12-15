@@ -5,6 +5,7 @@
     "cooldown": 6,
     "target_mode": 0,
     "state_behaviour": "game.spells.fireball_state.FireballState",
+    "base_icon": { "path": "img/spells/icons/fireball.png" },
     "data": {
         "damage": [8],
         "projectile_speed": 800,

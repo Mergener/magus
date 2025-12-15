@@ -1,0 +1,1 @@
+{"children": [], "behaviours": [{"__type": "common.behaviours.transform.Transform", "receive_updates": true, "visible": true, "local_position": {"x": 0.0, "y": 0.0}, "local_scale": {"x": 1.0, "y": 1.0}, "rotation": 0.0}, {"__type": "client.hud.Hud", "receive_updates": true, "visible": true}]}

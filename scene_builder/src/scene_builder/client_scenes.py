@@ -2,6 +2,7 @@ import json
 
 import pygame as pg
 
+from client.hud import Hud
 from client.scenes.lobby import Lobby
 from client.scenes.main_menu import MainMenu
 from common.animation import Animation, AnimationFrame, SliceMode, slice_image
@@ -31,6 +32,7 @@ def build_client_scenes():
     build_main_menu()
     build_lobby_menu()
     build_mage_template()
+    build_hud()
     # build_world()
 
 
@@ -139,6 +141,14 @@ def build_mage_template():
     health_bar.image_scale = Vector2(4, 1)
 
     save_node(mage_node, "templates/mage.json")
+
+
+def build_hud():
+    hud_node = Node()
+
+    hud = hud_node.get_or_add_behaviour(Hud)
+
+    save_node(hud_node, "templates/hud.json")
 
 
 # def build_world():

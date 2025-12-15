@@ -12,6 +12,16 @@
           "edge_pan_speed": 1000
         }
       ]
+    },
+    {
+      "children": [
+        "templates/hud.json"
+      ],
+      "behaviours": [
+        {
+          "__type": "common.behaviours.ui.canvas.Canvas"
+        }
+      ]
     }
   ],
   "behaviours": []

@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Self, cast, final
 
-from common.assets import Serializable, load_object_asset
+from common.assets import ImageAsset, Serializable, load_object_asset
 from common.behaviour import get_behaviour_type_by_name, get_behaviour_type_name
 from common.behaviours.camera import Camera
 from common.behaviours.network_behaviour import NetworkBehaviour
@@ -32,6 +32,7 @@ class SpellInfo(Serializable):
     levels: int
     target_mode: TargetMode
     state_behaviour: type[SpellState]
+    base_icon: ImageAsset = ImageAsset(None, "null")
     cooldown: list[float] = field(default_factory=lambda: [0])
     data: dict = field(default_factory=dict)
     _raw_tooltip: str = field(default_factory=str)
@@ -53,6 +54,9 @@ class SpellInfo(Serializable):
         out_dict["target_mode"] = self.target_mode.value
         out_dict["state_behaviour"] = get_behaviour_type_name(self.state_behaviour)
         out_dict["data"] = self.data
+
+        if self.base_icon:
+            out_dict["base_icon"] = self.base_icon.serialize()
 
         return out_dict
 
@@ -78,6 +82,10 @@ class SpellInfo(Serializable):
         # Ensure all fields are set
         self._file_name = ""
         self._formatted_tooltip_cache = {}
+
+        base_icon_data = in_dict.get("base_icon")
+        if base_icon_data is not None:
+            self.base_icon.deserialize(base_icon_data)
 
         return self
 
