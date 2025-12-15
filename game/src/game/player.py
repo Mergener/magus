@@ -14,34 +14,47 @@ if TYPE_CHECKING:
 
 class Player(NetworkBehaviour):
     def on_init(self):
-        self._local_player: bool = False
         self._net_peer: NetPeer | None = None
         self._game_manager: GameManager | None = None
         self._mage: Mage | None = None
         self._index = self.use_sync_var(int, 0)
+        self._local_player: bool = False
         self.player_name = self.use_sync_var(str, "Unnamed Player")
         self.coins = self.use_sync_var(int, 0)
         self.kills = self.use_sync_var(int, 0)
         self.deaths = self.use_sync_var(int, 0)
         self.team = self.use_sync_var(int, 0)
         self.wins = self.use_sync_var(int, 0)
-        self.mage_entity_id = self.use_sync_var(int)
+        self.mage_entity_id = self.use_sync_var(int, -1)
+
+    def is_local_player(self):
+        return self._local_player
 
     @property
     def mage(self) -> Mage | None:
-        if self._mage is not None:
-            return self._mage
+        from game.mage import Mage
 
-        if not self.game:
+        if self.game is None:
             return None
 
-        entity_mgr = self.entity_manager
-        entity = entity_mgr.get_entity_by_id(self.mage_entity_id.value)
+        if self._mage is None:
+            if self.mage_entity_id != -1:
+                entity = self.net_entity.entity_manager.get_entity_by_id(
+                    self.mage_entity_id.value
+                )
+                if entity is not None:
+                    mage = entity.node.get_behaviour(Mage)
+                    if mage is not None:
+                        self._mage = mage
+                        return mage
 
-        if not entity:
-            return None
+            mages = self.game.scene.find_behaviours_in_children(Mage)
+            for mage in mages:
+                if mage.owner_index == self.index:
+                    self._mage = mage
+                    return mage
 
-        return entity.node.get_behaviour(Mage)
+        return self._mage
 
     @property
     def index(self):
@@ -58,9 +71,6 @@ class Player(NetworkBehaviour):
         The peer associated with this player.
         """
         return self._net_peer
-
-    def is_local_player(self):
-        return self._local_player
 
     @entity_packet_handler(PlayerJoined)
     def _handle_player_joined(self, packet: PlayerJoined, peer: NetPeer):

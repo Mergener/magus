@@ -43,10 +43,15 @@ class LobbyManager(Behaviour):
             peer.send(JoinGameResponse(False, 0))
             return
 
-        player_entity = entity_manager.spawn_entity("player")
+        player_entity = entity_manager.spawn_entity(
+            "player",
+            include_packets=lambda _: [
+                JoinGameResponse(True, len(self._players)),
+            ],
+        )
 
-        peer.send(JoinGameResponse(True, len(self._players)))
         peer.send(PlayerJoined(player_entity.id, len(self._players), True))
+
         for i, p in enumerate(self._players):
             # Notify the player about every other present player.
             peer.send(PlayerJoined(p.net_entity.id, i, False))
@@ -82,10 +87,8 @@ class LobbyManager(Behaviour):
 
         await asyncio.gather(response_promise, load_promise)
 
-        # TODO: Handle player failing to load scene.
         game_mgr_node = entity_mgr.spawn_entity("game_manager").node
-        game_mgr = game_mgr_node.get_or_add_behaviour(GameManager)
-        game_mgr._players = self._players
+        game_mgr_node.get_or_add_behaviour(GameManager)
 
     def _handle_disconnection(self, peer):
         assert self.game

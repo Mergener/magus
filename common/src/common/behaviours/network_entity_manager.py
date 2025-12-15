@@ -134,6 +134,8 @@ class NetworkEntityManager(SingletonBehaviour):
 
         self._next_entity_id = self._fill_node_ids(p.id, entity.node)
 
+        print(f"Spawned entity {entity.id} of type {entity._type}")
+
         return entity
 
     def _fill_node_ids(self, entity_id: int, node: Node) -> int:

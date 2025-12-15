@@ -46,9 +46,13 @@ class MainMenu(Behaviour):
 
         lobby_node = load_node_asset("scenes/client/lobby.json")
 
-        await self.game.load_scene_async(lobby_node)
+        await self.game.load_scene_async(
+            lobby_node,
+            [p.node for p in self.game.scene.find_behaviours_in_children(Player, True)],
+        )
 
-        lobby_node.get_or_add_behaviour(Lobby)._local_player_index = response.index
+        lobby = lobby_node.get_or_add_behaviour(Lobby)
+        lobby._local_player_index = response.index
 
     def _on_join_game(self, msg: JoinGameResponse):
         assert self.game

@@ -3,6 +3,7 @@ import pygame as pg
 from common.behaviour import Behaviour
 from common.behaviours.camera import Camera
 from common.primitives import Vector2
+from common.utils import notnull
 from game.game_manager import GameManager
 
 
@@ -58,6 +59,8 @@ class PlayerCamera(Behaviour):
             game_mgr = self.game.container.get(GameManager)
             if game_mgr is not None:
                 local_player = game_mgr.get_local_player()
+                if local_player is None:
+                    return
                 mage = local_player.mage
                 if mage is not None:
                     self._camera.transform.position = mage.transform.position

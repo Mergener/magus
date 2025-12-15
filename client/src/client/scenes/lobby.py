@@ -3,6 +3,7 @@ from typing import cast
 
 from common.assets import load_node_asset
 from common.behaviour import Behaviour
+from common.behaviours import network_entity_manager
 from common.behaviours.network_entity_manager import NetworkEntityManager
 from common.behaviours.ui.ui_button import UIButton
 from common.behaviours.ui.ui_label import UILabel
@@ -63,13 +64,6 @@ class Lobby(Behaviour):
         self.game.network.unlisten(LobbyInfoPacket, self._lobby_info_handler)
 
     def _on_player_joined(self, packet: PlayerJoined):
-        for p in self._get_players():
-            if (
-                p.net_entity.id == packet.entity_id
-                and packet.index == self._local_player_index
-            ):
-                p._local_player = True
-
         if self.game:
             self.game.network.publish(RequestLobbyInfo())
 
@@ -79,11 +73,11 @@ class Lobby(Behaviour):
 
         players = self._get_players()
 
+        player_nodes = [p.node for p in players]
+
         for p in players:
             if p.index == self._local_player_index:
                 p._local_player = True
-
-        player_nodes = [p.node for p in players]
 
         entity_mgr = notnull(self.game.container.get(NetworkEntityManager))
 
@@ -101,7 +95,6 @@ class Lobby(Behaviour):
     def _get_players(self):
         assert self.game
         players = self.game.scene.find_behaviours_in_children(Player, recursive=True)
-        print(json.dumps(self.game.scene.serialize()))
         return players
 
     def _handle_lobby_info_packet(self, packet: LobbyInfoPacket, peer: NetPeer):
@@ -110,7 +103,7 @@ class Lobby(Behaviour):
         players = self._get_players()
         player_names = [p[0] for p in packet.players]
         for i, p in enumerate(players):
-            if p.is_local_player():
+            if p.index == self._local_player_index:
                 player_names[i] += " (you)"
                 break
 

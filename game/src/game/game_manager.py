@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
 import random
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
 import pygame as pg
 
+import server
 from common.assets import load_node_asset
 from common.behaviour import Behaviour
 from common.behaviours.network_behaviour import (
@@ -77,8 +79,9 @@ class RoundStarting(Packet):
 
 class GameManager(NetworkBehaviour):
     def on_init(self) -> Any:
-        self._players: list[Player] = []
-        self._players_by_peer: dict[NetPeer, Player] = {}
+        self._local_player: Player | None = None
+        self._players: list[Player] | None = None
+        self._players_by_peer: dict[NetPeer, Player] | None = None
         self._round = self.use_sync_var(int, 1)
         self._team_wins: defaultdict[int, int] = defaultdict(int)
 
@@ -88,22 +91,50 @@ class GameManager(NetworkBehaviour):
 
     @property
     def players(self):
-        return self._players
+        self._refresh_players_registry()
+        return notnull(self._players)
+
+    def _refresh_players_registry(self):
+        from game.player import Player
+
+        assert self.game
+
+        if self._players is None:
+            self._players = self.game.scene.get_behaviours_in_children(
+                Player, recursive=True
+            )
+
+        if self._players_by_peer is None and self.game.network.is_server():
+            self._players_by_peer = {}
+            for p in self._players:
+                if p.net_peer is None:
+                    continue
+                self._players_by_peer[p.net_peer] = p
 
     def get_player_by_index(self, player_idx: int):
-        if player_idx not in range(len(self._players)):
+        self._refresh_players_registry()
+        if player_idx not in range(len(self.players)):
             return None
-        return self._players[player_idx]
+        return self.players[player_idx]
 
+    @server_method
     def get_player_by_peer(self, peer: NetPeer):
+        self._refresh_players_registry()
+
+        assert self._players_by_peer
+
         return self._players_by_peer[peer]
 
     @client_method
     def get_local_player(self):
-        for p in self.players:
-            if p.is_local_player():
-                return p
-        raise Exception("Expected a local player")
+        self._refresh_players_registry()
+
+        if self._local_player is None:
+            for p in self.players:
+                if p.is_local_player():
+                    self._local_player = p
+
+        return self._local_player
 
     @server_method
     def on_player_death(self, player: Player, killer_player: Player | None):
@@ -124,18 +155,10 @@ class GameManager(NetworkBehaviour):
     #
 
     def on_common_pre_start(self):
-        from game.player import Player
+        self._refresh_players_registry()
 
         assert self.game
         self.game.container.register_singleton(type(self), self)
-
-        self._players = self.game.scene.get_behaviours_in_children(
-            Player, recursive=True
-        )
-
-        if self.game.network.is_server():
-            for p in self.players:
-                self._players_by_peer[notnull(p.net_peer)] = p
 
     def on_server_start(self):
         from game.mage import Mage
