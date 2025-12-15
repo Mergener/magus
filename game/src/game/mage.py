@@ -114,6 +114,20 @@ class Mage(NetworkBehaviour):
         self._order_queue: list[Order] = []
         self._stunners = self.use_sync_var(int, 0)
         self._health_bar = None
+        self._available_hotkeys = [
+            pg.K_v,
+            pg.K_c,
+            pg.K_x,
+            pg.K_z,
+            pg.K_f,
+            pg.K_d,
+            pg.K_s,
+            pg.K_a,
+            pg.K_r,
+            pg.K_e,
+            pg.K_w,
+            pg.K_q,
+        ]
 
         self.mass = CompositeValue(self, float, self._physics_object.mass)
         self.mass.multiplier.add_hook(
@@ -126,6 +140,16 @@ class Mage(NetworkBehaviour):
         self._max_health = self.use_sync_var(float, 500)
         self._health = self.use_sync_var(float, self.max_health)
         self._health.add_hook(self._handle_health_changed)
+
+    @client_method
+    def claim_hotkey(self):
+        if len(self._available_hotkeys) <= 0:
+            return None
+        return self._available_hotkeys.pop()
+
+    @client_method
+    def add_available_hotkey(self, hotkey: int):
+        self._available_hotkeys.append(hotkey)
 
     @property
     def physics_object(self):
@@ -295,6 +319,7 @@ class Mage(NetworkBehaviour):
         spell_state = spell_entity.node.add_behaviour(spell_info.state_behaviour)
         spell_state._spell = spell_info
         spell_state._mage = self
+        spell_state._hotkey = self.claim_hotkey()
         self._spells.append(spell_state)
 
     def _has_authority(self, peer: NetPeer):
@@ -341,15 +366,6 @@ class Mage(NetworkBehaviour):
                 )
                 self._last_pressed_move_order_target = mouse_world_pos
                 self._last_sent_move_order_tick = current_tick
-
-        if self.game.input.is_mouse_button_just_pressed(pg.BUTTON_LEFT):
-            fireball = self.get_spell_state(get_spell("fireball"))
-            if fireball is not None:
-                self.game.network.publish(
-                    CastPointTargetSpellOrder(
-                        self.net_entity.id, fireball.net_entity.id, mouse_world_pos
-                    )
-                )
 
     @server_method
     def _tick_order(self):

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Self, cast, final
 
 from common.assets import Serializable, load_object_asset
 from common.behaviour import get_behaviour_type_by_name, get_behaviour_type_name
+from common.behaviours.camera import Camera
 from common.behaviours.network_behaviour import NetworkBehaviour
 from common.network import DeliveryMode
 from common.primitives import Vector2
@@ -115,21 +116,13 @@ class SpellInfo(Serializable):
 class SpellState(NetworkBehaviour):
     _mage: Mage
     _spell: SpellInfo
+    _hotkey: int | None
 
     def on_init(self):
         self.cooldown_timer = self.use_sync_var(
             float, delivery_mode=DeliveryMode.UNRELIABLE
         )
         self.level = self.use_sync_var(int, 1)
-
-    def on_server_tick(self, tick_id: int):
-        assert self.game
-        tick_dt = self.game.simulation.tick_interval
-        self.cooldown_timer.value = max(0, self.cooldown_timer.value - tick_dt)
-
-    def on_client_update(self, dt: float):
-        # Update cooldown in client for smooth updates.
-        self.cooldown_timer.value = max(0, self.cooldown_timer.value - dt)
 
     def get_point_cast_order(self, mage: Mage, where: Vector2):
         def point_cast_order():
@@ -159,6 +152,32 @@ class SpellState(NetworkBehaviour):
 
     def get_current_level_data[T](self, entry: str, fallback: T) -> T:
         return self.spell.get_level_data(entry, self.level.value, fallback)
+
+    def on_server_tick(self, tick_id: int):
+        assert self.game
+        tick_dt = self.game.simulation.tick_interval
+        self.cooldown_timer.value = max(0, self.cooldown_timer.value - tick_dt)
+
+    def on_client_update(self, dt: float):
+        assert self.game
+
+        # Update cooldown in client for smooth updates.
+        self.cooldown_timer.value = max(0, self.cooldown_timer.value - dt)
+
+        if self._hotkey and self.game.input.is_key_just_released(self._hotkey):
+            from game.mage import CastPointTargetSpellOrder
+
+            camera = self.game.container.get(Camera)
+            if camera is None:
+                return
+
+            mouse_world_pos = camera.screen_to_world_space(self.game.input.mouse_pos)
+            if self.spell.target_mode == TargetMode.POINT:
+                self.game.network.publish(
+                    CastPointTargetSpellOrder(
+                        self._mage.net_entity.id, self.net_entity.id, mouse_world_pos
+                    )
+                )
 
 
 def get_spell(file_name: str):
