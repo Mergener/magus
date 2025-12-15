@@ -16,7 +16,7 @@ class Animator(Behaviour):
         self._accum_time = 0
         self._sprite_renderer = None
         self._current_animation: Animation | None = None
-        self._current_animation_name: str | None = None
+        self._current_animation_name: str | None = "idle"
         self._queue: list[str] = []
         self.animations = {}
 

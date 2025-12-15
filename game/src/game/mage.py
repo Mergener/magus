@@ -172,6 +172,10 @@ class Mage(NetworkBehaviour):
             self._active_order.send(OrderMessage.INTERRUPTED)
 
     @property
+    def alive(self):
+        return self._alive.value
+
+    @property
     def health(self):
         return self._health.value
 
@@ -242,13 +246,6 @@ class Mage(NetworkBehaviour):
         return None
 
     @server_method
-    def revive(self):
-        self._alive.value = True
-        self.health = self.max_health
-        if self.animator:
-            self.animator.play("idle")
-
-    @server_method
     def stop(self):
         self._order_queue.clear()
         self._stop_order_requested = True
@@ -304,6 +301,14 @@ class Mage(NetworkBehaviour):
         delta_normalized = delta.normalize()
         if self._animator:
             self._animator.transform.rotation = Vector2(0, 1).angle_to(delta_normalized)
+
+    @server_method
+    def revive(self):
+        self._alive.value = True
+        self.health = self.max_health
+        self._physics_object.collider.disabled = False
+        if self.animator:
+            self.animator.play("idle")
 
     #
     # Private

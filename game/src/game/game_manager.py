@@ -138,13 +138,57 @@ class GameManager(NetworkBehaviour):
 
     @server_method
     def on_player_death(self, player: Player, killer_player: Player | None):
+        assert self.game
         player.deaths.value += 1
         if killer_player:
             killer_player.kills.value += 1
 
+        alive_teams = set()
+        for p in self.players:
+            if not p.mage:
+                continue
+
+            if p.mage.alive:
+                alive_teams.add(p.team.value)
+
+        if len(alive_teams) == 1:
+            self.game.simulation.run_task(self._finish_round(alive_teams.pop()))
+
     #
     # Private
     #
+
+    @server_method
+    async def _finish_round(self, winner_team: int):
+        assert self.game
+        self.game.network.publish(RoundFinished(winner_team))
+        for p in self.players:
+            mage = p.mage
+            if not mage:
+                continue
+
+            if not mage.alive:
+                mage.revive()
+
+            mage.transform.position = Vector2(
+                random.randint(-200, 200), random.randint(-200, 200)
+            )
+
+        await self.game.simulation.wait_seconds(30)
+        self._start_round()
+
+    @server_method
+    def _start_round(self):
+        assert self.game
+        self.game.network.publish(RoundStarting())
+        for p in self.players:
+            mage = p.mage
+            if not mage:
+                continue
+
+            mage.transform.position = Vector2(
+                random.randint(-200, 200), random.randint(-200, 200)
+            )
 
     @client_method
     def _on_round_finished(self, packet: RoundFinished, peer: NetPeer):
@@ -168,12 +212,11 @@ class GameManager(NetworkBehaviour):
                 Mage
             )
             mage.owner_index.value = p.index
-            mage.transform.position = Vector2(
-                random.randint(-200, 200), random.randint(-200, 200)
-            )
             p.mage_entity_id.value = mage.net_entity.id
             p._mage = mage
             p._game_manager = self
+
+        self._start_round()
 
     def on_client_pre_start(self) -> Any:
         assert self.game

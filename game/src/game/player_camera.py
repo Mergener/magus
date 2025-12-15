@@ -4,7 +4,7 @@ from common.behaviour import Behaviour
 from common.behaviours.camera import Camera
 from common.primitives import Vector2
 from common.utils import notnull
-from game.game_manager import GameManager, RoundFinished
+from game.game_manager import GameManager, RoundFinished, RoundStarting
 
 
 class PlayerCamera(Behaviour):
@@ -14,12 +14,16 @@ class PlayerCamera(Behaviour):
     def on_start(self):
         assert self.game
         self._camera = self.game.container.get(Camera)
+        self._round_start_handler = self.game.network.listen(
+            RoundStarting, lambda _, __: self._pan_camera_to_mage()
+        )
         self._round_finish_handler = self.game.network.listen(
             RoundFinished, lambda _, __: self._pan_camera_to_mage()
         )
 
     def on_destroy(self):
         assert self.game
+        self.game.network.unlisten(RoundStarting, self._round_start_handler)
         self.game.network.unlisten(RoundFinished, self._round_finish_handler)
 
     def on_update(self, dt: float):
