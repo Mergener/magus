@@ -15,3 +15,4 @@ class FireballState(SpellState):
         projectile.destination = target
         projectile.damage = self.get_current_level_data("damage", 0.0)
         projectile.duration = 2
+        projectile.hit_force = self.get_current_level_data("knockback_force", 0.0)

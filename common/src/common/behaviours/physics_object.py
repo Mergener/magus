@@ -40,7 +40,7 @@ class CollisionHandler:
 
 class PhysicsObject(Behaviour):
     def on_init(self) -> Any:
-        self.mass: float = 1
+        self.mass: float = 100
         self.trigger: bool = False
         self._pending_motion = Vector2()
         self._contacts: set[Collider] = set()
@@ -159,6 +159,30 @@ class PhysicsObject(Behaviour):
                 self.game.simulation.run_task(
                     b.on_collision_exit(collider, physics_object)
                 )
+
+    def knock_back(self, impulse: Vector2):
+        assert self.game
+        return self.game.simulation.run_task(self._knock_back_task(impulse))
+
+    async def _knock_back_task(self, impulse: Vector2):
+        counter_motion = Vector2(-impulse.x, -impulse.y).normalize() * self.mass
+        counter_motion_sq_length = counter_motion.length_squared()
+        stop = False
+        while not stop:
+            if self.node.destroyed or not self.game:
+                return
+
+            impulse += counter_motion
+            if impulse.length_squared() > counter_motion_sq_length:
+                motion = impulse
+            else:
+                motion = -counter_motion
+                stop = True
+
+            tick_interval = self.game.simulation.tick_interval
+            self.move_and_collide(motion * tick_interval)
+
+            await self.game.simulation.wait_next_tick()
 
     def on_serialize(self, out_dict: dict):
         out_dict["trigger"] = self.trigger

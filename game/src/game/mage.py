@@ -105,8 +105,6 @@ class Mage(NetworkBehaviour):
             self, base=500, delivery_mode=DeliveryMode.UNRELIABLE
         )
         self.owner_index = self.use_sync_var(int)
-        self._max_health = self.use_sync_var(float, 500)
-        self._health = self.use_sync_var(float, self.max_health)
         self._last_pressed_move_order_target = Vector2(0, 0)
         self._last_sent_move_order_tick = 0
         self._alive = self.use_sync_var(bool, True)
@@ -117,7 +115,16 @@ class Mage(NetworkBehaviour):
         self._stunners = self.use_sync_var(int, 0)
         self._health_bar = None
 
+        self.mass = self.use_sync_var(float, 100)
+        self.mass.add_hook(lambda new, _: setattr(self._physics_object, "mass", new))
+
+        self._max_health = self.use_sync_var(float, 500)
+        self._health = self.use_sync_var(float, self.max_health)
         self._health.add_hook(self._handle_health_changed)
+
+    @property
+    def physics_object(self):
+        return self._physics_object
 
     @property
     def animator(self):
@@ -297,6 +304,7 @@ class Mage(NetworkBehaviour):
         if new <= 0:
             self.health = 0
             self._alive.value = False
+            self._physics_object.collider.disabled = True
             if self._animator:
                 self._animator.play("die")
                 self._animator.enqueue("null")

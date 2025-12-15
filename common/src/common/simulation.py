@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import time
 from collections import defaultdict
+from typing import Any
 
 import pygame as pg
 
@@ -51,7 +52,7 @@ class Simulation:
 
         task.add_done_callback(_cleanup)
 
-    def run_task[T](self, value: T) -> T:
+    def run_task(self, value: Any):
         if asyncio.iscoroutine(value):
             self._spawn_task(value)
         return value

@@ -185,7 +185,7 @@ class NetworkEntity(Behaviour):
     def _handle_pos_update(self, packet: PositionUpdate, peer: NetPeer):
         assert self.game
 
-        if packet.tick_id < self._last_updated_tick:
+        if packet.tick_id <= self._last_updated_tick:
             return
 
         # We want to deal with two different scenarios here, and
@@ -256,7 +256,6 @@ class NetworkEntity(Behaviour):
         ]
 
         for p in self._sync_vars:
-            p._last_sent_value = p._current_value
             packets.append(
                 SyncVarUpdate(
                     self.id, tick_id, p._id, p._current_value, p._delivery_mode

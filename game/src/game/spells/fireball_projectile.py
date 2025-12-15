@@ -23,6 +23,7 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
     destination = Vector2()
     owner: Player | None
     duration: float
+    hit_force: float
 
     def on_init(self):
         self._burst = False
@@ -39,9 +40,16 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
             self.destination - self.transform.position
         ).normalize() * self.speed
         self._burst = False
+        self._collided = False
 
     @server_method
     async def on_collision_enter(self, collision: Collision):
+        if self._collided:
+            return
+
+        if self._burst:
+            return
+
         if self.caster.node is collision.other_collider.node:
             return
 
@@ -53,7 +61,15 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
             return
 
         assert self.game
+
+        self._collided = True
+
         hit_mage.take_damage(self.damage, self.owner)
+        impulse = (
+            hit_mage.transform.position - self.transform.position
+        ).normalize() * self.hit_force
+        hit_mage.physics_object.knock_back(impulse)
+
         await self._do_burst()
 
     async def _do_burst(self):
