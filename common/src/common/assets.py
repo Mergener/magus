@@ -13,7 +13,7 @@ import pygame as pg
 class ImageAsset:
     def __init__(
         self,
-        pygame_surface: pg.Surface,
+        pygame_surface: pg.Surface | None,
         path: str | None = None,
         rect: pg.Rect | None = None,
     ):
@@ -33,6 +33,7 @@ class ImageAsset:
     def deserialize(self, in_dict: dict):
         path = in_dict.get("path")
         self.pygame_surface = load_image_asset(path or "").pygame_surface
+        self.path = path
 
         rect = in_dict.get("rect")
         if rect is not None:

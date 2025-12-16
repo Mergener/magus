@@ -16,8 +16,13 @@ class Animator(Behaviour):
         self._accum_time = 0
         self._sprite_renderer = None
         self._current_animation: Animation | None = None
+        self._current_animation_name: str | None = "idle"
         self._queue: list[str] = []
         self.animations = {}
+
+    @property
+    def current_animation_name(self):
+        return self._current_animation_name
 
     def on_pre_start(self):
         self._sprite_renderer = self.node.get_or_add_behaviour(SpriteRenderer)
@@ -27,7 +32,7 @@ class Animator(Behaviour):
             self.play("idle")
 
     def on_update(self, dt):
-        if self._sprite_renderer is None or self._current_animation is None:
+        if self._current_animation is None:
             return
 
         current_frame = self._current_animation.frames[self._frame_idx]
@@ -44,7 +49,9 @@ class Animator(Behaviour):
                     self.play(self._queue.pop(), clear_queue=False)
                     return
             current_frame = self._current_animation.frames[self._frame_idx]
-            self._sprite_renderer.texture = current_frame.image.pygame_surface
+
+            if self._sprite_renderer is not None:
+                self._sprite_renderer.texture = current_frame.image.pygame_surface
 
     def on_serialize(self, out_dict: dict):
         out_dict["animations"] = {}
@@ -68,12 +75,18 @@ class Animator(Behaviour):
         elif animation_name == "null" and self._sprite_renderer is not None:
             self._sprite_renderer.texture = None
 
+        if self._sprite_renderer is not None and anim is not None:
+            self._sprite_renderer.texture_cache_size = max(
+                len(anim.frames), self._sprite_renderer.texture_cache_size
+            )
+
         if clear_queue:
             self._queue.clear()
 
         if not force_restart and anim == self._current_animation:
             return
 
+        self._current_animation_name = animation_name
         self._current_animation = anim
         self._accum_time = 0
         self._frame_idx = 0

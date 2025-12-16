@@ -132,6 +132,7 @@ class UIButton(Widget):
         return self._ui_image.rect
 
     def on_serialize(self, out_dict: dict):
+        super().on_serialize(out_dict)
         out_dict["normal_color"] = {
             "r": self._normal_color.r,
             "g": self._normal_color.g,
@@ -152,6 +153,8 @@ class UIButton(Widget):
         }
 
     def on_deserialize(self, in_dict: dict):
+        super().on_deserialize(in_dict)
+
         def deserialize_color(color_dict, default):
             if color_dict:
                 return pg.Color(

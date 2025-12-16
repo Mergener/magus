@@ -1,0 +1,12 @@
+{
+    "name": "Thrust",
+    "tooltip": "Lunges forward.",
+    "levels": 1,
+    "cooldown": [6],
+    "target_mode": 0,
+    "state_behaviour": "game.spells.thrust_state.ThrustState",
+    "base_icon": { "path": "img/spells/icons/thrust.png" },
+    "data": {
+        "force": 1100
+    }
+}

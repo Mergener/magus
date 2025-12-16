@@ -4,14 +4,20 @@ import asyncio
 from sys import stderr
 from typing import TYPE_CHECKING
 
+from common import primitives
+from common.container import Container
+
 if TYPE_CHECKING:
     from common.network import Network, NullNetwork
     from common.node import Node
     from common.simulation import Simulation
     from common.behaviour import Behaviour
     from common.input import Input
+    from common.primitives import Color
 
 import pygame as pg
+
+from common.diagnostics import Profiler
 
 
 class Game:
@@ -22,13 +28,16 @@ class Game:
         network: Network | None = None,
         scene: Node | None = None,
         global_object: Node | None = None,
+        bg_color: Color | None = None,
     ):
         from common.input import Input
         from common.network import NullNetwork
         from common.node import Node
+        from common.primitives import Color
         from common.simulation import Simulation
 
-        self._simulation = simulation or Simulation()
+        self._profiler = Profiler()
+        self._simulation = simulation or Simulation(self.profiler)
         self._network: Network = network or NullNetwork()
         self._scene = scene or Node()
         self._global_object = global_object or Node()
@@ -37,8 +46,18 @@ class Game:
         self._queued_scene: Node | None = None
         self._queued_nodes_to_transfer: list[Node] | None = None
         self._stopped = False
-        self._input = Input()
         self._scene_loaded_futures: list[asyncio.Future] = []
+        self._container = Container()
+        self._input = Input()
+        self._bg_color = bg_color or Color(0, 0, 0)
+
+    @property
+    def profiler(self):
+        return self._profiler
+
+    @property
+    def container(self):
+        return self._container
 
     @property
     def stopped(self):
@@ -79,6 +98,8 @@ class Game:
         if self.stopped:
             return
 
+        self.profiler.step()
+
         if not self._started:
             self._started = True
             self.global_object.bind_to_game(self)
@@ -91,7 +112,8 @@ class Game:
 
             if self._queued_nodes_to_transfer is not None:
                 for n in self._queued_nodes_to_transfer:
-                    n.parent = self._scene
+                    if n.has_ancestor(prev_scene):
+                        n.parent = self._scene
 
             prev_scene.destroy()
             self._queued_scene = None
@@ -99,16 +121,21 @@ class Game:
 
             self._resolve_scene_loaded_futures()
 
-        self.network.poll()
+        with self._profiler.profile("network"):
+            self.network.poll()
         self.simulation.iterate()
 
         if not self.headless:
-            if (
-                self._display is not None
-            ):  # Condition always true, but needed for type checker
-                self._display.fill("black")
-            self.simulation.render()
-            pg.display.update()
+            with self.profiler.profile("render"):
+                assert self._display
+                with self.profiler.profile("render_reset"):
+                    self._display.fill(self._bg_color)
+
+                with self.profiler.profile("inner_render"):
+                    self.simulation.render()
+
+                with self.profiler.profile("draw_call"):
+                    pg.display.update()
 
         try:
             await asyncio.sleep(0)

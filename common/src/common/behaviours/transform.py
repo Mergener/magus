@@ -27,7 +27,7 @@ class Transform(Behaviour):
         self._local_scale = value
 
     @property
-    def scale(self):
+    def scale(self) -> Vector2:
         scale = self._local_scale
         if self.parent != None:
             scale = self.local_scale.elementwise() * self.parent.transform.scale

@@ -18,13 +18,14 @@ from common.behaviours.ui.ui_button import UIButton
 from common.behaviours.ui.ui_label import UILabel
 from common.game import Game
 from common.node import Node
+from common.primitives import Color
 
 
 async def main():
     pg.init()
 
     game = Game(
-        display=pg.display.set_mode((1280, 720), pg.RESIZABLE),
+        display=pg.display.set_mode((0, 0), pg.RESIZABLE, vsync=True),
         scene=load_node_asset("scenes/client/main_menu.json"),
         network=NetClient("localhost", 16214),
         global_object=load_node_asset("client_global_object.json"),

@@ -184,8 +184,6 @@ class NetPeer:
         self._enet_peer.send(channel, packet)
 
     def send(self, packet: Packet, override_mode: DeliveryMode | None = None):
-        if packet.delivery_mode != DeliveryMode.UNRELIABLE:
-            print(f"Sending {packet} to {self.address}")
         writer = ByteWriter()
         packet.encode(writer)
         mode = override_mode or packet.delivery_mode
@@ -193,6 +191,11 @@ class NetPeer:
 
     def disconnect(self):
         self._enet_peer.disconnect()
+
+        for l in self._packet_futures.values():
+            for f in l:
+                f.cancel()
+        self._packet_futures.clear()
 
     @property
     def address(self) -> tuple[str, int]:
@@ -241,7 +244,20 @@ class NetPeer:
 
 class Network(ABC):
     def __init__(self):
-        self._listener_id = 0
+        self._packet_listeners: defaultdict[
+            type, list[Callable[[Packet, NetPeer], Any]]
+        ] = defaultdict(list)
+        self._connect_listeners: list[Callable[[NetPeer], Any]] = []
+        self._disconnect_listeners: list[Callable[[NetPeer], Any]] = []
+
+    def connect(self):
+        pass
+
+    def purge(self):
+        connected_peers = [p for p in self.connected_peers]
+        for p in connected_peers:
+            p._packet_futures.clear()
+
         self._packet_listeners: defaultdict[
             type, list[Callable[[Packet, NetPeer], Any]]
         ] = defaultdict(list)
@@ -313,9 +329,6 @@ class Network(ABC):
         if packet_type == Packet:
             return
 
-        if packet.delivery_mode != DeliveryMode.UNRELIABLE:
-            print(f"Received {packet}")
-
         if packet_type == MultiPacket:
             for sub_packet in cast(MultiPacket, packet).packets:
                 self.notify(sub_packet, source_peer)
@@ -357,7 +370,11 @@ class Network(ABC):
 
     def unlisten[T: Packet](self, t: type[T], listener: Callable[[T, NetPeer], Any]):
         l = self._packet_listeners[t]
-        l.remove(cast(Callable[[Packet, NetPeer], Any], listener))
+        to_remove = cast(Callable[[Packet, NetPeer], Any], listener)
+        for i in range(len(l)):
+            if i == to_remove:
+                del l[i]
+                break
         if len(l) == 0:
             self._packet_listeners.pop(t)
 
@@ -370,10 +387,16 @@ class Network(ABC):
         return listener
 
     def unlisten_connected(self, listener: Callable[[NetPeer], Any]):
-        self._connect_listeners.remove(listener)
+        for i in range(len(self._connect_listeners)):
+            if self._connect_listeners[i] == listener:
+                del self._connect_listeners[i]
+                break
 
     def unlisten_disconnected(self, listener: Callable[[NetPeer], Any]):
-        self._disconnect_listeners.remove(listener)
+        for i in range(len(self._disconnect_listeners)):
+            if self._disconnect_listeners[i] == listener:
+                del self._disconnect_listeners[i]
+                break
 
     async def expect[T](
         self,
@@ -408,6 +431,9 @@ class Network(ABC):
             for task in pending:
                 task.cancel()
 
+            if pending:
+                await asyncio.gather(*pending, return_exceptions=True)
+
             if done:
                 first_task = done.pop()
                 try:
@@ -441,34 +467,19 @@ class Network(ABC):
             if exclude_peers is None or peer not in exclude_peers
         ]
 
-        expect_tasks = [
-            asyncio.create_task(peer.expect(expected_response_type))
-            for peer in target_peers
-        ]
+        async def expect_with_timeout(peer: NetPeer) -> tuple[NetPeer, T | None]:
+            try:
+                response = await asyncio.wait_for(
+                    peer.expect(expected_response_type), timeout=timeout_ms / 1000.0
+                )
+                return (peer, response)
+            except asyncio.TimeoutError:
+                return (peer, None)
+            except Exception as e:
+                print(f"Error getting response from {peer.address}: {e}", file=stderr)
+                return (peer, None)
 
-        timeout_seconds = timeout_ms / 1000.0
-        results: list[tuple[NetPeer, T | None]] = []
-
-        done, _ = await asyncio.wait(
-            expect_tasks, timeout=timeout_seconds, return_when=asyncio.ALL_COMPLETED
-        )
-
-        for i, task in enumerate(expect_tasks):
-            peer = target_peers[i]
-            if task in done:
-                try:
-                    response = task.result()
-                    results.append((peer, response))
-                except Exception as e:
-                    print(
-                        f"Error getting response from {peer.address}: {e}", file=stderr
-                    )
-                    results.append((peer, None))
-            else:
-                task.cancel()
-                results.append((peer, None))
-
-        return results
+        return await asyncio.gather(*[expect_with_timeout(p) for p in target_peers])
 
 
 class NullNetwork(Network):

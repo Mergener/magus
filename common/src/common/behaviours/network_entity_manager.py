@@ -7,13 +7,20 @@ from typing import Callable, cast
 
 from common.assets import load_node_asset
 from common.behaviour import Behaviour
-from common.behaviours.network_entity import EntityPacket, NetworkEntity, PositionUpdate
+from common.behaviours.network_entity import (
+    EntityPacket,
+    NetworkEntity,
+    PositionUpdate,
+    RotationUpdate,
+    ScaleUpdate,
+)
+from common.behaviours.singleton_behaviour import SingletonBehaviour
 from common.binary import ByteReader, ByteWriter
 from common.network import DeliveryMode, MultiPacket, NetPeer, Packet
 from common.node import Node
 
 
-class NetworkEntityManager(Behaviour):
+class NetworkEntityManager(SingletonBehaviour):
     _templates: dict[str, str]
     _entities: dict[int, NetworkEntity]
 
@@ -23,6 +30,8 @@ class NetworkEntityManager(Behaviour):
         self._next_entity_id = 1
 
     def on_pre_start(self):
+        super().on_pre_start()
+
         assert self.game
 
         self._entity_packet_listener = getattr(
@@ -47,6 +56,28 @@ class NetworkEntityManager(Behaviour):
                     DestroyEntity, lambda msg, _: self._handle_destroy_entity(msg)
                 ),
             )
+        if self.game.network.is_server():
+            self._handle_connection_listener = self.game.network.listen_connected(
+                self._handle_connection
+            )
+
+    def on_destroy(self):
+        assert self.game
+        if hasattr(self, "_entity_packet_listener"):
+            self.game.network.unlisten(EntityPacket, self._entity_packet_listener)
+        if hasattr(self, "_spawn_entity_listener"):
+            self.game.network.unlisten(SpawnEntity, self._spawn_entity_listener)
+        if hasattr(self, "_destroy_entity_listener"):
+            self.game.network.unlisten(DestroyEntity, self._destroy_entity_listener)
+        if hasattr(self, "_handle_connection_listener"):
+            self.game.network.unlisten_connected(self._handle_connection)
+
+    def reset(self):
+        entities = [e for e in self._entities.values()]
+        for e in entities:
+            e.node.destroy()
+        self._entities.clear()
+        self._next_entity_id = 1
 
     def spawn_entity(
         self,
@@ -66,15 +97,7 @@ class NetworkEntityManager(Behaviour):
         entity = self._do_spawn_entity(spawn_entity_packet)
 
         full_packet = MultiPacket(
-            [
-                spawn_entity_packet,
-                PositionUpdate(
-                    self.game.simulation.tick_id,
-                    entity.id,
-                    entity.transform.position.x,
-                    entity.transform.position.y,
-                ),
-            ],
+            [spawn_entity_packet, *entity.generate_sync_packets()],
             DeliveryMode.RELIABLE_ORDERED,
         )
 
@@ -112,8 +135,11 @@ class NetworkEntityManager(Behaviour):
         node.parent = parent
         entity = node.get_or_add_behaviour(NetworkEntity)
         entity._entity_manager = self
+        entity._type = p.template
 
         self._next_entity_id = self._fill_node_ids(p.id, entity.node)
+
+        print(f"Spawned entity {entity.id} of type {entity._type}")
 
         return entity
 
@@ -122,6 +148,7 @@ class NetworkEntityManager(Behaviour):
         if entity is not None:
             entity._id = entity_id
             self._entities[entity_id] = entity
+            entity._on_id_assigned()
 
         for c in node.children:
             entity_id += 1
@@ -129,9 +156,14 @@ class NetworkEntityManager(Behaviour):
         return entity_id
 
     def _do_destroy_entity(self, entity: NetworkEntity):
+        assert self.game
+
         entity.node.destroy()
         if entity.id in self._entities:
             del self._entities[entity.id]
+
+            if self.game.network.is_server():
+                self.game.network.publish(DestroyEntity(entity.id))
 
     def _handle_entity_packet(self, p: EntityPacket, peer: NetPeer):
         entity = self._entities.get(p.entity_id)
@@ -157,13 +189,27 @@ class NetworkEntityManager(Behaviour):
 
     def on_deserialize(self, in_dict: dict):
         self._templates = in_dict.get("templates", {})
-        print(f"Loaded net entity templates: {self._templates}")
 
     def get_entity_by_id(self, entity_id: int):
         return self._entities.get(entity_id)
 
     def query_entities(self, predicate: Callable[[NetworkEntity], bool]):
         return (e for e in self._entities.values() if predicate(e))
+
+    def _handle_connection(self, peer: NetPeer):
+        assert self.game
+        packets = []
+        for eid, e in self._entities.items():
+            parent_id = None
+            if e.parent is not None:
+                parent_entity = e.parent.get_behaviour(NetworkEntity)
+                if parent_entity is not None:
+                    parent_id = parent_entity.id
+
+            packets.append(SpawnEntity(eid, e._type, parent_id))
+            packets.extend(e.generate_sync_packets())
+
+        peer.send(MultiPacket(packets, DeliveryMode.RELIABLE_ORDERED))
 
 
 class SpawnEntity(Packet):

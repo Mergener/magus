@@ -7,7 +7,6 @@ from common.primitives import Vector2
 
 
 class Camera(Behaviour):
-    main: ClassVar[Self | None] = None
     view_rect_size: Vector2
     view_rect_relative_offset: Vector2
 
@@ -15,8 +14,15 @@ class Camera(Behaviour):
         self.view_rect_size = Vector2(1920, 1080)
 
     def on_pre_start(self):
-        if Camera.main is None:
-            Camera.main = self
+        assert self.game
+        if not self.game.container.is_registered(Camera):
+            self.game.container.register_singleton(Camera, self)
+
+    def on_destroy(self):
+        assert self.game
+        main_camera = self.game.container.get(Camera)
+        if self is main_camera:
+            self.game.container.unregister(Camera)
 
     def world_to_screen_space(self, point: Vector2):
         if self.game is None or self.game.display is None:

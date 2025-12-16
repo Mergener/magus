@@ -22,8 +22,6 @@ class NetServer(Network):
         override_delivery_mode: DeliveryMode | None = None,
         exclude_peers: list[NetPeer] | None = None,
     ):
-        if packet.delivery_mode != DeliveryMode.UNRELIABLE:
-            print(f"Broadcasting {packet}")
         writer = ByteWriter()
         packet.encode(writer)
         mode = override_delivery_mode or packet.delivery_mode

@@ -2,11 +2,13 @@
     "name": "Fireball",
     "tooltip": "Launches a fiery ball towards the targeted location, dealing %data.damage% to the first enemy it hits and knocking them back.",
     "levels": 1,
-    "cooldown": 6,
+    "cooldown": [4],
     "target_mode": 0,
     "state_behaviour": "game.spells.fireball_state.FireballState",
-    "data ": {
-        "damage": [8],
-        "projectile_speed": 800
+    "base_icon": { "path": "img/spells/icons/fireball.png" },
+    "data": {
+        "damage": [32],
+        "projectile_speed": 800,
+        "knockback_force": 1200
     }
 }

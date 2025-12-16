@@ -131,7 +131,7 @@ class Input:
         return Vector2(x, y)
 
     @property
-    def mouse_delta(self):
+    def mouse_delta(self) -> Vector2:
         x, y = self._mouse_delta
         return Vector2(x, y)
 

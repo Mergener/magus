@@ -1,14 +1,17 @@
 from common.network import register_packets
-from game.lobby import (
+from game.game_manager import GameFinished, RoundFinished, RoundStarting
+from game.lobby_base import (
     DoneLoadingGameScene,
     JoinGameRequest,
     JoinGameResponse,
+    LobbyInfoPacket,
     PlayerJoined,
     PlayerLeft,
+    RequestLobbyInfo,
     StartGameRequest,
+    UpdateLobbyRequest,
 )
 from game.mage import MoveToOrder
-from game.spells.fireball_projectile import FireballBurst
 
 register_packets(
     [
@@ -19,6 +22,11 @@ register_packets(
         PlayerLeft,
         DoneLoadingGameScene,
         MoveToOrder,
-        FireballBurst,
+        RoundStarting,
+        RoundFinished,
+        RequestLobbyInfo,
+        UpdateLobbyRequest,
+        LobbyInfoPacket,
+        GameFinished,
     ]
 )

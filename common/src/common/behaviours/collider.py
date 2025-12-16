@@ -35,12 +35,22 @@ class Collider(Behaviour):
         self._last_scale = self.transform.scale.copy()
         self._last_rotation = self.transform.local_rotation
         self._world = None
+        self._disabled = False
 
     def on_pre_start(self):
         self._refresh_bounding_rect()
         self._resolve_world()
         assert self.world
         self.world.register_collider(self)
+
+    @property
+    def disabled(self):
+        return self._disabled
+
+    @disabled.setter
+    def disabled(self, value: bool):
+        self._disabled = value
+        self._refresh_bounding_rect()
 
     @property
     def base_shape(self):
@@ -90,9 +100,12 @@ class Collider(Behaviour):
 
         world = self.world
         if world is not None:
-            world.update_collider_rect(
-                self, self._last_world_bounding_rect, self._bounding_rect
-            )
+            if not self.disabled:
+                world.update_collider_rect(
+                    self, self._last_world_bounding_rect, self._bounding_rect
+                )
+            else:
+                world.update_collider_rect(self, self._last_world_bounding_rect, None)
             self._last_world_bounding_rect = self._bounding_rect.copy()
 
         return self._bounding_rect
@@ -160,7 +173,9 @@ class Collider(Behaviour):
     def on_debug_render(self):
         from common.behaviours.camera import Camera
 
-        camera = Camera.main
+        assert self.game
+
+        camera = self.game.container.get(Camera)
         if camera is None or self.game is None or self.game.display is None:
             return
 

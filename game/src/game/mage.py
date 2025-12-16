@@ -16,26 +16,31 @@ from common.binary import ByteReader, ByteWriter
 from common.network import DeliveryMode, NetPeer
 from common.primitives import Vector2
 from common.utils import clamp, notnull
+from game.animator_synchronizer import AnimatorSynchronizer
 from game.composite_value import CompositeValue
 from game.game_manager import GameManager
+from game.orders import Order, OrderMessage, OrderTransition
 from game.player import Player
 from game.spell import SpellInfo, SpellState, get_spell
 from game.ui.status_bar import StatusBar
 
 
 class MoveToOrder(EntityPacket):
-    def __init__(self, entity_id: int, where: Vector2):
+    def __init__(self, entity_id: int, where: Vector2, enqueue: bool = False):
         super().__init__(entity_id)
         self.where = where
+        self.enqueue = enqueue
 
     def on_write(self, writer: ByteWriter):
         super().on_write(writer)
         writer.write_float32(self.where.x)
         writer.write_float32(self.where.y)
+        writer.write_bool(self.enqueue)
 
     def on_read(self, reader: ByteReader):
         super().on_read(reader)
         self.where = Vector2(reader.read_float32(), reader.read_float32())
+        self.enqueue = reader.read_bool()
 
     @property
     def delivery_mode(self) -> DeliveryMode:
@@ -91,18 +96,84 @@ class Mage(NetworkBehaviour):
 
     def on_init(self):
         self._animator = self.node.get_behaviour_in_children(Animator)
+        if self._animator:
+            self._animator.node.get_or_add_behaviour(AnimatorSynchronizer)
+
         self._physics_object = self.node.get_or_add_behaviour(PhysicsObject)
-        self._move_destination = None
         self._spells: list[SpellState] = []
         self.speed = CompositeValue(
             self, base=500, delivery_mode=DeliveryMode.UNRELIABLE
         )
         self.owner_index = self.use_sync_var(int)
-        self._max_health = self.use_sync_var(float, 500)
-        self._health = self.use_sync_var(float, self.max_health)
         self._last_pressed_move_order_target = Vector2(0, 0)
         self._last_sent_move_order_tick = 0
         self._alive = self.use_sync_var(bool, True)
+        self._moving = self.use_sync_var(bool, False)
+        self._active_order: Order | None = None
+        self._stop_order_requested: bool = False
+        self._order_queue: list[Order] = []
+        self._stunners = self.use_sync_var(int, 0)
+        self._health_bar = None
+        self._available_hotkeys = [
+            pg.K_v,
+            pg.K_c,
+            pg.K_x,
+            pg.K_z,
+            pg.K_f,
+            pg.K_d,
+            pg.K_s,
+            pg.K_a,
+            pg.K_r,
+            pg.K_e,
+            pg.K_w,
+            pg.K_q,
+        ]
+
+        self.mass = CompositeValue(self, float, self._physics_object.mass)
+        self.mass.multiplier.add_hook(
+            lambda _, __: setattr(self._physics_object, "mass", self.mass.current)
+        )
+        self.mass.increment.add_hook(
+            lambda _, __: setattr(self._physics_object, "mass", self.mass.current)
+        )
+
+        self._max_health = self.use_sync_var(float, 500)
+        self._health = self.use_sync_var(float, self.max_health)
+        self._health.add_hook(self._handle_health_changed)
+
+    @client_method
+    def claim_hotkey(self):
+        if len(self._available_hotkeys) <= 0:
+            return None
+        return self._available_hotkeys.pop()
+
+    @client_method
+    def add_available_hotkey(self, hotkey: int):
+        self._available_hotkeys.append(hotkey)
+
+    @property
+    def physics_object(self):
+        return self._physics_object
+
+    @property
+    def animator(self):
+        return self._animator
+
+    @property
+    def stunned(self):
+        return self._stunners.value > 0
+
+    @server_method
+    def push_stun(self):
+        prev = self._stunners.value
+        self._stunners.value += 1
+
+        if prev <= 0 and self._active_order:
+            self._active_order.send(OrderMessage.INTERRUPTED)
+
+    @property
+    def alive(self):
+        return self._alive.value
 
     @property
     def health(self):
@@ -110,6 +181,9 @@ class Mage(NetworkBehaviour):
 
     @health.setter
     def health(self, value: float):
+        if not self._alive:
+            return
+
         self._health.value = clamp(value, 0, self.max_health)
 
     @property
@@ -122,7 +196,7 @@ class Mage(NetworkBehaviour):
 
     @property
     def spells(self):
-        return (s for s in self._spells)
+        return self._spells
 
     @property
     def owner(self) -> Player:
@@ -153,13 +227,88 @@ class Mage(NetworkBehaviour):
         if not spell_state.can_cast_on_point_now(where):
             return
 
-        spell_state.on_point_cast(where)
+        self.issue_order(spell_state.get_point_cast_order(self, where))
+
+    @server_method
+    def take_damage(self, amount: float, damage_source: Player | None):
+        assert self.game
+
+        self.health -= amount
+
+        if self.health <= 0:
+            game_mgr = notnull(self.game.container.get(GameManager))
+            game_mgr.on_player_death(self.owner, damage_source)
 
     def get_spell_state(self, spell: SpellInfo):
         for s in self.spells:
             if s.spell == spell:
                 return s
         return None
+
+    @server_method
+    def stop(self):
+        self._order_queue.clear()
+        self._stop_order_requested = True
+
+    @server_method
+    def issue_order(self, order: Order):
+        self._stop_order_requested = True
+        self._order_queue = [order]
+
+    @server_method
+    def enqueue_order(self, order: Order):
+        self._order_queue.append(order)
+
+    @server_method
+    def move_to_order(self, destination: Vector2):
+        def order() -> Order:
+            self._moving.value = True
+            reached = False
+            while not reached:
+                assert self.game
+                tick_interval = self.game.simulation.tick_interval
+                curr_pos = self.transform.position
+
+                delta = destination - curr_pos
+                if delta.x == 0 and delta.y == 0:
+                    break
+
+                delta_normalized = delta.normalize()
+                if self._animator:
+                    self._animator.transform.rotation = Vector2(0, 1).angle_to(
+                        delta_normalized
+                    )
+
+                motion = delta_normalized * self.speed.current * tick_interval
+                if motion.length_squared() > delta.length_squared():
+                    motion = delta
+                    reached = True
+
+                self._physics_object.move_and_collide(motion)
+                response = yield OrderTransition.CONTINUE
+                if response != OrderMessage.STEP:
+                    break
+            self._moving.value = False
+
+        return order()
+
+    @server_method
+    def face(self, where: Vector2):
+        delta = where - self.transform.position
+        if delta.x == 0 and delta.y == 0:
+            return
+
+        delta_normalized = delta.normalize()
+        if self._animator:
+            self._animator.transform.rotation = Vector2(0, 1).angle_to(delta_normalized)
+
+    @server_method
+    def revive(self):
+        self._alive.value = True
+        self.health = self.max_health
+        self._physics_object.collider.disabled = False
+        if self.animator:
+            self.animator.play("idle")
 
     #
     # Private
@@ -175,6 +324,7 @@ class Mage(NetworkBehaviour):
         spell_state = spell_entity.node.add_behaviour(spell_info.state_behaviour)
         spell_state._spell = spell_info
         spell_state._mage = self
+        spell_state._hotkey = self.claim_hotkey()
         self._spells.append(spell_state)
 
     def _has_authority(self, peer: NetPeer):
@@ -182,19 +332,22 @@ class Mage(NetworkBehaviour):
         owner = self.owner
         return order_player.index == owner.index
 
-    def _do_death(self):
-        if not self._alive.value:
+    def _handle_health_changed(self, new: float, prev: float):
+        if new == prev:
             return
 
-        self._alive.value = False
-        if self._animator:
-            self._animator.play("die")
-            self._animator.enqueue("null")
+        if new <= 0:
+            self.health = 0
+            self._alive.value = False
+            self._physics_object.collider.disabled = True
+            if self._animator:
+                self._animator.play("die")
+                self._animator.enqueue("null")
 
     @client_method
     def _handle_user_input(self):
         assert self.game
-        camera = Camera.main
+        camera = self.game.container.get(Camera)
         if camera is None:
             return
 
@@ -214,41 +367,60 @@ class Mage(NetworkBehaviour):
                 and mouse_world_pos != self._last_pressed_move_order_target
             ):
                 self.game.network.publish(
-                    MoveToOrder(self.net_entity.id, mouse_world_pos)
+                    MoveToOrder(
+                        self.net_entity.id,
+                        mouse_world_pos,
+                        self.game.input.is_key_pressed(pg.K_LSHIFT),
+                    )
                 )
                 self._last_pressed_move_order_target = mouse_world_pos
                 self._last_sent_move_order_tick = current_tick
 
-        if self.game.input.is_mouse_button_just_pressed(pg.BUTTON_LEFT):
-            fireball = self.get_spell_state(get_spell("fireball"))
-            if fireball is not None:
-                self.game.network.publish(
-                    CastPointTargetSpellOrder(
-                        self.net_entity.id, fireball.net_entity.id, mouse_world_pos
-                    )
-                )
+    @server_method
+    def _tick_order(self):
+        if not self._alive or self.stunned:
+            return
+
+        if self._active_order is not None:
+            if self._stop_order_requested:
+                self._submit_to_order(OrderMessage.STEP)
+                self._submit_to_order(OrderMessage.STOP_REQUESTED)
+            else:
+                self._submit_to_order(OrderMessage.STEP)
+        else:
+            if len(self._order_queue) == 0:
+                return
+            self._active_order = self._order_queue.pop(0)
+            self._submit_to_order(None)
+
+        self._stop_order_requested = False
 
     @server_method
-    def _tick_motion(self, tick_interval: float):
-        if self._move_destination is None:
+    def _tick_animations(self):
+        if not self._animator:
             return
 
-        curr_pos = self.transform.position
-
-        delta = self._move_destination - curr_pos
-        if delta.x == 0 and delta.y == 0:
+        if not self._alive.value:
             return
 
-        delta_normalized = delta.normalize()
-        if self._animator:
-            self._animator.transform.rotation = Vector2(0, 1).angle_to(delta_normalized)
+        if self._moving.value:
+            self._animator.play("move")
+        else:
+            if self._animator.current_animation_name == "idle":
+                return
 
-        motion = delta_normalized * self.speed.current * tick_interval
-        if motion.length_squared() > delta.length_squared():
-            motion = delta
-            self._move_destination = None
+            self._animator.enqueue("idle")
 
-        self._physics_object.move_and_collide(motion)
+    def _submit_to_order(self, value: OrderMessage | None):
+        if not self._active_order:
+            return
+        try:
+            if value is not None:
+                self._active_order.send(value)
+            else:
+                next(self._active_order)
+        except StopIteration:
+            self._active_order = None
 
     #
     # Packet handlers
@@ -280,11 +452,15 @@ class Mage(NetworkBehaviour):
         self._do_add_spell(spell_entity, spell)
 
     @entity_packet_handler(MoveToOrder)
-    def _handle_move_to_order(self, order: MoveToOrder, peer: NetPeer):
+    def _handle_move_to_order(self, packet: MoveToOrder, peer: NetPeer):
         if not self._has_authority(peer):
             return
 
-        self._move_destination = order.where
+        order = self.move_to_order(packet.where)
+        if packet.enqueue:
+            self.enqueue_order(order)
+        else:
+            self.issue_order(order)
 
     #
     # Lifecycle
@@ -304,30 +480,21 @@ class Mage(NetworkBehaviour):
     def on_server_start(self):
         assert self.game
         assert self._animator
-        if not self.game.network.is_client():
-            self._animator.receive_updates = False
 
-        spell = get_spell("fireball")
-        self.add_spell(spell)
+        self.add_spell(get_spell("fireball"))
+        self.add_spell(get_spell("thrust"))
 
     def on_client_tick(self, tick_id: int):
-        if not self._health_bar:
-            return
-
         health_ratio = self.health / max(1, self.max_health)
-        if health_ratio != self._health_bar.value:
-            self._health_bar.value = health_ratio
-
-        if health_ratio == 0:
-            self._do_death()
+        if self._health_bar:
+            if health_ratio != self._health_bar.value:
+                self._health_bar.value = health_ratio
 
     def on_server_tick(self, tick_id: int):
         assert self.game
 
-        tick_interval = self.game.simulation.tick_interval
-        self.health -= 1 * tick_interval
-
-        self._tick_motion(tick_interval)
+        self._tick_animations()
+        self._tick_order()
 
     def on_client_update(self, dt: float):
         self._handle_user_input()

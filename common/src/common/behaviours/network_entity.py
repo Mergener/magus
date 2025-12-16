@@ -37,6 +37,7 @@ class SyncVar(Generic[TVar]):
     _last_recv_tick: int
     _delivery_mode: DeliveryMode
     _next_auto_tick: int = field(default=0)
+    _hooks: list[Callable[[TVar, TVar], Any]] = field(default_factory=list)
 
     @property
     def value(self):
@@ -44,7 +45,28 @@ class SyncVar(Generic[TVar]):
 
     @value.setter
     def value(self, v):
+        if v == self._current_value:
+            return
+
+        old = self._current_value
         self._current_value = v
+
+        for h in self._hooks:
+            h(v, old)
+
+    def add_hook(self, hook: Callable[[TVar, TVar], Any]):
+        """
+        Adds a hook of format hook(new_value, prev_value)
+        to be notified whenever this variable changes.
+        """
+        self._hooks.append(hook)
+        return hook
+
+    def remove_hook(self, hook: Callable[[TVar, TVar], Any]):
+        self._hooks.remove(hook)
+
+    def __bool__(self):
+        return bool(self._current_value)
 
 
 class NetworkEntity(Behaviour):
@@ -52,8 +74,12 @@ class NetworkEntity(Behaviour):
 
     def on_init(self):
         self._id: int = -1
+        self._type: str | None = None
         self._last_recv_pos = Vector2(0, 0)
         self._prev_sent_pos = Vector2(0, 0)
+        self._next_rotation_tick = 0
+        self._next_position_tick = 0
+        self._next_scale_tick = 0
         self._prev_sent_rot = 0
         self._prev_sent_scale = Vector2(0, 0)
         self._approx_speed = Vector2(0, 0)
@@ -71,6 +97,23 @@ class NetworkEntity(Behaviour):
     @property
     def id(self):
         return self._id
+
+    def _on_id_assigned(self):
+        assert self.game
+        if self.game.network.is_client():
+            self.listen(
+                PositionUpdate, lambda msg, peer: self._handle_pos_update(msg, peer)
+            )
+            self.listen(
+                RotationUpdate,
+                lambda msg, peer: self._handle_rotation_update(msg, peer),
+            )
+            self.listen(
+                ScaleUpdate, lambda msg, peer: self._handle_scale_update(msg, peer)
+            )
+            self.listen(
+                SyncVarUpdate, lambda msg, peer: self._handle_sync_var_update(msg, peer)
+            )
 
     @property
     def entity_manager(self):
@@ -95,34 +138,42 @@ class NetworkEntity(Behaviour):
     def on_pre_start(self):
         assert self.game
 
-        if self.game.network.is_client():
-            self.listen(
-                PositionUpdate, lambda msg, peer: self._handle_pos_update(msg, peer)
-            )
-            self.listen(
-                RotationUpdate,
-                lambda msg, peer: self._handle_rotation_update(msg, peer),
-            )
-            self.listen(
-                ScaleUpdate, lambda msg, peer: self._handle_scale_update(msg, peer)
-            )
-            self.listen(
-                SyncVarUpdate, lambda msg, peer: self._handle_sync_var_update(msg, peer)
-            )
-            self.listen(
-                SyncVarUpdate, lambda msg, peer: self._handle_sync_var_update(msg, peer)
-            )
-
-    def on_start(self) -> Any:
+    async def on_start(self) -> Any:
+        assert self.game
         self._require_sync_var_creation_sync = True
 
         assert self._pre_start_packet_queue is not None
+        self._started = True
         for t in self._pre_start_packet_queue:
             packet, peer = t
             self._handle_entity_packet(packet, peer)
 
         self._pre_start_packet_queue = None
-        self._started = True
+
+        # The following is a filthy hack to a problem that made entities transforms
+        # only get synchronized after moving at least once.
+        if self.game.network.is_server():
+            await self.game.simulation.wait_seconds(1)
+            if self.node.destroyed:
+                return
+
+            tick = self.game.simulation.tick_id
+            self.game.network.publish(
+                PositionUpdate(
+                    tick, self.id, self.transform.position.x, self.transform.position.y
+                ),
+                override_delivery_mode=DeliveryMode.RELIABLE,
+            )
+            self.game.network.publish(
+                ScaleUpdate(
+                    tick, self.id, self.transform.scale.x, self.transform.scale.y
+                ),
+                override_delivery_mode=DeliveryMode.RELIABLE,
+            )
+            self.game.network.publish(
+                RotationUpdate(tick, self.id, self.transform.rotation),
+                override_delivery_mode=DeliveryMode.RELIABLE,
+            )
 
     def _handle_rotation_update(self, packet: RotationUpdate, peer: NetPeer):
         self.transform.local_rotation = packet.rotation
@@ -133,7 +184,7 @@ class NetworkEntity(Behaviour):
     def _handle_pos_update(self, packet: PositionUpdate, peer: NetPeer):
         assert self.game
 
-        if packet.tick_id < self._last_updated_tick:
+        if packet.tick_id <= self._last_updated_tick:
             return
 
         # We want to deal with two different scenarios here, and
@@ -181,7 +232,7 @@ class NetworkEntity(Behaviour):
             ):
                 continue
 
-            p._current_value = update.value
+            p.value = update.value
 
             if self.game:
                 p._last_recv_tick = self.game.simulation.tick_id
@@ -189,30 +240,59 @@ class NetworkEntity(Behaviour):
                 p._last_recv_tick = 0
             break
 
+    def generate_sync_packets(self) -> list[Packet]:
+        assert self.game
+
+        tick_id = self.game.simulation.tick_id
+
+        pos = self.transform.position
+        scale = self.transform.scale
+
+        packets = [
+            PositionUpdate(tick_id, self.id, pos.x, pos.y),
+            ScaleUpdate(tick_id, self.id, scale.x, scale.y),
+            RotationUpdate(tick_id, self.id, self.transform.rotation),
+        ]
+
+        for p in self._sync_vars:
+            packets.append(
+                SyncVarUpdate(
+                    self.id, tick_id, p._id, p._current_value, p._delivery_mode
+                )
+            )
+
+        return packets
+
     def on_tick(self, tick_id: int) -> Any:
         assert self.game
         if self.game.network.is_server():
+            current_tick = self.game.simulation.tick_id
             pos = self.transform.position
-            if pos != self._prev_sent_pos:
+            if pos != self._prev_sent_pos or current_tick >= self._next_position_tick:
                 self._prev_sent_pos = pos
+                self._next_position_tick = current_tick + random.randint(256, 512)
                 self.game.network.publish(
                     PositionUpdate(tick_id, self.id, pos.x, pos.y)
                 )
 
             scale = self.transform.scale
-            if scale != self._prev_sent_scale:
+            if scale != self._prev_sent_scale or current_tick >= self._next_scale_tick:
                 self._prev_sent_scale = scale
+                self._next_scale_tick = current_tick + random.randint(256, 512)
                 self.game.network.publish(
                     ScaleUpdate(tick_id, self.id, scale.x, scale.y)
                 )
 
             rotation = self.transform.rotation
-            if rotation != self._prev_sent_rot:
+            if (
+                rotation != self._prev_sent_rot
+                or current_tick >= self._next_rotation_tick
+            ):
                 self._prev_sent_rot = rotation
+                self._next_rotation_tick = current_tick + random.randint(256, 512)
                 self.game.network.publish(RotationUpdate(tick_id, self.id, rotation))
 
             for sv in self._sync_vars:
-                current_tick = self.game.simulation.tick_id
                 delivery_mode = sv._delivery_mode
                 if sv._current_value == sv._last_sent_value:
                     # If the value is the same, we might still want to send periodic updates.
@@ -281,12 +361,12 @@ class NetworkEntity(Behaviour):
         )
 
     def on_destroy(self):
-        assert self.game
         self._packet_listeners.clear()
 
         # The following is mainly for notifying clients about the entity destruction.
         # Note that destroying a node is an idempotent action.
-        self.entity_manager.destroy_entity(self)
+        if hasattr(self, "_entity_manager"):
+            self._entity_manager.destroy_entity(self)
 
 
 class EntityPacket(Packet, ABC):
@@ -426,7 +506,7 @@ class ScaleUpdate(EntityPacket):
 
     @property
     def delivery_mode(self) -> DeliveryMode:
-        return DeliveryMode.RELIABLE
+        return DeliveryMode.UNRELIABLE
 
 
 class RotationUpdate(EntityPacket):
@@ -449,4 +529,4 @@ class RotationUpdate(EntityPacket):
 
     @property
     def delivery_mode(self) -> DeliveryMode:
-        return DeliveryMode.RELIABLE
+        return DeliveryMode.UNRELIABLE

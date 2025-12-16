@@ -47,6 +47,14 @@ class Node(Serializable):
             b.visible = b.visible
             b.receive_updates = b.receive_updates
 
+    def has_ancestor(self, node: Node):
+        curr = self
+        while curr is not None:
+            if curr == node:
+                return True
+            curr = curr.parent
+        return False
+
     @property
     def parent(self):
         return self._parent
@@ -54,7 +62,9 @@ class Node(Serializable):
     @parent.setter
     def parent(self, parent: Self | None):
         if self._parent is not None:
-            self._parent._children.remove(self)
+            for i, c in enumerate(self._parent.children):
+                if c == self:
+                    del self._parent._children[i]
 
         self._parent = parent
 
@@ -158,6 +168,8 @@ class Node(Serializable):
     def transform(self) -> Transform:
         from common.behaviours.transform import Transform
 
+        self._ensure_transform_is_first_behaviour()
+
         return cast(Transform, self._behaviours[0])
 
     @property
@@ -173,10 +185,12 @@ class Node(Serializable):
         self._destroy_helper()
 
     def _destroy_helper(self):
+        assert self.game
+        self._destroyed = True
         for b in self._behaviours:
             b.visible = False
             b.receive_updates = False
-            b.on_destroy()
+            self.game.simulation.run_task(b.on_destroy())
 
         self._behaviours.clear()
 
@@ -238,23 +252,18 @@ class Node(Serializable):
                 node = load_node_asset(dc)
                 node.parent = self
 
+        self._ensure_transform_is_first_behaviour()
+
         for db in dict_behaviours:
             behaviour_type = get_behaviour_type_by_name(db.get("__type"))
             if behaviour_type is None:
                 continue
 
-            if behaviour_type is not Transform:
-                b = self.add_behaviour(behaviour_type)
-            else:
-                b = self.get_behaviour(Transform)
-                if b is None:
-                    b = self.add_behaviour(Transform)
+            b = self.get_or_add_behaviour(behaviour_type)
 
             b.on_deserialize(db)
             b.receive_updates = db.get("receive_updates", True)
             b.visible = db.get("visible", True)
-
-        self._ensure_transform_is_first_behaviour()
 
         return self
 

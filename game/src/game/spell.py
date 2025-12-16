@@ -1,20 +1,18 @@
 from __future__ import annotations
 
 import re
-from abc import abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from re import T
 from typing import TYPE_CHECKING, Self, cast, final
 
-import pygame as pg
-
-from common.assets import Serializable, load_object_asset
+from common.assets import ImageAsset, Serializable, load_image_asset, load_object_asset
 from common.behaviour import get_behaviour_type_by_name, get_behaviour_type_name
+from common.behaviours.camera import Camera
 from common.behaviours.network_behaviour import NetworkBehaviour
 from common.network import DeliveryMode
 from common.primitives import Vector2
-from common.utils import get_object_attribute_from_dotted_path, notnull
+from common.utils import get_object_attribute_from_dotted_path
+from game.orders import OrderTransition
 
 if TYPE_CHECKING:
     from game.mage import Mage
@@ -34,6 +32,7 @@ class SpellInfo(Serializable):
     levels: int
     target_mode: TargetMode
     state_behaviour: type[SpellState]
+    base_icon: ImageAsset = field(default=ImageAsset(None, "null"))
     cooldown: list[float] = field(default_factory=lambda: [0])
     data: dict = field(default_factory=dict)
     _raw_tooltip: str = field(default_factory=str)
@@ -56,10 +55,12 @@ class SpellInfo(Serializable):
         out_dict["state_behaviour"] = get_behaviour_type_name(self.state_behaviour)
         out_dict["data"] = self.data
 
+        if self.base_icon:
+            out_dict["base_icon"] = self.base_icon.serialize()
+
         return out_dict
 
     def deserialize(self, in_dict: dict) -> Self:
-        print("Calling deserialize for spell info")
         self.name = in_dict.get("name", str())
         self._raw_tooltip = in_dict.get("tooltip", str())
         self.levels = in_dict.get("levels", 1)
@@ -74,7 +75,6 @@ class SpellInfo(Serializable):
         self.data = in_dict.get("data", {})
 
         behaviour = get_behaviour_type_by_name(in_dict.get("state_behaviour"))
-        print("Got behaviour", behaviour)
         if behaviour is None or not issubclass(behaviour, SpellState):
             raise ValueError("Expected a spell state behaviour.")
         self.state_behaviour = cast(type[SpellState], behaviour)
@@ -82,6 +82,10 @@ class SpellInfo(Serializable):
         # Ensure all fields are set
         self._file_name = ""
         self._formatted_tooltip_cache = {}
+
+        base_icon_data = in_dict.get("base_icon")
+        if base_icon_data is not None:
+            self.base_icon = load_image_asset(base_icon_data["path"])
 
         return self
 
@@ -103,10 +107,27 @@ class SpellInfo(Serializable):
         self._formatted_tooltip_cache[level] = tooltip
         return tooltip
 
+    def get_level_data[T](self, entry: str, level: int, fallback: T) -> T:
+        self.data.get(entry)
+
+        data = self.data.get(entry)
+
+        if isinstance(data, list):
+            data = data[min(len(data) - 1, level - 1)]
+
+        if data is None:
+            return fallback
+
+        return data
+
+    def get_level_cooldown(self, level: int):
+        return self.cooldown[min(len(self.cooldown) - 1, level - 1)]
+
 
 class SpellState(NetworkBehaviour):
     _mage: Mage
     _spell: SpellInfo
+    _hotkey: int | None
 
     def on_init(self):
         self.cooldown_timer = self.use_sync_var(
@@ -114,14 +135,19 @@ class SpellState(NetworkBehaviour):
         )
         self.level = self.use_sync_var(int, 1)
 
-    def on_server_tick(self, tick_id: int):
-        assert self.game
-        tick_dt = self.game.simulation.tick_interval
-        self.cooldown_timer.value = max(0, self.cooldown_timer.value - tick_dt)
+    def get_point_cast_order(self, mage: Mage, where: Vector2):
+        def point_cast_order():
+            mage.face(where)
+            if mage.animator:
+                mage.animator.play("cast")
+            self.cooldown_timer.value = self.get_current_level_cooldown()
+            self.on_point_cast(where)
+            yield OrderTransition.CONTINUE
 
-    def on_client_update(self, dt: float):
-        # Update cooldown in client for smooth updates.
-        self.cooldown_timer.value = max(0, self.cooldown_timer.value - dt)
+        return point_cast_order()
+
+    def get_formatted_tooltip(self):
+        return self.spell.get_formatted_tooltip(self.level.value)
 
     @property
     def spell(self):
@@ -139,9 +165,40 @@ class SpellState(NetworkBehaviour):
     def on_point_cast(self, target: Vector2):
         pass
 
+    def get_current_level_cooldown(self):
+        return self.spell.get_level_cooldown(self.level.value)
+
+    def get_current_level_data[T](self, entry: str, fallback: T) -> T:
+        return self.spell.get_level_data(entry, self.level.value, fallback)
+
+    def on_server_tick(self, tick_id: int):
+        assert self.game
+        tick_dt = self.game.simulation.tick_interval
+        self.cooldown_timer.value = max(0, self.cooldown_timer.value - tick_dt)
+
+    def on_client_update(self, dt: float):
+        assert self.game
+
+        # Update cooldown in client for smooth updates.
+        self.cooldown_timer.value = max(0, self.cooldown_timer.value - dt)
+
+        if self._hotkey and self.game.input.is_key_just_released(self._hotkey):
+            from game.mage import CastPointTargetSpellOrder
+
+            camera = self.game.container.get(Camera)
+            if camera is None:
+                return
+
+            mouse_world_pos = camera.screen_to_world_space(self.game.input.mouse_pos)
+            if self.spell.target_mode == TargetMode.POINT:
+                self.game.network.publish(
+                    CastPointTargetSpellOrder(
+                        self._mage.net_entity.id, self.net_entity.id, mouse_world_pos
+                    )
+                )
+
 
 def get_spell(file_name: str):
     spell_info = load_object_asset(f"spells/{file_name}.json", SpellInfo)
-    print("Loaded spell info here!", spell_info.__dict__)
     spell_info._file_name = file_name
     return spell_info
