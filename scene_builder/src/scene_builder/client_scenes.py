@@ -3,6 +3,7 @@ import json
 import pygame as pg
 
 from client.hud import Hud
+from client.scenes.game_over_menu import GameOverMenu
 from client.scenes.lobby import Lobby
 from client.scenes.main_menu import MainMenu
 from common.animation import Animation, AnimationFrame, SliceMode, slice_image
@@ -33,6 +34,7 @@ def build_client_scenes():
     build_lobby_menu()
     build_mage_template()
     build_hud()
+    build_end_menu()
     # build_world()
 
 
@@ -96,6 +98,33 @@ def build_lobby_menu():
     lobby_menu.add_behaviour(Lobby)
 
     save_node(lobby_menu, "scenes/client/lobby.json")
+
+
+def build_end_menu():
+    end_menu = Node(name="end_menu")
+    canvas = end_menu.add_behaviour(Canvas)
+
+    lobby_label = end_menu.add_child().add_behaviour(UILabel)
+    lobby_label.text = "Game Over!"
+    lobby_label.bold = False
+    lobby_label.font_size = 36
+    lobby_label.node.transform.position = Vector2(0, 200)
+
+    winner_label = end_menu.add_child().add_behaviour(UILabel)
+    winner_label.text = f"Team X Victory!"
+    winner_label.bold = True
+    winner_label.font_size = 46
+    winner_label.node.transform.position = Vector2(0, 120)
+
+    exit_button = end_menu.add_child().add_behaviour(UIButton)
+    exit_button.label.text = "Back"
+    exit_button.image.image_path = "img/ui/button.png"
+    exit_button.node.transform.position = Vector2(0, -50)
+    exit_button.image.surface_scale = Vector2(3, 1)
+
+    end_menu.add_behaviour(GameOverMenu)
+
+    save_node(end_menu, "scenes/client/end_menu.json")
 
 
 def build_mage_template():

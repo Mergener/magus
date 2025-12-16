@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import time
 from collections import defaultdict
+from sys import stderr
 from typing import Any
 
 import pygame as pg
@@ -41,11 +42,20 @@ class Simulation:
 
     def purge_futures(self):
         for f in self._frame_futures:
-            f.cancel()
+            try:
+                f.cancel()
+            except:
+                pass
         for f in self._tick_futures:
-            f.cancel()
+            try:
+                f.cancel()
+            except:
+                pass
         for t in self._pending_tasks:
-            t.cancel()
+            try:
+                t.cancel()
+            except:
+                pass
 
         self._frame_futures.clear()
         self._tick_futures.clear()
@@ -215,13 +225,19 @@ class Simulation:
         self._frame_futures.clear()
 
         for future in futures_to_resolve:
-            if not future.done():
-                future.set_result(None)
+            try:
+                if not future.done():
+                    future.set_result(None)
+            except Exception as e:
+                print(f"Error: {e}", file=stderr)
 
     def _resolve_tick_futures(self):
         futures_to_resolve = self._tick_futures.copy()
         self._tick_futures.clear()
 
         for future in futures_to_resolve:
-            if not future.done():
-                future.set_result(None)
+            try:
+                if not future.done():
+                    future.set_result(None)
+            except Exception as e:
+                print(f"Error: {e}", file=stderr)

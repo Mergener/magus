@@ -253,7 +253,7 @@ class Network(ABC):
     def purge(self):
         connected_peers = [p for p in self.connected_peers]
         for p in connected_peers:
-            p.disconnect()
+            p._packet_futures.clear()
 
         self._packet_listeners: defaultdict[
             type, list[Callable[[Packet, NetPeer], Any]]

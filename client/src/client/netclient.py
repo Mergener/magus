@@ -32,7 +32,8 @@ class NetClient(Network):
         exclude_peers: list[NetPeer] | None = None,
     ):
         if not self._peer:
-            raise RuntimeError("Not connected to any host.")
+            print("Not connected to any host.", file=stderr)
+            return
 
         self._peer.send(packet, override_delivery_mode)
 

@@ -7,7 +7,7 @@
     "state_behaviour": "game.spells.fireball_state.FireballState",
     "base_icon": { "path": "img/spells/icons/fireball.png" },
     "data": {
-        "damage": [32],
+        "damage": [5000],
         "projectile_speed": 800,
         "knockback_force": 1200
     }

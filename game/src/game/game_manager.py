@@ -16,8 +16,10 @@ from common.behaviours.network_behaviour import (
     entity_packet_handler,
     server_method,
 )
+from common.behaviours.network_entity_manager import NetworkEntityManager
 from common.behaviours.singleton_behaviour import SingletonBehaviour
 from common.binary import ByteReader, ByteWriter
+from common.game import Game
 from common.network import DeliveryMode, MultiPacket, NetPeer, Packet
 from common.primitives import Vector2
 from common.utils import notnull
@@ -104,7 +106,7 @@ class GameManager(NetworkBehaviour):
         self._players_by_peer: dict[NetPeer, Player] | None = None
         self._round = self.use_sync_var(int, 1)
         self._team_wins: defaultdict[int, int] = defaultdict(int)
-        self._max_rounds = self.use_sync_var(int, 10)
+        self._max_rounds = self.use_sync_var(int, 1)
 
     @property
     def max_rounds(self):
@@ -228,7 +230,13 @@ class GameManager(NetworkBehaviour):
                 ]
             )
         )
-        if self._round.value >= self._max_rounds.value:
+
+        self._team_wins[winner_team] += 1
+
+        if (
+            self._round.value >= self._max_rounds.value
+            or self._team_wins[winner_team] > self.max_rounds // 2
+        ):
             await self._finish_game()
             return
 
@@ -266,6 +274,14 @@ class GameManager(NetworkBehaviour):
     def _on_round_finished(self, packet: RoundFinished, peer: NetPeer):
         self._team_wins[packet.winner_team] += 1
 
+    @client_method
+    async def _on_game_finished(self, packet: GameFinished, peer: NetPeer):
+        assert self.game
+        entity_mgr = notnull(self.game.container.get(NetworkEntityManager))
+        scene = load_node_asset("scenes/client/end_menu.json")
+        await self.game.load_scene_async(scene, [entity_mgr.node])
+        self.entity_manager.reset()
+
     #
     # Lifecycle
     #
@@ -294,6 +310,9 @@ class GameManager(NetworkBehaviour):
         assert self.game
         self._round_finished_listener = self.game.network.listen(
             RoundFinished, self._on_round_finished
+        )
+        self._game_finished_listener = self.game.network.listen(
+            GameFinished, self._on_game_finished
         )
 
     def on_client_start(self):
