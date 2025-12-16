@@ -109,11 +109,11 @@ class UILabel(Widget):
         text_height = transformed_surface.get_height()
 
         if self._horizontal_align == HorizontalAlign.LEFT:
-            offset_x = 0
-        elif self._horizontal_align == HorizontalAlign.CENTER:
             offset_x = -text_width / 2
+        elif self._horizontal_align == HorizontalAlign.CENTER:
+            offset_x = 0
         else:
-            offset_x = -text_width
+            offset_x = text_width / 2
 
         if self._vertical_align == VerticalAlign.TOP:
             offset_y = 0
@@ -122,7 +122,7 @@ class UILabel(Widget):
         else:
             offset_y = -text_height
 
-        self._ui_texture.transform.position = Vector2(offset_x, offset_y)
+        self._ui_texture.transform.local_position = Vector2(offset_x, offset_y)
 
     @property
     def anchor(self):

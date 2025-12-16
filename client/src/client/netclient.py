@@ -12,9 +12,12 @@ class NetClient(Network):
         super().__init__()
         self._host = enet.Host(None, 1, 2, 0, 0)
         self._peer: NetPeer | None = None
-        self.connect(address, port)
+        self._address = address
+        self._port = port
 
-    def connect(self, address: str, port: int):
+    def connect(self):
+        address = self._address
+        port = self._port
         addr = enet.Address(address.encode("utf-8"), port)
         peer = self._host.connect(addr, 2, 0)
         event = self._host.service(5000)

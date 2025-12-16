@@ -361,12 +361,12 @@ class NetworkEntity(Behaviour):
         )
 
     def on_destroy(self):
-        assert self.game
         self._packet_listeners.clear()
 
         # The following is mainly for notifying clients about the entity destruction.
         # Note that destroying a node is an idempotent action.
-        self.entity_manager.destroy_entity(self)
+        if hasattr(self, "_entity_manager"):
+            self._entity_manager.destroy_entity(self)
 
 
 class EntityPacket(Packet, ABC):

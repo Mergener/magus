@@ -13,11 +13,13 @@ class GameOverMenu(Behaviour):
     def on_init(self):
         self._game_finished = None
 
-    def on_pre_start(self):
-        assert self.game
-
         self.winner_label = self.node.get_child(1).get_or_add_behaviour(UILabel)
         self.back_button = self.node.get_child(2).get_or_add_behaviour(UIButton)
+
+        self.back_button.on_click = self._on_back_button
+
+    def on_pre_start(self):
+        assert self.game
 
     @property
     def game_finished(self):
@@ -30,14 +32,8 @@ class GameOverMenu(Behaviour):
 
     async def _on_back_button(self):
         assert self.game
-        entity_mgr = self.game.container.get(NetworkEntityManager)
         game = self.game
-        entity_mgr = notnull(self.game.container.get(NetworkEntityManager))
-        await self.game.load_scene_async(
-            load_node_asset("scenes/client/main_menu.json"), [entity_mgr.node]
-        )
 
-        if entity_mgr:
-            entity_mgr.reset()
-        game.network.purge()
-        game.simulation.purge_futures()
+        game.network.disconnect()
+
+        await game.load_scene_async(load_node_asset("scenes/client/main_menu.json"))

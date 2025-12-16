@@ -30,6 +30,7 @@ class MainMenu(Behaviour):
     async def _join_game(self):
         assert self.game
 
+        self.game.network.connect()
         self.game.network.publish(JoinGameRequest())
         response = await self.game.network.expect(JoinGameResponse)
 

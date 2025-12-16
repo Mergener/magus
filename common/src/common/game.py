@@ -112,7 +112,8 @@ class Game:
 
             if self._queued_nodes_to_transfer is not None:
                 for n in self._queued_nodes_to_transfer:
-                    n.parent = self._scene
+                    if n.has_ancestor(prev_scene):
+                        n.parent = self._scene
 
             prev_scene.destroy()
             self._queued_scene = None

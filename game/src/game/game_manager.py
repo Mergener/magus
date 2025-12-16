@@ -189,7 +189,7 @@ class GameManager(NetworkBehaviour):
     #
 
     @server_method
-    async def _finish_game(self):
+    def _finish_game(self):
         assert self.game
         game_winner_team = 0
         wins = self.get_team_wins(game_winner_team)
@@ -214,9 +214,17 @@ class GameManager(NetworkBehaviour):
         )
 
         game = self.game
-        await self.game.load_scene_async(load_node_asset("scenes/server/lobby.json"))
+
         game.simulation.purge_futures()
+        entity_mgr = self.entity_manager or game.container.get(NetworkEntityManager)
+        if entity_mgr:
+            entity_mgr.reset()
+            game.container.unregister(NetworkEntityManager)
         game.network.purge()
+
+        game.simulation.run_task(
+            game.load_scene_async(load_node_asset("scenes/server/lobby.json"))
+        )
 
     @server_method
     async def _finish_round(self, winner_team: int):
@@ -237,7 +245,7 @@ class GameManager(NetworkBehaviour):
             self._round.value >= self._max_rounds.value
             or self._team_wins[winner_team] > self.max_rounds // 2
         ):
-            await self._finish_game()
+            self._finish_game()
             return
 
         self._round.value += 1
@@ -275,12 +283,20 @@ class GameManager(NetworkBehaviour):
         self._team_wins[packet.winner_team] += 1
 
     @client_method
-    async def _on_game_finished(self, packet: GameFinished, peer: NetPeer):
+    def _on_game_finished(self, packet: GameFinished, peer: NetPeer):
+        from client.scenes.game_over_menu import GameOverMenu
+
         assert self.game
-        entity_mgr = notnull(self.game.container.get(NetworkEntityManager))
+        game = self.game
         scene = load_node_asset("scenes/client/end_menu.json")
-        await self.game.load_scene_async(scene, [entity_mgr.node])
+
+        menu = notnull(scene.get_behaviour_in_children(GameOverMenu, recursive=True))
+        menu.game_finished = packet
+
         self.entity_manager.reset()
+        game.simulation.purge_futures()
+        game.simulation.run_task(game.load_scene_async(scene))
+        game.network.purge()
 
     #
     # Lifecycle

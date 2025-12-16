@@ -44,17 +44,17 @@ class Simulation:
         for f in self._frame_futures:
             try:
                 f.cancel()
-            except:
+            except BaseException:
                 pass
         for f in self._tick_futures:
             try:
                 f.cancel()
-            except:
+            except BaseException:
                 pass
         for t in self._pending_tasks:
             try:
                 t.cancel()
-            except:
+            except BaseException:
                 pass
 
         self._frame_futures.clear()
@@ -69,7 +69,7 @@ class Simulation:
             self._pending_tasks.discard(task)
             try:
                 task.result()
-            except Exception as e:
+            except BaseException as e:
                 print("Async task error:", e)
 
         task.add_done_callback(_cleanup)
@@ -147,13 +147,19 @@ class Simulation:
         for ts in starting:
             if ts._started or ts.node.destroyed:
                 continue
-            self.run_task(ts.on_pre_start())
+            try:
+                self.run_task(ts.on_pre_start())
+            except BaseException as e:
+                print(f"Error: {e}")
 
         for ts in starting:
             if ts._started or ts.node.destroyed:
                 continue
             ts._started = True
-            self.run_task(ts.on_start())
+            try:
+                self.run_task(ts.on_start())
+            except BaseException as e:
+                print(f"Error: {e}")
 
         self._resolve_frame_futures()
 
@@ -164,14 +170,20 @@ class Simulation:
                 for t in self._tickables:
                     if t.node.destroyed:
                         continue
-                    self.run_task(t.on_tick(self._tick_id))
+                    try:
+                        self.run_task(t.on_tick(self._tick_id))
+                    except BaseException as e:
+                        print(f"Error: {e}")
                 self._tick_id += 1
 
         with self._profiler.profile("update"):
             for u in self._updatables:
                 if u.node.destroyed:
                     continue
-                self.run_task(u.on_update(dt))
+                try:
+                    self.run_task(u.on_update(dt))
+                except BaseException as e:
+                    print(f"Error: {e}")
 
     def render(self):
         for bl in self._will_render:
@@ -190,13 +202,19 @@ class Simulation:
             for r in self._renderables[l]:
                 if r.node.destroyed:
                     continue
-                r.on_render()
+                try:
+                    r.on_render()
+                except BaseException as e:
+                    print(f"Error: {e}")
 
             if self.render_debug:
                 for r in self._renderables[l]:
                     if r.node.destroyed:
                         continue
-                    r.on_debug_render()
+                    try:
+                        r.on_debug_render()
+                    except BaseException as e:
+                        print(f"Error: {e}")
 
     async def wait_next_frame(self):
         loop = asyncio.get_event_loop()
@@ -228,7 +246,7 @@ class Simulation:
             try:
                 if not future.done():
                     future.set_result(None)
-            except Exception as e:
+            except BaseException as e:
                 print(f"Error: {e}", file=stderr)
 
     def _resolve_tick_futures(self):
@@ -239,5 +257,5 @@ class Simulation:
             try:
                 if not future.done():
                     future.set_result(None)
-            except Exception as e:
+            except BaseException as e:
                 print(f"Error: {e}", file=stderr)

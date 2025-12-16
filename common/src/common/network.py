@@ -250,6 +250,9 @@ class Network(ABC):
         self._connect_listeners: list[Callable[[NetPeer], Any]] = []
         self._disconnect_listeners: list[Callable[[NetPeer], Any]] = []
 
+    def connect(self):
+        pass
+
     def purge(self):
         connected_peers = [p for p in self.connected_peers]
         for p in connected_peers:
@@ -367,7 +370,11 @@ class Network(ABC):
 
     def unlisten[T: Packet](self, t: type[T], listener: Callable[[T, NetPeer], Any]):
         l = self._packet_listeners[t]
-        l.remove(cast(Callable[[Packet, NetPeer], Any], listener))
+        to_remove = cast(Callable[[Packet, NetPeer], Any], listener)
+        for i in range(len(l)):
+            if i == to_remove:
+                del l[i]
+                break
         if len(l) == 0:
             self._packet_listeners.pop(t)
 
@@ -380,10 +387,16 @@ class Network(ABC):
         return listener
 
     def unlisten_connected(self, listener: Callable[[NetPeer], Any]):
-        self._connect_listeners.remove(listener)
+        for i in range(len(self._connect_listeners)):
+            if self._connect_listeners[i] == listener:
+                del self._connect_listeners[i]
+                break
 
     def unlisten_disconnected(self, listener: Callable[[NetPeer], Any]):
-        self._disconnect_listeners.remove(listener)
+        for i in range(len(self._disconnect_listeners)):
+            if self._disconnect_listeners[i] == listener:
+                del self._disconnect_listeners[i]
+                break
 
     async def expect[T](
         self,

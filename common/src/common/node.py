@@ -47,6 +47,14 @@ class Node(Serializable):
             b.visible = b.visible
             b.receive_updates = b.receive_updates
 
+    def has_ancestor(self, node: Node):
+        curr = self
+        while curr is not None:
+            if curr == node:
+                return True
+            curr = curr.parent
+        return False
+
     @property
     def parent(self):
         return self._parent
@@ -54,7 +62,9 @@ class Node(Serializable):
     @parent.setter
     def parent(self, parent: Self | None):
         if self._parent is not None:
-            self._parent._children.remove(self)
+            for i, c in enumerate(self._parent.children):
+                if c == self:
+                    del self._parent._children[i]
 
         self._parent = parent
 
@@ -176,6 +186,7 @@ class Node(Serializable):
 
     def _destroy_helper(self):
         assert self.game
+        self._destroyed = True
         for b in self._behaviours:
             b.visible = False
             b.receive_updates = False

@@ -7,7 +7,7 @@ class AnimatorSynchronizer(NetworkBehaviour):
     def on_init(self):
         self._animator = self.node.get_or_add_behaviour(Animator)
         self._animation = self.use_sync_var(
-            str, "idle", delivery_mode=DeliveryMode.UNRELIABLE
+            str, "idle", delivery_mode=DeliveryMode.RELIABLE
         )
 
     def on_server_tick(self, tick_id: int):

@@ -64,6 +64,7 @@ class Lobby(Behaviour):
         self.game.network.unlisten(LobbyInfoPacket, self._lobby_info_handler)
 
     def _on_player_joined(self, packet: PlayerJoined):
+        print(packet)
         if self.game:
             self.game.network.publish(RequestLobbyInfo())
 
@@ -82,7 +83,7 @@ class Lobby(Behaviour):
         entity_mgr = notnull(self.game.container.get(NetworkEntityManager))
 
         await self.game.load_scene_async(
-            load_node_asset("scenes/client/game.json"), player_nodes + [entity_mgr.node]
+            load_node_asset("scenes/client/game.json"), player_nodes
         )
 
         game.network.publish(DoneLoadingGameScene())
@@ -98,6 +99,7 @@ class Lobby(Behaviour):
         return players
 
     def _handle_lobby_info_packet(self, packet: LobbyInfoPacket, peer: NetPeer):
+        print(packet)
         assert self.game
 
         players = self._get_players()
