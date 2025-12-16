@@ -97,6 +97,23 @@ class NetworkEntity(Behaviour):
     @property
     def id(self):
         return self._id
+    
+    def _on_id_assigned(self):
+        assert self.game
+        if self.game.network.is_client():
+            self.listen(
+                PositionUpdate, lambda msg, peer: self._handle_pos_update(msg, peer)
+            )
+            self.listen(
+                RotationUpdate,
+                lambda msg, peer: self._handle_rotation_update(msg, peer),
+            )
+            self.listen(
+                ScaleUpdate, lambda msg, peer: self._handle_scale_update(msg, peer)
+            )
+            self.listen(
+                SyncVarUpdate, lambda msg, peer: self._handle_sync_var_update(msg, peer)
+            )
 
     @property
     def entity_manager(self):
@@ -121,32 +138,17 @@ class NetworkEntity(Behaviour):
     def on_pre_start(self):
         assert self.game
 
-        if self.game.network.is_client():
-            self.listen(
-                PositionUpdate, lambda msg, peer: self._handle_pos_update(msg, peer)
-            )
-            self.listen(
-                RotationUpdate,
-                lambda msg, peer: self._handle_rotation_update(msg, peer),
-            )
-            self.listen(
-                ScaleUpdate, lambda msg, peer: self._handle_scale_update(msg, peer)
-            )
-            self.listen(
-                SyncVarUpdate, lambda msg, peer: self._handle_sync_var_update(msg, peer)
-            )
-
     async def on_start(self) -> Any:
         assert self.game
         self._require_sync_var_creation_sync = True
 
         assert self._pre_start_packet_queue is not None
+        self._started = True
         for t in self._pre_start_packet_queue:
             packet, peer = t
             self._handle_entity_packet(packet, peer)
 
         self._pre_start_packet_queue = None
-        self._started = True
 
         # The following is a filthy hack to a problem that made entities transforms
         # only get synchronized after moving at least once.
@@ -238,7 +240,7 @@ class NetworkEntity(Behaviour):
                 p._last_recv_tick = 0
             break
 
-    def generate_sync_packets(self):
+    def generate_sync_packets(self) -> list[Packet]:
         assert self.game
 
         tick_id = self.game.simulation.tick_id

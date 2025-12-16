@@ -143,6 +143,7 @@ class NetworkEntityManager(SingletonBehaviour):
         if entity is not None:
             entity._id = entity_id
             self._entities[entity_id] = entity
+            entity._on_id_assigned()
 
         for c in node.children:
             entity_id += 1

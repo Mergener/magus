@@ -120,6 +120,8 @@ class SpellInfo(Serializable):
 
         return data
 
+    def get_level_cooldown(self, level: int):
+        return self.cooldown[min(len(self.cooldown) - 1, level - 1)]
 
 class SpellState(NetworkBehaviour):
     _mage: Mage
@@ -137,6 +139,7 @@ class SpellState(NetworkBehaviour):
             mage.face(where)
             if mage.animator:
                 mage.animator.play("cast")
+            self.cooldown_timer.value = self.get_current_level_cooldown()
             self.on_point_cast(where)
             yield OrderTransition.CONTINUE
 
@@ -160,6 +163,9 @@ class SpellState(NetworkBehaviour):
 
     def on_point_cast(self, target: Vector2):
         pass
+
+    def get_current_level_cooldown(self):
+        return self.spell.get_level_cooldown(self.level.value)
 
     def get_current_level_data[T](self, entry: str, fallback: T) -> T:
         return self.spell.get_level_data(entry, self.level.value, fallback)

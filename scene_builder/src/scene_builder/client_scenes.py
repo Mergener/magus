@@ -149,8 +149,8 @@ def build_hud():
     scoreboard = hud_node.add_child().add_behaviour(UILabel)
     scoreboard.text = "Scoreboard"
     scoreboard.horizontal_align = HorizontalAlign.LEFT
-    scoreboard.font_size = 12
-    scoreboard.anchor = Vector2(0.9, 0.9)
+    scoreboard.font_size = 14
+    scoreboard.anchor = Vector2(0.93, 0.93)
 
     save_node(hud_node, "templates/hud.json")
 

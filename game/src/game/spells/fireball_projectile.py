@@ -21,7 +21,6 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
     speed: float
     damage: float
     destination = Vector2()
-    owner: Player | None
     duration: float
     hit_force: float
 
@@ -29,9 +28,12 @@ class FireballProjectile(NetworkBehaviour, CollisionHandler):
         self._burst = False
         self._animator = None
         self._phys_obj = None
-        self.owner = None
         self._animator = self.node.get_behaviour(Animator)
         self.node.get_or_add_behaviour(AnimatorSynchronizer)
+
+    @property
+    def owner(self):
+        return self.caster.owner
 
     def on_server_pre_start(self):
         self._phys_obj = self.node.get_or_add_behaviour(PhysicsObject)

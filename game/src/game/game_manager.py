@@ -18,7 +18,7 @@ from common.behaviours.network_behaviour import (
 )
 from common.behaviours.singleton_behaviour import SingletonBehaviour
 from common.binary import ByteReader, ByteWriter
-from common.network import DeliveryMode, NetPeer, Packet
+from common.network import DeliveryMode, NetPeer, Packet, MultiPacket
 from common.primitives import Vector2
 from common.utils import notnull
 from game.lobby_base import LobbyInfo
@@ -84,6 +84,11 @@ class GameManager(NetworkBehaviour):
         self._players_by_peer: dict[NetPeer, Player] | None = None
         self._round = self.use_sync_var(int, 1)
         self._team_wins: defaultdict[int, int] = defaultdict(int)
+        self._max_rounds = self.use_sync_var(int, 10)
+        
+    @property
+    def max_rounds(self):
+        return self._max_rounds.value
 
     def get_team_wins(self, team: int):
         return self._team_wins.get(team, 0)
@@ -164,7 +169,15 @@ class GameManager(NetworkBehaviour):
     @server_method
     async def _finish_round(self, winner_team: int):
         assert self.game
-        self.game.network.publish(RoundFinished(winner_team))
+
+        self.game.network.publish(
+            MultiPacket(
+                packets=[
+                    *self.net_entity.generate_sync_packets(),
+                    RoundFinished(winner_team),
+                ]
+            )
+        )
         for p in self.players:
             mage = p.mage
             if not mage:
@@ -195,7 +208,7 @@ class GameManager(NetworkBehaviour):
 
     @client_method
     def _on_round_finished(self, packet: RoundFinished, peer: NetPeer):
-        pass
+        self._team_wins[packet.winner_team] += 1
 
     #
     # Lifecycle
