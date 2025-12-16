@@ -85,7 +85,7 @@ class SpellInfo(Serializable):
 
         base_icon_data = in_dict.get("base_icon")
         if base_icon_data is not None:
-            self.base_icon.deserialize(base_icon_data)
+            self.base_icon = load_image_asset(base_icon_data["path"])
 
         return self
 

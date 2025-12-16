@@ -481,8 +481,8 @@ class Mage(NetworkBehaviour):
         assert self.game
         assert self._animator
 
-        spell = get_spell("fireball")
-        self.add_spell(spell)
+        self.add_spell(get_spell("fireball"))
+        self.add_spell(get_spell("thrust"))
 
     def on_client_tick(self, tick_id: int):
         health_ratio = self.health / max(1, self.max_health)

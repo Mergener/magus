@@ -106,7 +106,7 @@ class GameManager(NetworkBehaviour):
         self._players_by_peer: dict[NetPeer, Player] | None = None
         self._round = self.use_sync_var(int, 1)
         self._team_wins: defaultdict[int, int] = defaultdict(int)
-        self._max_rounds = self.use_sync_var(int, 1)
+        self._max_rounds = self.use_sync_var(int, 10)
 
     @property
     def max_rounds(self):
@@ -250,6 +250,8 @@ class GameManager(NetworkBehaviour):
 
         self._round.value += 1
 
+        await self.game.simulation.wait_seconds(5)
+
         for p in self.players:
             mage = p.mage
             if not mage:
@@ -261,8 +263,11 @@ class GameManager(NetworkBehaviour):
             mage.transform.position = Vector2(
                 random.randint(-200, 200), random.randint(-200, 200)
             )
+            self.game.network.publish(
+                MultiPacket(mage.net_entity.generate_sync_packets()),
+                override_delivery_mode=DeliveryMode.RELIABLE_ORDERED,
+            )
 
-        await self.game.simulation.wait_seconds(30)
         self._start_round()
 
     @server_method

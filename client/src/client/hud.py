@@ -100,6 +100,7 @@ class Hud(Behaviour):
             node.skip_serialization = True
             icon = node.add_behaviour(UIImage)
             icon.image_asset = spell_state.spell.base_icon
+
             icon.anchor = Vector2(0.5, 0.05)
             icon.transform.local_position = Vector2(
                 start_x
